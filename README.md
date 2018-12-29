@@ -31,6 +31,11 @@ X-CASH is a cryptocurrency built on X-CASH v7 with the aim to become and standar
 
 -    Emission structure: logarithmic until max supply is reached in 2020. For more information: https://www.x-cash.org
 
+We developed the FlexPrivacy feature, giving the opportunity to the user to chose between sending their transaction privately or publicly, from the same account, on the same blockchain, and on a per transaction basis. This is the first Cryptonight coin showing this hybrid feature, resembling the current cash system:
+- make a transaction using a check, credit card, bank transfer etc… and leave a transaction trail (public transaction)
+- pay with cash from person to person, without any outside party witnessing the transaction (private transaction)
+Either way, similar to the fiat system, there is no need to have multiple accounts to pay with cash or check. Your account balance, as well as the receiver’s account balance, is never made public.
+
 ## License
 
 See [LICENSE](LICENSE).
