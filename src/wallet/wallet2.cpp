@@ -6199,7 +6199,7 @@ return use_fork_rules(HF_VERSION_MIN_MIXIN_20,10) == true ? 21 : 11;
 //------------------------------------------------------------------------------------------------------------------------------
 uint64_t wallet2::adjust_mixin(uint64_t mixin) const
 {
-  const uint64_t ringsize = mixin++;
+  const uint64_t ringsize = mixin + 1;
   const uint64_t min_ring_size = get_min_ring_size();
   const uint64_t max_ring_size = get_max_ring_size();
   

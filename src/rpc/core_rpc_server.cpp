@@ -76,6 +76,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_restricted_rpc);
     command_line::add_arg(desc, arg_bootstrap_daemon_address);
     command_line::add_arg(desc, arg_bootstrap_daemon_login);
+    command_line::add_arg(desc, arg_user_agent);
     cryptonote::rpc_args::init_options(desc);
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -97,6 +98,7 @@ namespace cryptonote
     m_restricted = restricted;
     m_nettype = nettype;
     m_net_server.set_threads_prefix("RPC");
+    
 
     auto rpc_config = cryptonote::rpc_args::process(vm);
     if (!rpc_config)
@@ -133,7 +135,7 @@ namespace cryptonote
 
     auto rng = [](size_t len, uint8_t *ptr){ return crypto::rand(len, ptr); };
     return epee::http_server_impl_base<core_rpc_server, connection_context>::init(
-      rng, std::move(port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins), std::move(http_login)
+      rng, std::move(port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins), std::move(http_login), std::move(rpc_config->user_agent)
     );
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -2230,6 +2232,12 @@ namespace cryptonote
   const command_line::arg_descriptor<std::string> core_rpc_server::arg_bootstrap_daemon_login = {
       "bootstrap-daemon-login"
     , "Specify username:password for the bootstrap daemon login"
+    , ""
+    };
+
+  const command_line::arg_descriptor<std::string> core_rpc_server::arg_user_agent = {
+      "user-agent"
+    , "Restrict RPC to clients using this user agent"
     , ""
     };
 }  // namespace cryptonote

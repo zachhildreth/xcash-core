@@ -56,6 +56,7 @@ namespace net_utils
 			std::string m_folder;
 			std::vector<std::string> m_access_control_origins;
 			boost::optional<login> m_user;
+                        std::string m_required_user_agent;
 			critical_section m_lock;
 		};
 

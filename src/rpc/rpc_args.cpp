@@ -41,6 +41,7 @@ namespace cryptonote
      , rpc_login({"rpc-login", rpc_args::tr("Specify username[:password] required for RPC server"), "", true})
      , confirm_external_bind({"confirm-external-bind", rpc_args::tr("Confirm rpc-bind-ip value is NOT a loopback (local) IP")})
      , rpc_access_control_origins({"rpc-access-control-origins", rpc_args::tr("Specify a comma separated list of origins to allow cross origin resource sharing"), ""})
+     , rpc_user_agent({"rpc-user-agent", rpc_args::tr("Specify the User-Agent to have the RPC server use, for secured RPC connections"), ""})
   {}
 
   const char* rpc_args::tr(const char* str) { return i18n_translate(str, "cryptonote::rpc_args"); }
@@ -52,6 +53,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg.rpc_login);
     command_line::add_arg(desc, arg.confirm_external_bind);
     command_line::add_arg(desc, arg.rpc_access_control_origins);
+    command_line::add_arg(desc, arg.rpc_user_agent);
   }
 
   boost::optional<rpc_args> rpc_args::process(const boost::program_options::variables_map& vm)
@@ -117,6 +119,8 @@ namespace cryptonote
       std::for_each(access_control_origins.begin(), access_control_origins.end(), boost::bind(&boost::trim<std::string>, _1, std::locale::classic()));
       config.access_control_origins = std::move(access_control_origins);
     }
+
+    config.user_agent = command_line::get_arg(vm, arg.rpc_user_agent);
 
     return {std::move(config)};
   }

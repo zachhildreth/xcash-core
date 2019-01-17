@@ -57,7 +57,7 @@ namespace epee
 
     bool init(std::function<void(size_t, uint8_t*)> rng, const std::string& bind_port = "0", const std::string& bind_ip = "0.0.0.0",
       std::vector<std::string> access_control_origins = std::vector<std::string>(),
-      boost::optional<net_utils::http::login> user = boost::none)
+      boost::optional<net_utils::http::login> user = boost::none, const std::string &user_agent = "")
     {
 
       //set self as callback handler
@@ -66,6 +66,8 @@ namespace epee
 
       //here set folder for hosting reqests
       m_net_server.get_config_object().m_folder = "";
+      
+      m_net_server.get_config_object().m_required_user_agent = user_agent;
 
       //set access control allow origins if configured
       std::sort(access_control_origins.begin(), access_control_origins.end());
