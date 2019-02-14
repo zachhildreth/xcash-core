@@ -98,7 +98,7 @@ static const struct {
 
   // version 8 starts from block 95085, which is on or around Oct 8, 2018. This version includes a new difficulty algorithm.
   { 8, 95085, 0, 1538524800 },
-
+  
   // version 9 starts from block 106000, which is on or around Oct 16, 2018. This version includes a change to the new difficulty algorithm.
   { 9, 106000, 0, 1539550195 },
 
@@ -107,6 +107,9 @@ static const struct {
 
   // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
   { 11, 137000, 0, 1540146330 },
+
+  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to Cryptonight HeavyX and changes the block time to 2 minutes.
+  { 12, 281000, 0, 1549310115 },
 };
 static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
@@ -133,6 +136,9 @@ static const struct {
 
   // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
   { 11, 137000, 0, 1540146330 },
+
+  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to CN/DOUBLE and changes the block time to 2 minutes.
+  { 12, 281000, 0, 1549310115 },
 };
 static const uint64_t testnet_hard_fork_version_1_till = 1;
 
@@ -819,8 +825,11 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   else if(version == 9){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V9;
   }
-  else{
+  else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -883,19 +892,27 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_timestamps = timestamps;
     m_difficulties = difficulties;
   }
-  size_t target = DIFFICULTY_TARGET_V10;
+  size_t target;
   difficulty_type diff;
   if(version <= 7){
-    diff = next_difficulty(timestamps, difficulties, target);
+    target = DIFFICULTY_TARGET_V10;
+    diff = next_difficulty(timestamps, difficulties, target);    
   }
   else if(version == 8){
+    target = DIFFICULTY_TARGET_V10;
     diff = next_difficulty_V8(timestamps, difficulties, block_height);
   }
   else if(version == 9){
+    target = DIFFICULTY_TARGET_V10;
     diff = next_difficulty_V9(timestamps, difficulties, target);
   }
-  else{
+  else if(version == 10 || version == 11){
+    target = DIFFICULTY_TARGET_V10;
     diff = next_difficulty_V10(timestamps, difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V12;
+    diff = next_difficulty_V12(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
@@ -1064,8 +1081,11 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   else if(version == 9){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V9;
   }
-  else{
+  else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -1123,18 +1143,26 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   }
 
   // FIXME: This will fail if fork activation heights are subject to voting
-  size_t target = DIFFICULTY_TARGET_V10;
+  size_t target;
   if(version <= 7){
+    target = DIFFICULTY_TARGET_V10;
     return next_difficulty(timestamps, cumulative_difficulties, target);
   }
   else if(version == 8){
+    target = DIFFICULTY_TARGET_V10;
     return next_difficulty_V8(timestamps, cumulative_difficulties, block_height);
   }
   else if(version == 9){
+    target = DIFFICULTY_TARGET_V10;
     return next_difficulty_V9(timestamps, cumulative_difficulties, target);
   }
-  else{
+  else if(version == 10 || version == 11){
+    target = DIFFICULTY_TARGET_V10;
     return next_difficulty_V10(timestamps, cumulative_difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V12;
+    return next_difficulty_V12(timestamps, cumulative_difficulties, target);
   }
 }
 //------------------------------------------------------------------
@@ -3082,7 +3110,7 @@ bool Blockchain::is_tx_spendtime_unlocked(uint64_t unlock_time) const
   {
     //interpret as time
     uint64_t current_time = static_cast<uint64_t>(time(NULL));
-    if(current_time + (get_current_hard_fork_version() < 2 ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2) >= unlock_time)
+    if(current_time + (get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12) >= unlock_time)
       return true;
     else
       return false;
@@ -3197,9 +3225,13 @@ bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) cons
    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V9;
    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V9;
   }
+  else if(version == 10 || version == 11){
+   cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V10;
+   blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V10;
+  }
   else{
-    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V10;
-    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V10;
+    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V12;
+    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12;
   }
   LOG_PRINT_L3("Blockchain::" << __func__);
   if(b.timestamp > get_adjusted_time() + cryptonote_block_future_time_limit)
@@ -4422,7 +4454,7 @@ bool Blockchain::get_hard_fork_voting_info(uint8_t version, uint32_t &window, ui
 
 uint64_t Blockchain::get_difficulty_target() const
 {
-  return get_current_hard_fork_version() < 2 ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V2;
+  return get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V12;
 }
 
 std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> Blockchain:: get_output_histogram(const std::vector<uint64_t> &amounts, bool unlocked, uint64_t recent_cutoff, uint64_t min_count) const
