@@ -19,13 +19,13 @@ Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
 ## Introduction
 
-X-CASH is a cryptocurrency built using the Cryptonight v8 (CNv2) algorithm, using a variation called CN/DOUBLE, with the aim to become and standard in digital payment and transaction settlement. We believe privacy is very important when it comes to managing personal finances, but at the same time banks and institutions need to know the source of the funds for KYC purposes. Therefore, we plan on leaving the users the choice of whether or not they want their transaction to be public. Because we are implementing a worldwide network of dedicated servers, we hope to make the synchronization of the blockchain faster than other cryptocurrencies as well as reducing transaction latency. We believe this network will be a key component in the deployment of the future improvements we plan on adding to the core code. The main characteristics of X-CASH are detailed below:
+X-CASH is a cryptocurrency built using the Cryptonight algorithm, using a variation called Cryptonight HeavyX with the aim to become and standard in digital payment and transaction settlement. We believe privacy is very important when it comes to managing personal finances, but at the same time banks and institutions need to know the source of the funds for KYC purposes. Therefore, we plan on leaving the users the choice of whether or not they want their transaction to be public. Because we are implementing a worldwide network of dedicated servers, we hope to make the synchronization of the blockchain faster than other cryptocurrencies as well as reducing transaction latency. We believe this network will be a key component in the deployment of the future improvements we plan on adding to the core code. The main characteristics of X-CASH are detailed below:
 
 -    Total Supply: 100,000,000,000
 
 -    Block Time: 2 minute
 
--    Algorithm: CN/DOUBLE (Cryptonight v8 (scratchpad of 2MB) with double the iterations, and some minor changes)
+-    Algorithm: Cryptonight HeavyX (Cryptonight v8 (scratchpad of 2MB) with double the iterations, and some minor changes)
 
 -    Reward: ~100,000 XCA at inception
 
@@ -54,7 +54,7 @@ If you want to help out, see [CONTRIBUTING](CONTRIBUTING.md) for a set of guidel
 | 106000                  | 16-10-2018 | v9                 | Adjusting the new difficulty algorithm       |
 | 136000                  | 06-11-2018 | v10                 | Adding public transactions, bullet proofs, fixed ring size of 21 and more!       |
 | 137000                  | 07-11-2018 | v11                 | This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.       |
-| 281000                  | 15-02-2019 | v12                 | This version changes the proof of work algorithm to CN/DOUBLE, and changes the block time to 2 minutes.     |
+| 281000                  | 15-02-2019 | v12                 | This version changes the proof of work algorithm to Cryptonight HeavyX, and changes the block time to 2 minutes.     |
 
 Note future releases block heights and dates may change, so make sure to frequently check github, our website, the forums, etc. for the most up to date information.
 
