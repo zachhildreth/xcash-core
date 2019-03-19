@@ -822,9 +822,11 @@ bool simple_wallet::print_fee_info(const std::vector<std::string> &args/* = std:
     {
       std::string msg;
       if (priority == m_wallet->get_default_priority() || (m_wallet->get_default_priority() == 0 && priority == 2))
+      {
         msg = tr(" (current)");
-        uint64_t minutes_low = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_low * DIFFICULTY_TARGET_V12 / 60 : nblocks_low * DIFFICULTY_TARGET_V2 / 60;
-        uint64_t minutes_high = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_high * DIFFICULTY_TARGET_V12 / 60 : nblocks_high * DIFFICULTY_TARGET_V2 / 60;
+      }
+      uint64_t minutes_low = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_low * DIFFICULTY_TARGET_V12 / 60 : nblocks_low * DIFFICULTY_TARGET_V2 / 60;
+      uint64_t minutes_high = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_high * DIFFICULTY_TARGET_V12 / 60 : nblocks_high * DIFFICULTY_TARGET_V2 / 60;
       if (nblocks_high == nblocks_low)
         message_writer() << (boost::format(tr("%u block (%u minutes) backlog at priority %u%s")) % nblocks_low % minutes_low % priority % msg).str();
       else
