@@ -1056,10 +1056,10 @@ namespace cryptonote
       return false;
     }
 
-    if(req.reserve_size > 255)
+    if(req.reserve_size > MAXIMUM_RESERVE_BYTES_LEGNTH)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_RESERVE_SIZE;
-      error_resp.message = "Too big reserved size, maximum 255";
+      error_resp.message = "Too big reserved size, maximum " + std::to_string(MAXIMUM_RESERVE_BYTES_LEGNTH);
       return false;
     }
 

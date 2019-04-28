@@ -181,6 +181,9 @@
 
 #define BLOCKCHAIN_DEFAULT_MIXIN                20
 
+// X-CASH Proof Of Stake
+#define MAXIMUM_RESERVE_BYTES_LEGNTH 4096
+
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 
 #define HASH_OF_HASHES_STEP                     256
