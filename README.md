@@ -5,7 +5,7 @@ Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
 ## Development resources
 
-- Web: [x-cash.org](https://x-cash.org)
+- Web: [x-network.io](https://x-network.io)
 - Explorer: [explorer.x-cash.org](https://explorer.x-cash.org)
 - Official Mining Pool: [minexcash.com](http://minexcash.com)
 - Bitcointalk: [Bitcointalk](https://bitcointalk.org/index.php?topic=4781246.0)
@@ -29,7 +29,7 @@ X-CASH is a cryptocurrency built using the Cryptonight algorithm, using a variat
 
 -    Reward: ~100,000 XCA at inception
 
--    Emission structure: logarithmic until max supply is reached in 2022. For more information: https://www.x-cash.org
+-    Emission structure: logarithmic until max supply is reached in 2022. For more information: https://www.x-network.io
 
 We developed the FlexPrivacy feature, giving the opportunity to the user to chose between sending their transaction privately or publicly, from the same account, on the same blockchain, and on a per transaction basis. This is the first Cryptonight coin showing this hybrid feature, resembling the current cash system:
 - make a transaction using a check, credit card, bank transfer etc… and leave a transaction trail (public transaction)
