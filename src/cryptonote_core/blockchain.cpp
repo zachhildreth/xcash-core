@@ -3704,6 +3704,88 @@ size_t string_count(const char* DATA, const char* STRING)
   datacopy2 = NULL;
   return count;
 }
+int string_replace(char *data, const char* STR1, const char* STR2)
+{  
+  // define macros
+  #define REPLACE_STRING "|REPLACE_STRING|"
+
+  // check if the str to replace exist in the string
+  if (strstr(data,STR1) != NULL)
+  { 
+    // Variables
+    char* datacopy = (char*)calloc(BLOCK_TEMPLATE_BUFFER_SIZE,sizeof(char));
+    char* string;
+    size_t data_length;
+    size_t str2_length;
+    size_t start;
+    size_t total = 0;
+    size_t count = 0; 
+
+    // check if the memory needed was allocated on the heap successfully
+    if (datacopy == NULL)
+    {
+      MERROR("Could not allocate the memory needed on the heap");
+      exit(0);
+    } 
+
+    // get the occurences of STR1   
+    total = string_count(data,(char*)STR1);
+
+    // replace the string with the REPLACE_STRING
+    for (count = 0; count < total; count++)
+    {
+      // reset the variables
+      memset(datacopy,0,strnlen(datacopy,BLOCK_TEMPLATE_BUFFER_SIZE));
+      data_length = strnlen(data,BLOCK_TEMPLATE_BUFFER_SIZE);
+      str2_length = strnlen(REPLACE_STRING,BLOCK_TEMPLATE_BUFFER_SIZE);
+      start = data_length - strnlen(strstr(data,STR1),BLOCK_TEMPLATE_BUFFER_SIZE);
+   
+      // get a pointer to where the rest of the data string should be copied to
+      string = strstr(data,STR1)+strnlen(STR1,BLOCK_TEMPLATE_BUFFER_SIZE);
+           
+      // copy the bytes before STR1 to the new string
+      memcpy(datacopy,data,start);
+      // copy STR2 to the new string
+      memcpy(datacopy+start,REPLACE_STRING,str2_length);
+      // copy the bytes after STR1 to the new string
+      memcpy(datacopy+start+str2_length,string,strnlen(string,BLOCK_TEMPLATE_BUFFER_SIZE));
+      // copy the new string to the string pointer
+      memset(data,0,data_length);
+      memcpy(data,datacopy,strnlen(datacopy,BLOCK_TEMPLATE_BUFFER_SIZE));
+    }
+    // replace the REPLACE_STRING with STR2
+    for (count = 0; count < total; count++)
+    {
+      // reset the variables
+      memset(datacopy,0,strnlen(datacopy,BLOCK_TEMPLATE_BUFFER_SIZE));
+      data_length = strnlen(data,BLOCK_TEMPLATE_BUFFER_SIZE);
+      str2_length = strnlen(STR2,BLOCK_TEMPLATE_BUFFER_SIZE);
+      start = data_length - strnlen(strstr(data,REPLACE_STRING),BLOCK_TEMPLATE_BUFFER_SIZE);
+   
+      // get a pointer to where the rest of the data string should be copied to
+      string = strstr(data,REPLACE_STRING)+strnlen(REPLACE_STRING,BLOCK_TEMPLATE_BUFFER_SIZE);
+           
+      // copy the bytes before REPLACE_STRING to the new string
+      memcpy(datacopy,data,start);
+      // copy STR2 to the new string
+      memcpy(datacopy+start,STR2,str2_length);
+      // copy the bytes after REPLACE_STRING to the new string
+      memcpy(datacopy+start+str2_length,string,strnlen(string,BLOCK_TEMPLATE_BUFFER_SIZE));
+      // copy the new string to the string pointer
+      memset(data,0,data_length);
+      memcpy(data,datacopy,strnlen(datacopy,BLOCK_TEMPLATE_BUFFER_SIZE));
+    }
+    free(datacopy);
+    datacopy = NULL;
+    return 1;
+  }
+  else
+  {
+    return 0;
+  } 
+
+  #undef REPLACE_STRING
+}
 //------------------------------------------------------------------
 bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc)
 {
