@@ -182,7 +182,16 @@
 #define BLOCKCHAIN_DEFAULT_MIXIN                20
 
 // X-CASH Proof Of Stake
+#define HF_VERSION_PROOF_OF_STAKE 13
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096
+#define BLOCK_TEMPLATE_BUFFER_SIZE 5000
+#define BLOCK_VALIDATION_SIGNATURES_AMOUNT 4 // 4 out of 5 block validation signatures are needed per block to make it a valid block
+#define BLOCK_VALIDATION_SIGNATURES_TOTAL 5 // maximum of 5 block validation signatures per block.
+#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_1 ""
+#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_2 ""
+#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_3 ""
+#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_4 ""
+#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_5 ""
 
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 
