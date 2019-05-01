@@ -190,7 +190,8 @@
 
 // X-CASH Proof Of Stake
 #define HF_VERSION_PROOF_OF_STAKE 13
-#define MAXIMUM_RESERVE_BYTES_LEGNTH 4096
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 100 // The first block of the X-CASH proof of stake
+#define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
 #define BLOCK_TEMPLATE_BUFFER_SIZE 5000
 #define BLOCK_VALIDATION_SIGNATURES_AMOUNT 4 // 4 out of 5 block validation signatures are needed per block to make it a valid block
 #define BLOCK_VALIDATION_SIGNATURES_TOTAL 5 // maximum of 5 block validation signatures per block.

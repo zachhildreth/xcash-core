@@ -144,11 +144,12 @@ namespace cryptonote
     return request_block_template();
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::request_block_template()
+    bool miner::request_block_template()
   {
     block bl = AUTO_VAL_INIT(bl);
     difficulty_type di = AUTO_VAL_INIT(di);
     uint64_t height = AUTO_VAL_INIT(height);
+    
     uint64_t expected_reward; //only used for RPC calls - could possibly be useful here too?
 
     cryptonote::blobdata extra_nonce;
@@ -162,7 +163,31 @@ namespace cryptonote
       LOG_ERROR("Failed to get_block_template(), stopping mining");
       return false;
     }
+    
     set_block_template(bl, di, height);
+
+    // check if the network is running the proof of stake consensus mechanism
+    if (height >= HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+    {      
+      send_stop_signal();
+      CRITICAL_REGION_LOCAL(m_threads_lock);
+
+      // In case background mining was active and the miner threads are waiting
+      // on the background miner to signal start. 
+      m_is_background_mining_started_cond.notify_all();
+
+      for(boost::thread& th: m_threads)
+        th.join();
+
+      // The background mining thread could be sleeping for a long time, so we
+      // interrupt it just in case
+      m_background_mining_thread.interrupt();
+      m_background_mining_thread.join();
+
+      LOG_ERROR("Stopped mining, since X-CASH is now using the X-CASH proof of stake consensus mechanism");
+      m_threads.clear();
+      return false;      
+    }
     return true;
   }
   //-----------------------------------------------------------------------------------------------------

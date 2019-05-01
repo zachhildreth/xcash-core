@@ -116,6 +116,9 @@ static const struct {
 
   // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to Cryptonight HeavyX and changes the block time to 2 minutes.
   { 12, 281000, 0, 1549310115 },
+
+  // version 13 starts from block 100, which is on or around Feb 15, 2019. This version changes the consensus mechanism to X-CASH proof of stake. It also changes the block time to 5 minutes, and doubles the block reward to adjust for the block time change.
+  { 13, 100, 0, 1550310115 },
 };
 static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
@@ -145,6 +148,9 @@ static const struct {
 
   // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to CN/DOUBLE and changes the block time to 2 minutes.
   { 12, 281000, 0, 1549310115 },
+
+  // version 13 starts from block 100, which is on or around Feb 15, 2019. This version changes the consensus mechanism to X-CASH proof of stake. It also changes the block time to 5 minutes, and doubles the block reward to adjust for the block time change.
+  { 13, 100, 0, 1550310115 },
 };
 static const uint64_t testnet_hard_fork_version_1_till = 1;
 
