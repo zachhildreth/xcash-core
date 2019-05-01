@@ -3674,6 +3674,36 @@ bool Blockchain::update_next_cumulative_weight_limit()
   m_current_block_cumul_weight_limit = median*2;
   return true;
 }
+size_t string_count(const char* DATA, const char* STRING)
+{
+  // Constants
+  const size_t STRING_LENGTH = strnlen(STRING,BLOCK_TEMPLATE_BUFFER_SIZE);
+  
+  // Variables
+  char* datacopy1 = (char*)calloc(BLOCK_TEMPLATE_BUFFER_SIZE,sizeof(char)); 
+  // since were going to be changing where datacopy1 is referencing, we need to create a copy to pointer_reset
+  char* datacopy2 = datacopy1; 
+  size_t count = 0;
+
+  // check if the memory needed was allocated on the heap successfully
+  if (datacopy1 == NULL)
+  {
+    MERROR("Could not allocate the memory needed on the heap");
+    exit(0);
+  }
+
+  // get the occurences of the string 
+  memcpy(datacopy1,DATA,strnlen(DATA,BLOCK_TEMPLATE_BUFFER_SIZE));
+  while((datacopy1 = strstr(datacopy1, STRING)) != NULL)
+  {
+    count++;
+    datacopy1+= STRING_LENGTH;
+  } 
+
+  free(datacopy2);
+  datacopy2 = NULL;
+  return count;
+}
 //------------------------------------------------------------------
 bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc)
 {
