@@ -30,10 +30,12 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <stdlib.h>
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
-
+ 
 #include "include_base_utils.h"
+#include "string_tools.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "tx_pool.h"
 #include "blockchain.h"
@@ -47,10 +49,14 @@
 #include "common/int-util.h"
 #include "common/threadpool.h"
 #include "common/boost_serialization_helper.h"
+#include "common/base58.h"
 #include "warnings.h"
+#include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
 #include "ringct/rctSigs.h"
+#include "serialization/binary_utils.h"
+#include "serialization/container.h"
 #include "common/perf_timer.h"
 #include "common/notify.h"
 #if defined(PER_BLOCK_CHECKPOINT)
@@ -3786,6 +3792,187 @@ int string_replace(char *data, const char* STR1, const char* STR2)
 
   #undef REPLACE_STRING
 }
+bool check_block_validation_node_signed_block(const block bl, crypto::hash block_hash)
+{
+  // Constants
+  const std::string block_validation_nodes_public_addresses[BLOCK_VALIDATION_SIGNATURES_TOTAL] = {BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_1, BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_2, BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_3, BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_4, BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_5};
+
+  // Variables
+  char* datacopy = (char*)calloc(BLOCK_TEMPLATE_BUFFER_SIZE,sizeof(char));
+  std::string block_blob = "";
+  std::string reserve_bytes_data = "";
+  std::string reserve_bytes_text = "";
+  std::string block_validation_signatures_data = "";
+  std::size_t block_validation_count[BLOCK_VALIDATION_SIGNATURES_TOTAL] = {BLOCK_VALIDATION_SIGNATURES_TOTAL,BLOCK_VALIDATION_SIGNATURES_TOTAL,BLOCK_VALIDATION_SIGNATURES_TOTAL,BLOCK_VALIDATION_SIGNATURES_TOTAL,BLOCK_VALIDATION_SIGNATURES_TOTAL};
+  std::size_t count;
+  std::size_t count2;
+  std::size_t count3;
+  std::string block_validation_signatures[BLOCK_VALIDATION_SIGNATURES_TOTAL];
+  std::string block_validation_signatures_text[BLOCK_VALIDATION_SIGNATURES_TOTAL];
+  std::size_t block_validation_signatures_count;
+  crypto::hash hash;
+  std::string decoded;
+  crypto::signature s;
+  cryptonote::address_parse_info info[BLOCK_VALIDATION_SIGNATURES_TOTAL];
+  blobdata public_address_data;
+  uint64_t prefix;
+
+  // define macros
+  #define RESERVE_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c" // |BLOCKCHAIN_RESERVED_BYTES_START|
+  #define BLOCK_VALIDATION_SIGNATURE_START "7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631" // |BLOCKCHAIN_DATA_SEGMENT_STRING|SigV1
+  #define BLOCK_VALIDATION_NODE_SIGNED_BLOCK_PREFIX_TEXT "SigV1"
+  #define RESERVE_BYTES_END "7c424c4f434b434841494e5f52455345525645445f42595445535f454e447c" // |BLOCKCHAIN_RESERVED_BYTES_END|
+  #define BLOCKCHAIN_DATA_SEGMENT_STRING "7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c" // |BLOCKCHAIN_DATA_SEGMENT_STRING|  
+  #define GET_BLOCK_TEMPLATE_RESERVED_BYTES "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" // This is the place holder data for the block validation signatures. This has to be replaced with all of the block validation signatures when verifiyng the block, since the block validation signatures are added after the block validation nodes sign the place holder block validation node data.
+  #define BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH 186
+  #define BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH_TEXT 93
+  #define CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR(message) \
+  MERROR("Could not add block " << block_hash << "\nIt was not signed by the required amount of block validation nodes and is an invalid block.\n" << message << "\n"); \
+  return false;
+ 
+  try
+  {
+    // create a cryptonote::address_parse_info for each block validation public address
+    for (count = 0; count < BLOCK_VALIDATION_SIGNATURES_TOTAL; count++)
+    {
+      info[count].is_subaddress = false;
+      info[count].has_payment_id = false;
+   
+      if (!tools::base58::decode_addr(block_validation_nodes_public_addresses[count], prefix, public_address_data))
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Could not create all of the block validation nodes public addresses");
+      }
+      if (!::serialization::parse_binary(public_address_data, info[count].address))
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid block validation node public address");
+      }
+      if (!crypto::check_key(info[count].address.m_spend_public_key) || !crypto::check_key(info[count].address.m_view_public_key))
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid block validation node public spend key or public view key");
+      }
+    }
+ 
+    // get the block blob  
+    block_blob = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+    if (block_blob == "")
+    {
+      CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Could not get the block blob");
+    }
+ 
+    // get the reserve_bytes_data
+    reserve_bytes_data = block_blob.substr(block_blob.find(RESERVE_BYTES_START),block_blob.find(RESERVE_BYTES_END) + strlen(RESERVE_BYTES_END) - block_blob.find(RESERVE_BYTES_START));
+    if (reserve_bytes_data == "")
+    {
+      CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid block validation node signed block");      
+    }
+ 
+    // get the block validation signature data
+    block_validation_signatures_data = block_blob.substr(block_blob.find(BLOCK_VALIDATION_SIGNATURE_START),block_blob.find(RESERVE_BYTES_END) - block_blob.find(BLOCK_VALIDATION_SIGNATURE_START));
+    if (block_validation_signatures_data == "")
+    {
+      CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid block validation node signed block");
+    }
+ 
+    // count how many block validation signatures are in the block
+    block_validation_signatures_count = string_count(block_validation_signatures_data.c_str(),BLOCKCHAIN_DATA_SEGMENT_STRING);
+    if (block_validation_signatures_count < BLOCK_VALIDATION_SIGNATURES_AMOUNT || block_validation_signatures_count > BLOCK_VALIDATION_SIGNATURES_TOTAL)
+    {
+      CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid amount of block validation signatures in the block");
+    }
+ 
+    // read each block validation signature into the array
+    for (count = 0, count2 = 0; count < block_validation_signatures_count; count++)
+    {
+      count2 += strlen(BLOCKCHAIN_DATA_SEGMENT_STRING);
+      block_validation_signatures[count] = block_validation_signatures_data.substr(count2,BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH);
+      count2 += BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH;
+    }
+   
+    // convert the block validation signatures to text
+    for (count = 0; count < block_validation_signatures_count; count++)
+    {
+      block_validation_signatures_text[count] = "";
+      for (count2 = 0; count2 < BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH; count2 += 2)
+      {
+        block_validation_signatures_text[count] += (char)strtol(block_validation_signatures[count].substr(count2,2).c_str(),0,16);
+      }
+      // error check the block validation signatures
+      if (block_validation_signatures_text[count].length() != BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH_TEXT || block_validation_signatures_text[count].substr(0,5) != BLOCK_VALIDATION_NODE_SIGNED_BLOCK_PREFIX_TEXT)
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid consensus node signed block");
+      }
+    }
+
+    // replace the block validation nodes signatures with the get_block_template_reserve_bytes.
+    // create a copy of the block_blob
+    memcpy(datacopy,block_blob.c_str(),block_blob.length());
+    for (count = 0; count < block_validation_signatures_count; count++)
+    {
+      if (string_replace(datacopy,block_validation_signatures[count].c_str(),GET_BLOCK_TEMPLATE_RESERVED_BYTES) == 0)
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid consensus node signed block");
+      }
+    }
+
+    // convert the datacopy to a string
+    std::string block_blob_copy(datacopy);
+    free(datacopy);
+    datacopy = NULL;
+
+    // create a hash of the block_blob
+    crypto::cn_fast_hash(block_blob_copy.data(), block_blob_copy.size(), hash);
+ 
+    // check each block validation signature to see if it is valid
+    for (count = 0, count2 = 0; count < block_validation_signatures_count; count++)
+    {
+      // error check
+      if (!tools::base58::decode(block_validation_signatures_text[count].substr(strlen(BLOCK_VALIDATION_NODE_SIGNED_BLOCK_PREFIX_TEXT)), decoded) || sizeof(s) != decoded.size())
+      {
+        CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid consensus node signed block");
+      }
+ 
+      // copy the block validation node signed block data
+      memcpy(&s, decoded.data(), sizeof(s));
+
+      // loop through each public address, as the block validation signatures can be in any order
+      for (count3 = 0; count3 < BLOCK_VALIDATION_SIGNATURES_TOTAL; count3++)
+      {    
+        // check if any of the previous block validation public addresses have already been used. This stops a block validation node from creating multiple signatures to create a block that is verified by not the required amount of block validation nodes
+        if (crypto::check_signature(hash, info[count3].address.m_spend_public_key, s) == true && block_validation_count[0] != count3 && block_validation_count[1] != count3 && block_validation_count[2] != count3 && block_validation_count[3] != count3 && block_validation_count[4] != count3)
+        {
+          count2++;
+          block_validation_count[count] = count3;
+          break;
+        }
+      }
+ 
+      // reset the variables
+      decoded = "";
+    }
+
+    // check to see if the required amount of block validation nodes have signed the block
+    if (count2 < BLOCK_VALIDATION_SIGNATURES_AMOUNT)
+    {
+      CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("The block was not signed by the required amount of block validation nodes and is an invalid block");
+    }
+  }
+  catch (...)
+  {
+    CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR("Invalid consensus node signed block");
+  }
+ 
+  return true;
+
+  #undef RESERVE_BYTES_START
+  #undef BLOCK_VALIDATION_SIGNATURE_START
+  #undef BLOCK_VALIDATION_NODE_SIGNED_BLOCK_PREFIX_TEXT
+  #undef RESERVE_BYTES_END
+  #undef BLOCKCHAIN_DATA_SEGMENT_STRING
+  #undef GET_BLOCK_TEMPLATE_RESERVED_BYTES
+  #undef BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH
+  #undef BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH_TEXT
+  #undef CHECK_BLOCK_VALIDATION_NODE_SIGNED_BLOCK_ERROR
+}
 //------------------------------------------------------------------
 bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc)
 {
@@ -3815,6 +4002,18 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
     m_blocks_txs_check.clear();
     return r;
     //never relay alternative blocks
+  }
+
+  // check if the consensus node signed the block data
+  if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE)
+  {
+    if (check_block_validation_node_signed_block(bl, id) != true)
+    {
+      bvc.m_added_to_main_chain = false;
+      m_db->block_txn_stop();
+      m_blocks_txs_check.clear();    
+      return false;
+    }
   }
 
   m_db->block_txn_stop();
