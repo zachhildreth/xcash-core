@@ -57,4 +57,5 @@ namespace cryptonote
     difficulty_type next_difficulty_V9(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
     difficulty_type next_difficulty_V10(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
     difficulty_type next_difficulty_V12(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
+    difficulty_type next_difficulty_V13(std::vector<std::uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds);
 }

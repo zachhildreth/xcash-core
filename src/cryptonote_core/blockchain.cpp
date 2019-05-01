@@ -834,8 +834,11 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
   }
-  else{
+  else if(version == 12){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V13;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -898,7 +901,7 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_timestamps = timestamps;
     m_difficulties = difficulties;
   }
-  size_t target;
+    size_t target;
   difficulty_type diff;
   if(version <= 7){
     target = DIFFICULTY_TARGET_V10;
@@ -916,9 +919,13 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     target = DIFFICULTY_TARGET_V10;
     diff = next_difficulty_V10(timestamps, difficulties, target);
   }
-  else{
+  else if(version == 12){
     target = DIFFICULTY_TARGET_V12;
     diff = next_difficulty_V12(timestamps, difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V13;
+    diff = next_difficulty_V13(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
@@ -1090,8 +1097,11 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
   }
-  else{
+  else if(version == 12){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V13;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -1166,9 +1176,13 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
     target = DIFFICULTY_TARGET_V10;
     return next_difficulty_V10(timestamps, cumulative_difficulties, target);
   }
-  else{
+  else if(version == 12){
     target = DIFFICULTY_TARGET_V12;
     return next_difficulty_V12(timestamps, cumulative_difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V13;
+    return next_difficulty_V13(timestamps, cumulative_difficulties, target);
   }
 }
 //------------------------------------------------------------------
@@ -3235,9 +3249,13 @@ bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) cons
    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V10;
    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V10;
   }
+  else if(version == 12){
+   cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V12;
+   blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12;
+  }
   else{
-    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V12;
-    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12;
+    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V13;
+    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V13;
   }
   LOG_PRINT_L3("Blockchain::" << __func__);
   if(b.timestamp > get_adjusted_time() + cryptonote_block_future_time_limit)
