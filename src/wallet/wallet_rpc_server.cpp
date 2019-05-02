@@ -28,13 +28,16 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 #include <boost/format.hpp>
+#include <boost/asio.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include <cstdint>
 #include "include_base_utils.h"
 using namespace epee;
-
+ 
+using boost::asio::ip::tcp;
+ 
 #include "wallet_rpc_server.h"
 #include "wallet/wallet_args.h"
 #include "common/command_line.h"
@@ -3373,6 +3376,116 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er)
+  {
+    // Variables
+    std::string public_address = "";
+    std::string reserve_proof = "";
+    tools::wallet2::transfer_container transfers;
+    boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+    boost::asio::io_service http_service;
+    boost::asio::streambuf message;
+    std::string data2 = "";
+    std::string http_version;
+    int http_status;
+ 
+    // define macros
+    #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+    #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
+ 
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+      er.message = "Failed to send the vote";
+      return false;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+      er.message = "Failed to send the vote";
+      return false;
+    }
+    if (!try_connect_to_daemon())
+    {
+      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+      er.message = "Failed to send the vote";
+      return false;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address](uint32_t index)
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this, &index](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ m_current_subaddress_account, index };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({m_current_subaddress_account, index});
+    };
+    print_address_sub(0);
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create a reserve proof for the wallets balance  
+    try
+    {
+      reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+    }
+    catch (...)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+      er.message = "Failed to send the vote";
+      return false;
+    }
+
+    // create the data
+    data2 = "public_address=" + public_address + "&delegate_public_address=" + req.delegate_public_address + "&reserve_proof=" + reserve_proof;
+
+    // send the data to the server
+    tcp::resolver resolver(http_service);
+    tcp::resolver::query query("voting-website", "80");
+    tcp::resolver::iterator data = resolver.resolve(query);
+    tcp::socket socket(http_service);
+    boost::asio::connect(socket, data);
+ 
+    // create the post request
+    std::ostream http_request(&message);
+    http_request << "POST /createnewvote HTTP/1.1\r\nHost: " << "voting-website" << "\r\nContent-Type: x-www-form-urlencoded\r\nAccept: application/json\r\nContent-Length: " << data2.length() << "\r\n\r\n" << data2;
+ 
+    // send the post request and read the response
+    boost::asio::write(socket, message);
+    boost::asio::streambuf response;
+    boost::asio::read_until(socket, response, "\r\n");
+    std::istream response_stream(&response);
+    response_stream >> http_version;
+    response_stream >> http_status;
+   
+    // check the result of the post request
+    if (http_status != 200)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+      er.message = "Failed to send the vote";
+      return false;        
+    }
+ 
+    res.vote_status = "success";
+    return true;
+  
+    #undef XCASH_WALLET_LENGTH
+    #undef XCASH_WALLET_PREFIX
+  }
 }
 
 class t_daemon

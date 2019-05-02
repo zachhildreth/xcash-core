@@ -2081,5 +2081,26 @@ namespace wallet_rpc
     };
   };
 
+  struct COMMAND_RPC_VOTE
+  {
+    struct request
+    {
+      std::string delegate_public_address;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(delegate_public_address)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string vote_status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(vote_status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }
