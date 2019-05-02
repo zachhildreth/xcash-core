@@ -43,6 +43,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
 #include "include_base_utils.h"
 #include "common/i18n.h"
 #include "common/command_line.h"
@@ -78,6 +80,7 @@ using namespace std;
 using namespace epee;
 using namespace cryptonote;
 using boost::lexical_cast;
+using boost::asio::ip::tcp;
 namespace po = boost::program_options;
 typedef cryptonote::simple_wallet sw;
 
@@ -2297,16 +2300,16 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
-  auto print_address_sub = [this, &transfers, &public_address](uint32_t index)
-  {
-    bool used = std::find_if(
-      transfers.begin(), transfers.end(),
-      [this, &index](const tools::wallet2::transfer_details& td) {
-        return td.m_subaddr_index == cryptonote::subaddress_index{ m_current_subaddress_account, index };
-      }) != transfers.end();
-      public_address = m_wallet->get_subaddress_as_str({m_current_subaddress_account, index});
-  };
-  print_address_sub(0);
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
   
   if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
   {

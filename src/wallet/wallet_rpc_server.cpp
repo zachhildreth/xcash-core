@@ -3409,27 +3409,21 @@ namespace tools
       er.message = "Failed to send the vote";
       return false;
     }
-    if (!try_connect_to_daemon())
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to send the vote";
-      return false;
-    }
 
     // get the wallet transfers   
     m_wallet->get_transfers(transfers);
 
     // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address](uint32_t index)
+    auto print_address_sub = [this, &transfers, &public_address]()
     {
       bool used = std::find_if(
         transfers.begin(), transfers.end(),
-        [this, &index](const tools::wallet2::transfer_details& td) {
-          return td.m_subaddr_index == cryptonote::subaddress_index{ m_current_subaddress_account, index };
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
         }) != transfers.end();
-        public_address = m_wallet->get_subaddress_as_str({m_current_subaddress_account, index});
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
     };
-    print_address_sub(0);
+    print_address_sub();
   
     if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
     {
