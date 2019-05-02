@@ -2256,6 +2256,111 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
   return true;
 }
 
+bool simple_wallet::vote(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  boost::asio::io_service http_service;
+  boost::asio::streambuf message;
+  std::string data2 = "";
+  std::string http_version;
+  int http_status;
+
+  // define macros
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
+
+  // error check
+  if (m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    return true;
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address](uint32_t index)
+  {
+    bool used = std::find_if(
+      transfers.begin(), transfers.end(),
+      [this, &index](const tools::wallet2::transfer_details& td) {
+        return td.m_subaddr_index == cryptonote::subaddress_index{ m_current_subaddress_account, index };
+      }) != transfers.end();
+      public_address = m_wallet->get_subaddress_as_str({m_current_subaddress_account, index});
+  };
+  print_address_sub(0);
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
+ 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to send the vote3\nFailed to create the reserve proof");
+    return true;  
+  }
+ 
+  // create the data
+  data2 = "public_address=" + public_address + "&delegate_public_address=" + args.front() + "&reserve_proof=" + reserve_proof;
+ 
+  // send the data to the server
+  tcp::resolver resolver(http_service);
+  tcp::resolver::query query("voting-website", "80");
+  tcp::resolver::iterator data = resolver.resolve(query);
+  tcp::socket socket(http_service);
+  boost::asio::connect(socket, data);
+ 
+  // create the post request
+  std::ostream http_request(&message);
+  http_request << "POST /createnewvote HTTP/1.1\r\nHost: " << "voting-website" << "\r\nContent-Type: x-www-form-urlencoded\r\nAccept: application/json\r\nContent-Length: " << data2.length() << "\r\n\r\n" << data2;
+ 
+  // send the post request and read the response
+  boost::asio::write(socket, message);
+  boost::asio::streambuf response;
+  boost::asio::read_until(socket, response, "\r\n");
+  std::istream response_stream(&response);
+  response_stream >> http_version;
+  response_stream >> http_status;
+ 
+  // check the result of the post request
+  if (http_status != 200)
+  {
+    fail_msg_writer() << tr("Failed to send the vote.\nFailed to save the vote");
+    return true;      
+  }
+ 
+  success_msg_writer() << "Vote has been sent successfully";
+  return true;
+  
+  #undef XCASH_WALLET_LENGTH
+  #undef XCASH_WALLET_PREFIX
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -2619,6 +2724,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::version, this, _1),
                            tr("version"),
                            tr("Returns version information"));
+  m_cmd_binder.set_handler("vote",
+                           boost::bind(&simple_wallet::vote, this, _1),
+                           tr("vote <delegates_public_address>"),
+                           tr("Votes for a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
