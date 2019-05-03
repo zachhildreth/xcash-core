@@ -3136,7 +3136,7 @@ bool Blockchain::is_tx_spendtime_unlocked(uint64_t unlock_time) const
   {
     //interpret as time
     uint64_t current_time = static_cast<uint64_t>(time(NULL));
-    if(current_time + (get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12) >= unlock_time)
+    if(current_time + (get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : get_current_hard_fork_version() < HF_VERSION_PROOF_OF_STAKE ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V13) >= unlock_time)
       return true;
     else
       return false;
@@ -4789,7 +4789,7 @@ bool Blockchain::get_hard_fork_voting_info(uint8_t version, uint32_t &window, ui
 
 uint64_t Blockchain::get_difficulty_target() const
 {
-  return get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V12;
+  return get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : get_current_hard_fork_version() < HF_VERSION_PROOF_OF_STAKE ? DIFFICULTY_TARGET_V12 : DIFFICULTY_TARGET_V13;
 }
 
 std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> Blockchain:: get_output_histogram(const std::vector<uint64_t> &amounts, bool unlocked, uint64_t recent_cutoff, uint64_t min_count) const

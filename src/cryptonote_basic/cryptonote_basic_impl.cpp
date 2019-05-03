@@ -87,15 +87,15 @@ namespace cryptonote {
   }
   //-----------------------------------------------------------------------------------------------
   bool get_block_reward(size_t median_weight, size_t current_block_weight, uint64_t already_generated_coins, uint64_t &reward, uint8_t version, uint64_t height) {
-    static_assert(DIFFICULTY_TARGET_V1%60==0&&DIFFICULTY_TARGET_V2%60==0&&DIFFICULTY_TARGET_V8%60==0&&DIFFICULTY_TARGET_V9%60==0&&DIFFICULTY_TARGET_V10%60==0&&DIFFICULTY_TARGET_V12%60==0,"difficulty targets must be a multiple of 60");
-    const int target = version < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V12;
-    const int target_minutes = 1; // set it to always 1, so we dont increase the block reward when changing the block time
+    static_assert(DIFFICULTY_TARGET_V1%60==0&&DIFFICULTY_TARGET_V2%60==0&&DIFFICULTY_TARGET_V8%60==0&&DIFFICULTY_TARGET_V9%60==0&&DIFFICULTY_TARGET_V10%60==0&&DIFFICULTY_TARGET_V12%60==0&&DIFFICULTY_TARGET_V13%60==0,"difficulty targets must be a multiple of 60");
+    const int target = version < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : version < HF_VERSION_PROOF_OF_STAKE ? DIFFICULTY_TARGET_V12 : DIFFICULTY_TARGET_V13;
+    const int target_minutes = version < HF_VERSION_PROOF_OF_STAKE ? 1 : 2; // double the block reward when switching to a five minute block time time
     const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE - (target_minutes-1);
 
     uint64_t base_reward;
 
     // Premine code
-    // You can read more about the premine structure at https://x-cash.org/
+    // You can read more about the premine structure at https://x-network.io/
     if (height == PREMINE_BLOCK_HEIGHT && already_generated_coins < PREMINE_BLOCK_REWARD)
     {
         base_reward = PREMINE_BLOCK_REWARD;

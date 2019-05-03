@@ -261,10 +261,10 @@ namespace cryptonote
   {
     if(context.m_state == cryptonote_connection_context::state_before_handshake && !is_inital)
       return true;
-
+ 
     if(context.m_state == cryptonote_connection_context::state_synchronizing)
       return true;
-
+ 
     // from v6, if the peer advertises a top block version, reject if it's not what it should be (will only work if no voting)
     if (hshd.current_height > 0)
     {
@@ -278,13 +278,13 @@ namespace cryptonote
         return false;
       }
     }
-
+ 
     context.m_remote_blockchain_height = hshd.current_height;
-
+ 
     uint64_t target = m_core.get_target_blockchain_height();
     if (target == 0)
       target = m_core.get_current_blockchain_height();
-
+ 
     if(m_core.have_block(hshd.top_id))
     {
       context.m_state = cryptonote_connection_context::state_normal;
@@ -292,7 +292,7 @@ namespace cryptonote
         on_connection_synchronized();
       return true;
     }
-
+ 
     if (hshd.current_height > target)
     {
     /* As I don't know if accessing hshd from core could be a good practice,
@@ -302,10 +302,83 @@ namespace cryptonote
     int64_t diff = static_cast<int64_t>(hshd.current_height) - static_cast<int64_t>(m_core.get_current_blockchain_height());
     uint64_t abs_diff = std::abs(diff);
     uint64_t max_block_height = std::max(hshd.current_height,m_core.get_current_blockchain_height());
-    uint64_t last_block_v1 = m_core.get_nettype() == TESTNET ? HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME-1 : m_core.get_nettype() == MAINNET ? HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME-1 : (uint64_t)-1;
+    uint64_t last_block_v1 = m_core.get_nettype() == TESTNET ? HF_BLOCK_HEIGHT_PROOF_OF_STAKE-1 : m_core.get_nettype() == MAINNET ? HF_BLOCK_HEIGHT_PROOF_OF_STAKE-1 : (uint64_t)-1;
     uint64_t diff_v2 = max_block_height > last_block_v1 ? std::min(abs_diff, max_block_height - last_block_v1) : 0;
+ 
+    // calculate the number of days that the blockchain is behind the network
+    uint64_t current_height = m_core.get_current_blockchain_height();
+    uint64_t one_minute_blocks = 0;
+    uint64_t two_minute_blocks = 0;
+    uint64_t five_minute_blocks = 0;
+    uint64_t days = 0;
+ 
+    #define ONE_MINUTE_BLOCKS_PER_DAY 1440
+    #define TWO_MINUTE_BLOCKS_PER_DAY 720
+    #define FIVE_MINUTE_BLOCKS_PER_DAY 288
+ 
+    if (abs_diff > 0)
+    {
+      if (current_height < HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME)
+      {
+        days = abs_diff / ONE_MINUTE_BLOCKS_PER_DAY;
+      }
+ 
+      else if (current_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+      {
+        one_minute_blocks = (HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - (current_height - abs_diff));
+        if (one_minute_blocks < 0)
+        {
+          one_minute_blocks = 0;
+        }
+        two_minute_blocks = abs_diff - one_minute_blocks;
+        if (one_minute_blocks > 0)
+        {
+          days = (one_minute_blocks / ONE_MINUTE_BLOCKS_PER_DAY) + (two_minute_blocks / TWO_MINUTE_BLOCKS_PER_DAY);
+        }
+        else
+        {
+          days = two_minute_blocks / TWO_MINUTE_BLOCKS_PER_DAY;
+        }
+      }
+ 
+      else if (current_height >= HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+      {
+        one_minute_blocks = (HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - (current_height - abs_diff));
+        if (one_minute_blocks < 0)
+        {
+          one_minute_blocks = 0;
+        }
+        two_minute_blocks = (HF_BLOCK_HEIGHT_PROOF_OF_STAKE - (current_height - abs_diff)) - one_minute_blocks;
+        if (two_minute_blocks < 0)
+        {
+          two_minute_blocks = 0;
+        }
+        five_minute_blocks = abs_diff - one_minute_blocks - two_minute_blocks;
+        if (one_minute_blocks > 0 && two_minute_blocks > 0)
+        {
+          days = (one_minute_blocks / ONE_MINUTE_BLOCKS_PER_DAY) + (two_minute_blocks / TWO_MINUTE_BLOCKS_PER_DAY) + (five_minute_blocks / FIVE_MINUTE_BLOCKS_PER_DAY);
+        }
+        else if (one_minute_blocks > 0 && two_minute_blocks <= 0)
+        {
+          days = (one_minute_blocks / ONE_MINUTE_BLOCKS_PER_DAY) + (five_minute_blocks / FIVE_MINUTE_BLOCKS_PER_DAY);
+        }
+        else if (one_minute_blocks <= 0 && two_minute_blocks > 0)
+        {
+          days = (two_minute_blocks / TWO_MINUTE_BLOCKS_PER_DAY) + (five_minute_blocks / FIVE_MINUTE_BLOCKS_PER_DAY);
+        }
+        else if (one_minute_blocks <= 0 && two_minute_blocks <= 0)
+        {
+          days = five_minute_blocks / FIVE_MINUTE_BLOCKS_PER_DAY;
+        }
+      }
+    }
+    else
+    {
+      days = 0;
+    }
+ 
     MCLOG(is_inital ? el::Level::Info : el::Level::Debug, "global", context <<  "Sync data returned a new top block candidate: " << m_core.get_current_blockchain_height() << " -> " << hshd.current_height
-      << " [Your node is " << abs_diff << " blocks (" << ((abs_diff - diff_v2) / (24 * 60 * 60 / DIFFICULTY_TARGET_V1)) + (diff_v2 / (24 * 60 * 60 / DIFFICULTY_TARGET_V12)) << " days) "
+      << " [Your node is " << abs_diff << " blocks (" << days << " days) "
       << (0 <= diff ? std::string("behind") : std::string("ahead"))
       << "] " << ENDL << "SYNCHRONIZATION started");
       if (hshd.current_height >= m_core.get_current_blockchain_height() + 5) // don't switch to unsafe mode just for a few blocks
@@ -318,6 +391,10 @@ namespace cryptonote
     ++context.m_callback_request_count;
     m_p2p->request_callback(context);
     return true;
+ 
+    #undef ONE_MINUTE_BLOCKS_PER_DAY
+    #undef TWO_MINUTE_BLOCKS_PER_DAY
+    #undef FIVE_MINUTE_BLOCKS_PER_DAY
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
