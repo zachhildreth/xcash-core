@@ -38,6 +38,7 @@
 #include <boost/format.hpp>
 #include <ctime>
 #include <string>
+#include "../external/VRF_functions/VRF_functions.c"
 
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "daemon"
