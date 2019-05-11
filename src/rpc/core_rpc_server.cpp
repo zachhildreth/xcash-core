@@ -28,6 +28,9 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <sstream>
+#include <algorithm>
+
 #include "include_base_utils.h"
 #include "string_tools.h"
 using namespace epee;
@@ -2195,6 +2198,74 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+
+  bool core_rpc_server::on_verify_round_statistics(const COMMAND_RPC_VERIFY_ROUND_STATISTICS::request& req, COMMAND_RPC_VERIFY_ROUND_STATISTICS::response& res, epee::json_rpc::error& error_resp)
+  {
+    // Variables
+    std::string block_blob = "";
+    crypto::hash block_hash;
+    bool hash_parsed;
+    uint64_t block_height = 0;
+    block blk;
+    bool orphan;
+    bool have_block;
+    bool fill_block_hash;
+    block_header_response block_header;
+    bool response_filled;
+ 
+    // define macros
+    #define VERIFY_ROUND_STATISTICS_ERROR(error,message2) \
+    error_resp.code = error; \
+    error_resp.message = message2; \
+    return false;
+ 
+    try
+    {
+      // check if the data is a block height or a block hash
+      if (req.block_data.length() == 64)
+      {
+        // the data is a block hash
+        hash_parsed = parse_hash256(req.block_data, block_hash);
+        if(!hash_parsed)
+        {
+          VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_WRONG_PARAM,"Invalid block hash");
+        }
+      }
+      else
+      {
+        // the data is a block height
+        // convert the block height to a number
+        std::istringstream stringstream(req.block_data);
+        stringstream >> block_height;
+        if (block_height == 0 || m_core.get_current_blockchain_height() <= block_height)
+        {
+          VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_WRONG_PARAM,"Invalid block height");
+        }
+        block_hash = m_core.get_block_id_by_height(block_height);  
+      }
+ 
+      orphan = false;
+      have_block = m_core.get_block_by_hash(block_hash, blk, &orphan);
+      if (!have_block || blk.miner_tx.vin.size() != 1 || blk.miner_tx.vin.front().type() != typeid(txin_gen))
+      {
+        VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_INTERNAL_ERROR,"Failed to get verify round statistics");
+      }
+ 
+      block_height = boost::get<txin_gen>(blk.miner_tx.vin.front()).height;
+      response_filled = fill_block_header_response(blk, orphan, block_height, block_hash, block_header, fill_block_hash);
+      if (!response_filled)
+      {
+        VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_INTERNAL_ERROR,"Failed to get verify round statistics");
+      } 
+      res.block_blob = string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(blk));
+    }
+    catch (const std::exception &e)
+    {
+      VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_INTERNAL_ERROR,"Failed to get verify round statistics");
+    }
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
 
 
   const command_line::arg_descriptor<std::string, false, true, 2> core_rpc_server::arg_rpc_bind_port = {

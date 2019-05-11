@@ -2268,4 +2268,26 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_VERIFY_ROUND_STATISTICS
+  {
+    struct request
+    {
+      std::string block_data;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(block_data)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string block_blob;
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(block_blob)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
 }

@@ -680,4 +680,24 @@ bool t_command_parser_executor::version(const std::vector<std::string>& args)
   return true;
 }
 
+bool t_command_parser_executor::verify_round_statistics(const std::vector<std::string>& args)
+{
+  if (args.empty())
+  {
+    std::cout << "expected: verify_round_statistics (<block_hash> | <block_height>)" << std::endl;
+    return false;
+  }
+ 
+  const std::string& block_data = args.front();
+  try
+  {
+    return m_executor.verify_round_statistics(block_data);
+  }
+  catch (...)
+  {
+    return false;
+  }
+  return true;
+}
+
 } // namespace daemonize
