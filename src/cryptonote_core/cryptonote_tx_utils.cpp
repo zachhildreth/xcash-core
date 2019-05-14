@@ -86,6 +86,12 @@ namespace cryptonote
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
         return false;
 
+    // check if the blockchain is running the X-CASH proof of stake, and if so add the private tx key of the block reward transaction to the tx_extra of the block reward transaction
+    if (hard_fork_version >= HF_VERSION_PROOF_OF_STAKE)
+    {
+      add_extra_nonce_to_tx_extra(tx.extra,"|TX_PRIVATE_KEY_START|" + t_serializable_object_to_blob(txkey.sec) + "|TX_PRIVATE_KEY_END|");
+    }
+
     txin_gen in;
     in.height = height;
 
