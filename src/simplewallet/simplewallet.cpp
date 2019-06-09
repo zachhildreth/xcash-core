@@ -2417,6 +2417,122 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
+bool simple_wallet::delegate_register(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string public_address = "";
+  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  int count; 
+  int count2;
+  int count3;
+
+  // define macros
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+
+  // error check
+  if (m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    return true;
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // initialize the network_data_nodes_list struct
+  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2;
+  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
+
+  // send the message to a random network data node
+  while (string.find("|") == std::string::npos)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+  }
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
+ 
+  // create the data
+  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n \"delegate_name\": \"" + args[0] + "\",\r\n \"delegates_IP_address\": \"" + args[1] + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+ 
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_nodes_to_block_verifiers_register_delegates") == std::string::npos)
+    {
+      count2++;
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  {
+    message_writer(console_color_green, false) << "The delegate has been registered successfully";             
+  } 
+  else
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");   
+  }
+  return true;  
+  
+  #undef XCASH_WALLET_LENGTH
+  #undef XCASH_WALLET_PREFIX
+  #undef MESSAGE
+}
+
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -2784,6 +2900,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::vote, this, _1),
                            tr("vote <delegates_public_address>"),
                            tr("Votes for a delegate, for the X-CASH Proof Of Stake"));
+  m_cmd_binder.set_handler("delegate_register",
+                           boost::bind(&simple_wallet::delegate_register, this, _1),
+                           tr("delegate_register <delegates_name> <delegates_IP_address>"),
+                           tr("Registers a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
