@@ -191,15 +191,13 @@
 // X-CASH Proof Of Stake
 #define HF_VERSION_PROOF_OF_STAKE 13
 #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 100 // The first block of the X-CASH proof of stake
-#define MAXIMUM_RESERVE_BYTES_LEGNTH 5120 // The maximum size in bytes for the reserve bytes in the block header
+#define MAXIMUM_RESERVE_BYTES_LEGNTH 255 // The maximum size in bytes for the reserve bytes in the block header
+#define SEND_DATA_PORT 8000 // The port that is used by all nodes to send and receive data
+#define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 #define BLOCK_TEMPLATE_BUFFER_SIZE 10000
-#define BLOCK_VALIDATION_SIGNATURES_AMOUNT 4 // 4 out of 5 block validation signatures are needed per block to make it a valid block
-#define BLOCK_VALIDATION_SIGNATURES_TOTAL 5 // maximum of 5 block validation signatures per block.
-#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_1 ""
-#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_2 ""
-#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_3 ""
-#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_4 ""
-#define BLOCK_VALIDATION_NODE_PUBLIC_ADDRESS_5 ""
+#define BLOCK_VALIDATION_SIGNATURES_AMOUNT 67 // 67 out of 100 block verifier signatures are needed per block to make it a valid block
+#define BLOCK_VALIDATION_SIGNATURES_TOTAL 100 // maximum of 100 block verifiers signatures per block.
+
 
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 
