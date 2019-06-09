@@ -3662,6 +3662,171 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   #undef MESSAGE
 }
 
+bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res, epee::json_rpc::error& er)
+{
+// structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string public_address = "";
+  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  int count; 
+  int count2;
+  int count3;
+
+  // define macros
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+
+  // check if the wallet is open
+  if (!m_wallet) return not_open(er);
+
+  // error check
+  if (m_wallet->key_on_device())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false;
+  }
+  if (!try_connect_to_daemon())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false;
+  }
+
+    // check if the item to update is a valid item
+  if (req.item != "about" && req.item != "website" && req.item != "team" && req.item != "pool_mode" && req.item != "fee_structure" && req.item != "server_settings")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings";
+    return false;
+  }
+  if (req.item == "about" && req.value.length() > 1024)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid about. About length must be less than 1024";
+    return false;
+  }
+  if (req.item == "website" && req.value.length() > 255)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid website. Website length must be less than 255";
+    return false;
+  }
+  if (req.item == "team" && req.value.length() > 255)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid team. Team length must be less than 255";
+    return false; 
+  }
+  if (req.item == "pool_mode" && req.value != "true" && req.value != "false")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false";
+    return false; 
+  }
+  if (req.item == "fee_structure" && req.value.length() > 10)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10";
+    return false;  
+  }
+  if (req.item == "server_settings" && req.value.length() > 255)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";
+    return false;
+  }
+
+  // initialize the network_data_nodes_list struct
+  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2;
+  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
+
+  // send the message to a random network data node
+  while (string.find("|") == std::string::npos)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+  }
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
+  }
+ 
+  // create the data
+  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n \"item\": \"" + req.item + "\",\r\n \"value\": \"" + req.value + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+  
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_nodes_to_block_verifiers_update_delegates") == std::string::npos)
+    {
+      count2++;
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  {
+    res.delegate_update_status = "success";
+    return true;            
+  } 
+  else
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false; 
+  } 
+  
+  #undef XCASH_WALLET_LENGTH
+  #undef XCASH_WALLET_PREFIX
+  #undef MESSAGE
+}
+
 
 }
 
