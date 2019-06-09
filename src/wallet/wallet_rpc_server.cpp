@@ -3376,44 +3376,103 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er)
+std::string send_and_receive_data(std::string IP_address,std::string data2)
+{
+  // Variables
+  boost::asio::io_service http_service;
+  boost::asio::streambuf message;
+
+  // send the data to the server
+  tcp::resolver resolver(http_service);
+  tcp::resolver::query query(IP_address, SEND_DATA_PORT);
+  tcp::resolver::iterator data = resolver.resolve(query);
+  tcp::socket socket(http_service);
+  boost::asio::connect(socket, data);
+
+  std::ostream http_request(&message);
+  http_request << data2;
+ 
+  // send the message and read the response
+  boost::asio::write(socket, message);
+  boost::asio::streambuf response;
+  boost::asio::read_until(socket, response, SOCKET_END_STRING);
+  std::istream response_stream(&response);
+  std::string string;
+  response_stream >> string;
+  return string;
+}
+
+bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er)
+{
+   // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  int count; 
+  int count2;
+  int count3;
+
+  // define macros
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+
+  // error check
+  if (m_wallet->key_on_device())
   {
-    // Variables
-    std::string public_address = "";
-    std::string reserve_proof = "";
-    tools::wallet2::transfer_container transfers;
-    boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
-    boost::asio::io_service http_service;
-    boost::asio::streambuf message;
-    std::string data2 = "";
-    std::string http_version;
-    int http_status;
- 
-    // define macros
-    #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-    #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
- 
-    // check if the wallet is open
-    if (!m_wallet) return not_open(er);
+    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    return true;
+  }
 
-    // error check
-    if (m_wallet->key_on_device())
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to send the vote";
-      return false;
-    }
-    if (m_wallet->watch_only() || m_wallet->multisig())
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to send the vote";
-      return false;
-    }
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
 
-    // get the wallet transfers   
-    m_wallet->get_transfers(transfers);
+  // initialize the network_data_nodes_list struct
+  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1;
+  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2;
+  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
-    // get the wallets public address
+  // send the message to a random network data node
+  while (string.find("|") == std::string::npos)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+  }
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
     auto print_address_sub = [this, &transfers, &public_address]()
     {
       bool used = std::find_if(
@@ -3425,61 +3484,55 @@ namespace tools
     };
     print_address_sub();
   
-    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
-    {
-      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-      er.message = "Invalid address";
-      return false;
-    }
-
-    // create a reserve proof for the wallets balance  
-    try
-    {
-      reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
-    }
-    catch (...)
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to send the vote";
-      return false;
-    }
-
-    // create the data
-    data2 = "public_address=" + public_address + "&delegate_public_address=" + req.delegate_public_address + "&reserve_proof=" + reserve_proof;
-
-    // send the data to the server
-    tcp::resolver resolver(http_service);
-    tcp::resolver::query query("voting-website", "80");
-    tcp::resolver::iterator data = resolver.resolve(query);
-    tcp::socket socket(http_service);
-    boost::asio::connect(socket, data);
- 
-    // create the post request
-    std::ostream http_request(&message);
-    http_request << "POST /createnewvote HTTP/1.1\r\nHost: " << "voting-website" << "\r\nContent-Type: x-www-form-urlencoded\r\nAccept: application/json\r\nContent-Length: " << data2.length() << "\r\n\r\n" << data2;
- 
-    // send the post request and read the response
-    boost::asio::write(socket, message);
-    boost::asio::streambuf response;
-    boost::asio::read_until(socket, response, "\r\n");
-    std::istream response_stream(&response);
-    response_stream >> http_version;
-    response_stream >> http_status;
-   
-    // check the result of the post request
-    if (http_status != 200)
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to send the vote";
-      return false;        
-    }
- 
-    res.vote_status = "success";
-    return true;
-  
-    #undef XCASH_WALLET_LENGTH
-    #undef XCASH_WALLET_PREFIX
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
   }
+ 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nFailed to create the reserve proof");
+    return true;  
+  }
+ 
+  // create the data
+  data2 = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF\",\r\n \"delegates_public_address\": \"" + args.front() + "\",\r\n \"reserve_proof\": \"" + reserve_proof + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+ 
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_node_to_block_verifiers_add_reserve_proof") == std::string::npos)
+    {
+      count2++;
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  {
+    message_writer(console_color_green, false) << "Vote has been sent successfully";             
+  } 
+  else
+  {
+    fail_msg_writer() << tr("Failed to send the vote");   
+  }
+  return true;  
+  
+  #undef XCASH_WALLET_LENGTH
+  #undef XCASH_WALLET_PREFIX
+  #undef MESSAGE
+}
 }
 
 class t_daemon
