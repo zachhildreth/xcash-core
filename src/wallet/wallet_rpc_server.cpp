@@ -3429,25 +3429,28 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
+  // check if the wallet is open
+  if (!m_wallet) return not_open(er);
+
   // error check
   if (m_wallet->key_on_device())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
-    return true;
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote";
+    return false;
   }
   if (m_wallet->watch_only() || m_wallet->multisig())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
-    return true;
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote";
+    return false;
   }
   if (!try_connect_to_daemon())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
-    return true;
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote";
+    return false;
   }
-
-  // ask for the password
-  SCOPED_WALLET_UNLOCK();
 
   // initialize the network_data_nodes_list struct
   network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
@@ -3486,8 +3489,9 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   
   if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
-    return true;  
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
   }
  
   // create a reserve proof for the wallets balance  
@@ -3497,8 +3501,9 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to create the reserve proof");
-    return true;  
+     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+     er.message = "Failed to send the vote";
+     return false;  
   }
  
   // create the data
@@ -3521,18 +3526,21 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   // check the result of the data
   if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
   {
-    message_writer(console_color_green, false) << "Vote has been sent successfully";             
+    res.vote_status = "success";
+    return true;            
   } 
   else
   {
-    fail_msg_writer() << tr("Failed to send the vote");   
-  }
-  return true;  
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote";
+    return false; 
+  } 
   
   #undef XCASH_WALLET_LENGTH
   #undef XCASH_WALLET_PREFIX
   #undef MESSAGE
 }
+
 }
 
 class t_daemon
