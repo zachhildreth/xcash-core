@@ -146,6 +146,7 @@ namespace tools
         MAP_JON_RPC_WE("submit_multisig",    on_submit_multisig,    wallet_rpc::COMMAND_RPC_SUBMIT_MULTISIG)
         MAP_JON_RPC_WE("get_version",        on_get_version,        wallet_rpc::COMMAND_RPC_GET_VERSION)
         MAP_JON_RPC_WE("vote",               on_vote,               wallet_rpc::COMMAND_RPC_VOTE)
+        MAP_JON_RPC_WE("delegate_register",               on_delegate_register,               wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -225,6 +226,7 @@ namespace tools
       bool on_submit_multisig(const wallet_rpc::COMMAND_RPC_SUBMIT_MULTISIG::request& req, wallet_rpc::COMMAND_RPC_SUBMIT_MULTISIG::response& res, epee::json_rpc::error& er);
       bool on_get_version(const wallet_rpc::COMMAND_RPC_GET_VERSION::request& req, wallet_rpc::COMMAND_RPC_GET_VERSION::response& res, epee::json_rpc::error& er);
       bool on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er);
+      bool on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::response& res, epee::json_rpc::error& er);
 
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
