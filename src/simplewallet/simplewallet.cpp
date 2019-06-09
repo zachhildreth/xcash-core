@@ -2259,6 +2259,32 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
   return true;
 }
 
+std::string send_and_receive_data(std::string IP_address,std::string data2)
+{
+  // Variables
+  boost::asio::io_service http_service;
+  boost::asio::streambuf message;
+
+  // send the data to the server
+  tcp::resolver resolver(http_service);
+  tcp::resolver::query query(IP_address, SEND_DATA_PORT);
+  tcp::resolver::iterator data = resolver.resolve(query);
+  tcp::socket socket(http_service);
+  boost::asio::connect(socket, data);
+
+  std::ostream http_request(&message);
+  http_request << data2;
+ 
+  // send the message and read the response
+  boost::asio::write(socket, message);
+  boost::asio::streambuf response;
+  boost::asio::read_until(socket, response, SOCKET_END_STRING);
+  std::istream response_stream(&response);
+  std::string string;
+  response_stream >> string;
+  return string;
+}
+
 bool simple_wallet::vote(const std::vector<std::string>& args)
 {
   // Variables
