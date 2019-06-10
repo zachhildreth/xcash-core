@@ -44,7 +44,7 @@
 #include <string>
 #include "serialization/binary_utils.h"
 #include "serialization/container.h"
-#include "../external/VRF_functions/VRF_functions.c"
+#include "../../external/VRF_functions/VRF_functions.c"
 
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "daemon"
