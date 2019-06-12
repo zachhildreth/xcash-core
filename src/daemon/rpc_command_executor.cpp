@@ -40,11 +40,15 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_basic/hardfork.h"
 #include <boost/format.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
 #include <ctime>
 #include <string>
 #include "serialization/binary_utils.h"
 #include "serialization/container.h"
-#include "../../external/VRF_functions/VRF_functions.c"
+#include "../../external/VRF_functions/VRF_functions.h"
+
+using boost::asio::ip::tcp;
 
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "daemon"
@@ -1979,22 +1983,16 @@ bool t_rpc_command_executor::sync_info()
 #define VRF_BETA_LENGTH 128
 #define VRF_DATA_LENGTH 8 // true when the VRF data is verified
 
-#define NODES_PUBLIC_ADDRESS_LIST_FILE_NAME "nodes_public_address_list.txt" // The current enabled nodes public address list
-#define NODES_NAME_LIST_FILE_NAME "nodes_name_list.txt" // The current enabled nodes name list
-#define NODES_IP_ADDRESS_LIST_FILE_NAME "nodes_IP_address_list.txt" // The current enabled nodes IP address list
-#define NODES_UPDATED_TIME_FILE_NAME "nodes_updated_time.txt" // The last time the nodes list was updated
-#define BLOCK_VALIDATION_NODES_TOTAL_AMOUNT 5 // The total amount of block validation nodes
-#define BLOCK_VALIDATION_NODES_AMOUNT 4 // The amount of block validation nodes needed to make the network block valid
+#define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
+#define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix of a xcash_proof_of_stake_signature for the signed data
+#define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed data
+#define NETWORK_VERSION "0d0d" // the network version
 #define MAXIMUM_TRANSACATIONS_PER_BLOCK 1000000 // The maximum amount of transaction per block
 #define TEST_OUTLINE "-----------------------------------------------------------------------------------------------"
-#define MINIMUM_RESERVE_BYTE_LENGTH 2920  // The minimum amount of reserve bytes
-#define MAXIMUM_RESERVE_BYTE_LENGTH 3194 // The maximum amount of reserve bytes
-#define MINIMUM_RESERVE_BYTE_TEXT_LENGTH "2920"  // The minimum amount of reserve bytes
-#define MAXIMUM_RESERVE_BYTE_TEXT_LENGTH "3194" // The maximum amount of reserve bytes
 #define RESERVE_BYTE_START_STRING "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" // The reserve bytes the block producer will create using the get block template
 #define GET_BLOCK_TEMPLATE_RESERVED_BYTES "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" // This is the place holder data for the block validation signatures. This has to be replaced with all of the block validation signatures when verifiyng the block, since the block validation signatures are added after the block validation nodes sign the place holder block validation node data.
 #define BLOCK_PRODUCER_NETWORK_BLOCK_NONCE "00000000" // the network block nonce used when the block producer creates the block
-#define NETWORK_DATA_NODE_NETWORK_BLOCK_NONCE "11111111" // the network block nonce used when the consensus node creates the block
+#define NETWORK_DATA_NODE_NETWORK_BLOCK_NONCE "11111111" // the network block nonce used when the network data node creates the block
 #define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
 #define BLOCKCHAIN_DATA_SEGMENT_STRING "7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c"
 #define BLOCKCHAIN_RESERVED_BYTES_END "7c424c4f434b434841494e5f52455345525645445f42595445535f454e447c"
@@ -2078,6 +2076,18 @@ struct blockchain_reserve_bytes {
     char* vrf_node_random_data_backup_nodes_names_data; // The vrf_node_random_data_backup_nodes_names
     char* vrf_node_random_data_backup_nodes_names; // The vrf_node_random_data_backup_nodes_names_data text
     size_t vrf_node_random_data_backup_nodes_names_data_length; // The amount of characters of the vrf_node_random_data_backup_nodes_names_data
+    char* vrf_node_next_main_nodes_delegates_name_data; // The vrf_node_next_main_nodes_delegates_name
+    char* vrf_node_next_main_nodes_delegates_name; // The vrf_node_next_main_nodes_delegates_name_data text
+    size_t vrf_node_next_main_nodes_delegates_name_data_length; // The amount of characters of the vrf_node_next_main_nodes_delegates_name_data
+    char* vrf_node_next_main_nodes_public_address_data; // The vrf_node_next_main_nodes_public_address
+    char* vrf_node_next_main_nodes_public_address; // The vrf_node_next_main_nodes_public_address_data text
+    size_t vrf_node_next_main_nodes_public_address_data_length; // The amount of characters of the vrf_node_next_main_nodes_public_address_data
+    char* vrf_node_next_main_nodes_node_backup_count_data; // The vrf_node_next_main_nodes_node_backup_count
+    char* vrf_node_next_main_nodes_node_backup_count; // The vrf_node_next_main_nodes_node_backup_count_data text
+    size_t vrf_node_next_main_nodes_node_backup_count_data_length; // The amount of characters of the vrf_node_next_main_nodes_node_backup_count_data
+    char* vrf_node_next_main_nodes_backup_nodes_names_data; // The vrf_node_next_main_nodes_backup_nodes_names
+    char* vrf_node_next_main_nodes_backup_nodes_names; // The vrf_node_next_main_nodes_backup_nodes_names_data text
+    size_t vrf_node_next_main_nodes_backup_nodes_names_data_length; // The amount of characters of the vrf_node_next_main_nodes_backup_nodes_names_data
     char* vrf_public_key_data_round_part_1; // The VRF public key text for round part 1
     unsigned char* vrf_public_key_round_part_1; // The VRF public key for round part 1
     size_t vrf_public_key_data_length_round_part_1; // The length of the VRF public key for round part 1
@@ -2117,12 +2127,28 @@ struct blockchain_reserve_bytes {
     unsigned char* vrf_beta_string_round_part_3; // The VRF beta string (output string) for round part 3
     size_t vrf_beta_string_data_length_round_part_3; // The length of the VRF beta string (output string) for round part 3
     char* vrf_data_round_part_3; // The VRF data for round part 3  
+    char* vrf_public_key_data_round_part_4; // The VRF public key text for round part 3
+    unsigned char* vrf_public_key_round_part_4; // The VRF public key for round part 3
+    size_t vrf_public_key_data_length_round_part_4; // The length of the VRF public key for round part 3
+    char* vrf_alpha_string_data_round_part_4; // The VRF alpha string (input string) text for round part 3
+    unsigned char* vrf_alpha_string_round_part_4; // The VRF alpha string (input string) for round part 3
+    size_t vrf_alpha_string_data_length_round_part_4; // The length of the VRF alpha string (input string) for round part 3
+    char* vrf_proof_data_round_part_4; // The VRF proof text for round part 3
+    unsigned char* vrf_proof_round_part_4; // The VRF proof for round part 3
+    size_t vrf_proof_data_length_round_part_4; // The length of the VRF proof for round part 3
+    char* vrf_beta_string_data_round_part_4; // The VRF beta string (output string) text for round part 3
+    unsigned char* vrf_beta_string_round_part_4; // The VRF beta string (output string) for round part 3
+    size_t vrf_beta_string_data_length_round_part_4; // The length of the VRF beta string (output string) for round part 3
+    char* vrf_data_round_part_4; // The VRF data for round part 3  
     char* vrf_data; // The VRF data for all of the round parts
     size_t vrf_data_length; // The length of the VRF data for all of the round parts
+    char* next_block_verifiers_public_address_data[BLOCK_VERIFIERS_AMOUNT]; // The next_block_verifiers_public_address
+    char* next_block_verifiers_public_address[BLOCK_VERIFIERS_AMOUNT]; // The next_block_verifiers_public_address_data text
+    size_t next_block_verifiers_public_address_data_length; // The amount of characters of the next_block_verifiers_public_address_data
     char* previous_block_hash_data; // The previous_block_hash
     size_t previous_block_hash_data_length; // The amount of characters of the previous_block_hash_data
-    char* block_validation_node_signature_data[BLOCK_VALIDATION_NODES_TOTAL_AMOUNT]; // The block_validation_node_signature
-    char* block_validation_node_signature[BLOCK_VALIDATION_NODES_TOTAL_AMOUNT]; // The block_validation_node_signature_data text
+    char* block_validation_node_signature_data[BLOCK_VERIFIERS_AMOUNT]; // The block_validation_node_signature
+    char* block_validation_node_signature[BLOCK_VERIFIERS_AMOUNT]; // The block_validation_node_signature_data text
     size_t block_validation_node_signature_data_length; // The amount of characters of the block_validation_node_signature_data
 };
 
@@ -2321,6 +2347,141 @@ int string_replace(char *data, const char* STR1, const char* STR2)
   } 
 
   #undef REPLACE_STRING
+}
+
+int varint_encode(long long int number, char* result)
+{
+  // Variables
+  char* data = (char*)calloc(BUFFER_SIZE,sizeof(char));
+  size_t length;
+  size_t count = 0;
+  size_t count2 = 0;
+  int binary_numbers[8];
+  int binary_number_copy;
+  long long int number_copy = (long long int)number;  
+
+  // check if the memory needed was allocated on the heap successfully
+  if (data == NULL)
+  {     
+    color_print("Could not allocate the memory needed on the heap","red");  
+    pointer_reset(data); 
+    exit(0);
+  } 
+
+  memset(result,0,strlen(result));  
+
+  // check if it should not be encoded
+  if (number <= 0xFF)
+  {
+    sprintf(result,"%02llx",number);
+    pointer_reset(data);
+    return 1;
+  }
+
+  // convert the number to a binary string
+  for (count = 0; number_copy != 0; count++)
+  {
+    if (number_copy % 2 == 1)
+    {
+      memcpy(data+count,"1",1);
+    }
+    else
+    {
+      memcpy(data+count,"0",1);
+    }
+    number_copy /= 2; 
+  }
+
+  // pad the string to a mulitple of 7 bits  
+  for (count = strnlen(data,BUFFER_SIZE); count % 7 != 0; count++)
+  {
+    memcpy(result+strnlen(result,BUFFER_SIZE),"0",1);
+  }
+
+  // reverse the string
+  length = strnlen(data,BUFFER_SIZE);
+  for (count = 0; count <= length; count++)
+  {
+    memcpy(result+strnlen(result,BUFFER_SIZE),&data[length - count],1);
+  }
+  memset(data,0,strnlen(data,BUFFER_SIZE));
+  memcpy(data,result,strnlen(result,BUFFER_SIZE));
+  memset(result,0,strnlen(result,BUFFER_SIZE));
+
+  /*
+  convert each 7 bits to one byte
+  set the first bit to 1 for all groups of 7 except for the first group of 7
+  */
+  length = strnlen(data,BUFFER_SIZE) + (strnlen(data,BUFFER_SIZE) / 7);
+  count = 0;
+  count2 = 0;
+
+ for (count = 0, count2 = 0; count < length; count++)
+ {
+   if (count % 8 == 0 && count != 0)
+   {
+     // reverse the binary bits
+     binary_number_copy = 0;       
+     if (((binary_numbers[count2] >> 7) & 1U) == 1) {binary_number_copy |= 1UL << 0;} else {binary_number_copy &= ~(1UL << 0);}
+     if (((binary_numbers[count2] >> 6) & 1U) == 1) {binary_number_copy |= 1UL << 1;} else {binary_number_copy &= ~(1UL << 1);}
+     if (((binary_numbers[count2] >> 5) & 1U) == 1) {binary_number_copy |= 1UL << 2;} else {binary_number_copy &= ~(1UL << 2);}
+     if (((binary_numbers[count2] >> 4) & 1U) == 1) {binary_number_copy |= 1UL << 3;} else {binary_number_copy &= ~(1UL << 3);}
+     if (((binary_numbers[count2] >> 3) & 1U) == 1) {binary_number_copy |= 1UL << 4;} else {binary_number_copy &= ~(1UL << 4);}
+     if (((binary_numbers[count2] >> 2) & 1U) == 1) {binary_number_copy |= 1UL << 5;} else {binary_number_copy &= ~(1UL << 5);}
+     if (((binary_numbers[count2] >> 1) & 1U) == 1) {binary_number_copy |= 1UL << 6;} else {binary_number_copy &= ~(1UL << 6);}
+     if (((binary_numbers[count2] >> 0) & 1U) == 1) {binary_number_copy |= 1UL << 7;} else {binary_number_copy &= ~(1UL << 7);}
+     binary_numbers[count2] = binary_number_copy;
+     count2++;
+   } 
+   if (count % 8 == 0)
+   {
+     if (count == 0)
+     {
+       // clear the binary bit to 0
+       binary_numbers[count2] &= ~(1 << (count % 8));      
+     }
+     else
+     {
+       // set the binary bit to 1
+       binary_numbers[count2] |= 1 << (count % 8);
+     }
+   }
+   else
+   {
+     if (memcmp(data + (count - (count2+1)),"1",1) == 0)
+     {
+       // set the binary bit to 1
+       binary_numbers[count2] |= 1 << (count % 8);
+     }
+     else
+     {
+       // clear the binary bit to 0
+       binary_numbers[count2] &= ~(1 << (count % 8));
+     }     
+   }
+ }
+
+  // reverse the last binary_number
+  length = strnlen(data,BUFFER_SIZE) / 8;
+  binary_number_copy = 0;
+  if (((binary_numbers[length] >> 7) & 1U) == 1) {binary_number_copy |= 1UL << 0;} else {binary_number_copy &= ~(1UL << 0);}
+  if (((binary_numbers[length] >> 6) & 1U) == 1) {binary_number_copy |= 1UL << 1;} else {binary_number_copy &= ~(1UL << 1);}
+  if (((binary_numbers[length] >> 5) & 1U) == 1) {binary_number_copy |= 1UL << 2;} else {binary_number_copy &= ~(1UL << 2);}
+  if (((binary_numbers[length] >> 4) & 1U) == 1) {binary_number_copy |= 1UL << 3;} else {binary_number_copy &= ~(1UL << 3);}
+  if (((binary_numbers[length] >> 3) & 1U) == 1) {binary_number_copy |= 1UL << 4;} else {binary_number_copy &= ~(1UL << 4);}
+  if (((binary_numbers[length] >> 2) & 1U) == 1) {binary_number_copy |= 1UL << 5;} else {binary_number_copy &= ~(1UL << 5);}
+  if (((binary_numbers[length] >> 1) & 1U) == 1) {binary_number_copy |= 1UL << 6;} else {binary_number_copy &= ~(1UL << 6);}
+  if (((binary_numbers[length] >> 0) & 1U) == 1) {binary_number_copy |= 1UL << 7;} else {binary_number_copy &= ~(1UL << 7);}
+  binary_numbers[length] = binary_number_copy;
+
+  // create the varint encoded string
+  for (count = 0, count2 = 0; count <= length; count++, count2 += 2)
+  {
+    sprintf(result+count2,"%02x",binary_numbers[length-count] & 0xFF);
+  }
+
+  pointer_reset(data);
+  return 1;    
 }
 
 size_t varint_decode(size_t varint)
@@ -2624,7 +2785,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   // network_version
   blockchain_data.network_version_data_length = 4;
   count+= blockchain_data.network_version_data_length;
-  if (count > DATA_LENGTH)
+  if (count > strnlen(DATA,BUFFER_SIZE))
   {
     NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR("Invalid network_block_string\nFunction: network_block_string_to_blockchain_data");
   }
@@ -2669,20 +2830,8 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
 
   // unlock_block
   // get the current block height
-  if (memcmp(BLOCK_HEIGHT,"0",1) == 0)
-  {
-    if (get_current_block_height(current_block_height, 0) == 0)
-    {
-      NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR("Could not get the current block height\nFunction: network_block_string_to_blockchain_data");
-    }
-    sscanf(current_block_height, "%zu", &number);
-    number += 61;
-  }
-  else
-  {
-    sscanf(BLOCK_HEIGHT, "%zu", &number);
-    number += 60;
-  }  
+  sscanf(BLOCK_HEIGHT, "%zu", &number);
+  number += 60; 
 
   if (number > 2097091)
   {
@@ -2749,7 +2898,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
 
   // block_reward
   // since the block reward could be any number because of transactions fees, get the position of BLOCKCHAIN_RESERVED_BYTES_START to get the length of the block reward
-  data3 = strstr(DATA,BLOCKCHAIN_RESERVED_BYTES_START);
+  data3 = strstr((char*)DATA,BLOCKCHAIN_RESERVED_BYTES_START);
   if (data3 == NULL)
   {
     NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR("Invalid network_block_string\nFunction: network_block_string_to_blockchain_data");
@@ -2834,7 +2983,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count+= 66;
 
   // block_producer_delegates_name
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length);
   // convert the hexadecimal string to a string
@@ -2847,7 +2996,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length + 64;
   
   // block_producer_public_address
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length);
   // convert the hexadecimal string to a string
@@ -2860,7 +3009,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length + 64;
   
   // block_producer_node_backup_count
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length);
   // convert the hexadecimal string to a string
@@ -2873,7 +3022,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length + 64;
 
   // block_producer_backup_nodes_names
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length);
   // convert the hexadecimal string to a string
@@ -2886,7 +3035,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length + 64;
 
   // vrf_node_public_and_secret_key_delegates_name
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length);
   // convert the hexadecimal string to a string
@@ -2899,7 +3048,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length + 64;
 
   // vrf_node_public_and_secret_key_public_address
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length);
   // convert the hexadecimal string to a string
@@ -2912,7 +3061,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length + 64;
 
   // vrf_node_public_and_secret_key_node_backup_count
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length);
   // convert the hexadecimal string to a string
@@ -2925,7 +3074,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length + 64;
 
   // vrf_node_public_and_secret_key_backup_nodes_names
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length);
   // convert the hexadecimal string to a string
@@ -2938,7 +3087,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length + 64;
 
   // vrf_node_random_data_delegates_name
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length);
   // convert the hexadecimal string to a string
@@ -2951,7 +3100,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length + 64;
 
   // vrf_node_random_data_public_address
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length);
   // convert the hexadecimal string to a string
@@ -2964,7 +3113,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length + 64;
 
   // vrf_node_random_data_node_backup_count
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length);
   // convert the hexadecimal string to a string
@@ -2977,7 +3126,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length + 64;
 
   // vrf_node_random_data_backup_nodes_names
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length);
   // convert the hexadecimal string to a string
@@ -2990,7 +3139,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length + 64;
 
   // vrf_node_next_main_nodes_delegates_name
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length);
   // convert the hexadecimal string to a string
@@ -3003,7 +3152,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length + 64;
 
   // vrf_node_next_main_nodes_public_address
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length);
   // convert the hexadecimal string to a string
@@ -3016,7 +3165,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length + 64;
 
   // vrf_node_next_main_nodes_node_backup_count
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length);
   // convert the hexadecimal string to a string
@@ -3029,7 +3178,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length + 64;
 
   // vrf_node_next_main_nodes_backup_nodes_names
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length);
   // convert the hexadecimal string to a string
@@ -3042,7 +3191,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length + 64;
 
   // vrf_public_key_round_part_1
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_1,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1);
   // convert the hexadecimal string to a string
@@ -3055,7 +3204,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1 + 64;
 
   // vrf_alpha_string_round_part_1
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_1,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1);
   // convert the hexadecimal string to a string
@@ -3068,7 +3217,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1 + 64;
 
   // vrf_proof_round_part_1
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_1,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1);
   // convert the hexadecimal string to a string
@@ -3081,7 +3230,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1 + 64;
 
   // vrf_beta_string_round_part_1
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_1,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1);
   // convert the hexadecimal string to a string
@@ -3094,12 +3243,12 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1 + 64;
 
   // vrf_data_round_part_1
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_1,&DATA[count],VRF_DATA_LENGTH);
   count += VRF_DATA_LENGTH + 64;
 
   // vrf_public_key_round_part_2
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_2,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2);
   // convert the hexadecimal string to a string
@@ -3112,7 +3261,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2 + 64;
 
   // vrf_alpha_string_round_part_2
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_2,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2);
   // convert the hexadecimal string to a string
@@ -3125,7 +3274,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2 + 64;
 
   // vrf_proof_round_part_2
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_2,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2);
   // convert the hexadecimal string to a string
@@ -3138,7 +3287,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2 + 64;
 
   // vrf_beta_string_round_part_2
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_2,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2);
   // convert the hexadecimal string to a string
@@ -3151,12 +3300,12 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2 + 64;
 
   // vrf_data_round_part_2
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_2,&DATA[count],VRF_DATA_LENGTH);
   count += VRF_DATA_LENGTH + 64;
 
   // vrf_public_key_round_part_3
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_3,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3);
   // convert the hexadecimal string to a string
@@ -3169,7 +3318,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3 + 64;
 
   // vrf_alpha_string_round_part_3
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_3,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3);
   // convert the hexadecimal string to a string
@@ -3182,7 +3331,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3 + 64;
 
   // vrf_proof_round_part_3
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_3,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3);
   // convert the hexadecimal string to a string
@@ -3195,7 +3344,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3 + 64;
 
   // vrf_beta_string_round_part_3
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_3,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3);
   // convert the hexadecimal string to a string
@@ -3208,12 +3357,12 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3 + 64;
 
   // vrf_data_round_part_3
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_3,&DATA[count],VRF_DATA_LENGTH);
   count += VRF_DATA_LENGTH + 64;
 
   // vrf_public_key_round_part_4
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4);
   // convert the hexadecimal string to a string
@@ -3226,7 +3375,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4 + 64;
 
   // vrf_alpha_string_round_part_4
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4);
   // convert the hexadecimal string to a string
@@ -3239,7 +3388,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4 + 64;
 
   // vrf_proof_round_part_4
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4);
   // convert the hexadecimal string to a string
@@ -3252,7 +3401,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4 + 64;
 
   // vrf_beta_string_round_part_4
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4 = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4,&DATA[count],blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4);
   // convert the hexadecimal string to a string
@@ -3265,17 +3414,17 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4 + 64;
 
   // vrf_data_round_part_4
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4,&DATA[count],VRF_DATA_LENGTH);
   count += VRF_DATA_LENGTH + 64;
 
   // vrf_data
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data,&DATA[count],VRF_DATA_LENGTH);
   count += VRF_DATA_LENGTH + 64;
 
   // next_block_verifiers_public_address_data
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   for (count3 = 0; count3 < BLOCK_VERIFIERS_AMOUNT; count3++)
   { 
@@ -3292,13 +3441,13 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += 64;
 
   // previous block hash
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   memcpy(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,&DATA[count],blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length);
   count += blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length + 64;
 
   // block_validation_node_signature_data
-  message_copy1 = strstr(DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
+  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
   blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
   size_t count5 = string_count(DATA,"5369675631");
   for (count3 = 0; count3 < count5; count3++)
@@ -3315,7 +3464,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   }
 
   // set the count to the end of the reserve bytes
-  message_copy1 = strstr(DATA,BLOCKCHAIN_RESERVED_BYTES_END);
+  message_copy1 = strstr((char*)DATA,BLOCKCHAIN_RESERVED_BYTES_END);
   count = strnlen(DATA,BUFFER_SIZE) - strnlen(message_copy1,BUFFER_SIZE) + 62;
 
   // ringct_version
@@ -3354,6 +3503,647 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
 
   #undef pointer_reset_all
   #undef NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR
+}
+
+int blockchain_data_to_network_block_string(char* result)
+{
+  // Variables
+  size_t count = 0;
+  size_t count2 = 0;
+  size_t counter = 0;
+
+  // define macros  
+  #define BLOCKCHAIN_RESERVED_BYTES_LENGTH_TEXT "7c424c4f434b434841494e5f52455345525645445f42595445535f4c454e4754487c"
+  #define BLOCKCHAIN_EXTRA_BYTES_LENGTH_TEXT "7c424c4f434b434841494e5f45585452415f42595445535f4c454e4754487c"
+  #define BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR(settings) \
+  color_print(settings,"red"); \
+  return 0; 
+
+  memset(result,0,strlen(result));
+  
+  // network_version
+  count = 0;
+  blockchain_data.network_version_data_length = strnlen(blockchain_data.network_version_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.network_version_data,blockchain_data.network_version_data_length);
+  count += blockchain_data.network_version_data_length;
+  
+  // timestamp
+  if (varint_encode((long long int)blockchain_data.timestamp,blockchain_data.timestamp_data) == 0)
+  {
+    BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR("Could not create the varint for the timestamp\nFunction: blockchain_data_to_network_block_string");
+  }
+  blockchain_data.timestamp_data_length = strnlen(blockchain_data.timestamp_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.timestamp_data,blockchain_data.timestamp_data_length);  
+  count += blockchain_data.timestamp_data_length;
+
+  // previous_block_hash
+  blockchain_data.previous_block_hash_data_length = strnlen(blockchain_data.previous_block_hash_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.previous_block_hash_data,blockchain_data.previous_block_hash_data_length);
+  count += blockchain_data.previous_block_hash_data_length;
+
+  // nonce
+  blockchain_data.nonce_data_length = strnlen(blockchain_data.nonce_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.nonce_data,blockchain_data.nonce_data_length);
+  count += blockchain_data.nonce_data_length;
+
+  // block_reward_transaction_version
+  blockchain_data.block_reward_transaction_version_data_length = strnlen(blockchain_data.block_reward_transaction_version_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.block_reward_transaction_version_data,blockchain_data.block_reward_transaction_version_data_length);
+  count += blockchain_data.block_reward_transaction_version_data_length;
+
+  // unlock_block
+  if (varint_encode((long long int)blockchain_data.unlock_block,blockchain_data.unlock_block_data) == 0)
+  {
+    BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR("Could not create the varint for the timestamp\nFunction: blockchain_data_to_network_block_string");
+  }
+  blockchain_data.unlock_block_data_length = strnlen(blockchain_data.unlock_block_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.unlock_block_data,blockchain_data.unlock_block_data_length);  
+  count += blockchain_data.unlock_block_data_length;
+
+  // block_reward_input
+  blockchain_data.block_reward_input_data_length = strnlen(blockchain_data.block_reward_input_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.block_reward_input_data,blockchain_data.block_reward_input_data_length);
+  count += blockchain_data.block_reward_input_data_length;
+
+  // vin_type
+  blockchain_data.vin_type_data_length = strnlen(blockchain_data.vin_type_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.vin_type_data,blockchain_data.vin_type_data_length);
+  count += blockchain_data.vin_type_data_length;
+
+  // block_height
+  if (varint_encode((long long int)blockchain_data.block_height,blockchain_data.block_height_data) == 0)
+  {
+    BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR("Could not create the varint for the block height\nFunction: blockchain_data_to_network_block_string");
+  }
+  blockchain_data.block_height_data_length = strnlen(blockchain_data.block_height_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.block_height_data,blockchain_data.block_height_data_length);  
+  count += blockchain_data.block_height_data_length;
+
+  // block_reward_output
+  blockchain_data.block_reward_output_data_length = strnlen(blockchain_data.block_reward_output_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.block_reward_output_data,blockchain_data.block_reward_output_data_length);
+  count += blockchain_data.block_reward_output_data_length;
+
+  // block_reward
+  if (varint_encode((long long int)blockchain_data.block_reward,blockchain_data.block_reward_data) == 0)
+  {
+    BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR("Could not create the varint for the block reward\nFunction: blockchain_data_to_network_block_string");
+  }
+  blockchain_data.block_reward_data_length = strnlen(blockchain_data.block_reward_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.block_reward_data,blockchain_data.block_reward_data_length);  
+  count += blockchain_data.block_reward_data_length;
+
+  // stealth_address_output_tag
+  blockchain_data.stealth_address_output_tag_data_length = strnlen(blockchain_data.stealth_address_output_tag_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.stealth_address_output_tag_data,blockchain_data.stealth_address_output_tag_data_length);
+  count += blockchain_data.stealth_address_output_tag_data_length;
+
+  // stealth_address_output
+  blockchain_data.stealth_address_output_data_length = strnlen(blockchain_data.stealth_address_output_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.stealth_address_output_data,blockchain_data.stealth_address_output_data_length);
+  count += blockchain_data.stealth_address_output_data_length;
+
+  // extra_bytes_size
+  memset(blockchain_data.extra_bytes_size_data,0,strlen(blockchain_data.extra_bytes_size_data));
+  memcpy(blockchain_data.extra_bytes_size_data,"a3",2);
+  blockchain_data.extra_bytes_size = 163;
+  blockchain_data.extra_bytes_size_data_length = 2;
+  memcpy(result+count,blockchain_data.extra_bytes_size_data,blockchain_data.extra_bytes_size_data_length);
+  count += blockchain_data.extra_bytes_size_data_length;
+
+  // transaction_public_key_tag
+  blockchain_data.transaction_public_key_tag_data_length = strnlen(blockchain_data.transaction_public_key_tag_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.transaction_public_key_tag_data,blockchain_data.transaction_public_key_tag_data_length);
+  count += blockchain_data.transaction_public_key_tag_data_length;
+
+  // transaction_public_key
+  blockchain_data.transaction_public_key_data_length = strnlen(blockchain_data.transaction_public_key_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.transaction_public_key_data,blockchain_data.transaction_public_key_data_length);
+  count += blockchain_data.transaction_public_key_data_length;
+
+  // extra_nonce_tag
+  blockchain_data.extra_nonce_tag_data_length = strnlen(blockchain_data.extra_nonce_tag_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.extra_nonce_tag_data,blockchain_data.extra_nonce_tag_data_length);
+  count += blockchain_data.extra_nonce_tag_data_length;
+
+  // reserve_bytes_size
+  memset(blockchain_data.reserve_bytes_size_data,0,strlen(blockchain_data.reserve_bytes_size_data));
+  memcpy(blockchain_data.reserve_bytes_size_data,"80",2);
+  blockchain_data.reserve_bytes_size = 128;
+  blockchain_data.reserve_bytes_size_data_length = 2;
+  memcpy(result+count,blockchain_data.reserve_bytes_size_data,blockchain_data.reserve_bytes_size_data_length);
+  count += blockchain_data.reserve_bytes_size_data_length;
+
+  // blockchain_reserve_bytes
+  memcpy(result+count,BLOCKCHAIN_RESERVED_BYTES_START,66);
+  count+= 66;  
+
+  // block_producer_delegates_name  
+  blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data,blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // block_producer_public_address  
+  blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.block_producer_public_address,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.block_producer_public_address[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data,blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64; 
+
+  // block_producer_node_backup_count
+  blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"0",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"30",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"1",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"31",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"2",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"32",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"3",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"33",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"4",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"34",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,"5",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"35",2);
+  }
+  blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length = 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;  
+
+  // block_producer_backup_nodes_names
+  blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data,blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_public_and_secret_key_delegates_name  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_delegates_name_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_public_and_secret_key_public_address  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_public_address_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64; 
+
+  // vrf_node_public_and_secret_key_node_backup_count
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"0",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"30",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"1",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"31",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"2",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"32",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"3",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"33",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"4",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"34",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count,"5",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,"35",2);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length = 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_node_backup_count_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;  
+
+  // vrf_node_public_and_secret_key_backup_nodes_names
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data,blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_public_and_secret_key_backup_nodes_names_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_random_data_delegates_name  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_delegates_name_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_random_data_public_address  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_public_address_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64; 
+
+  // vrf_node_random_data_node_backup_count
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"0",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"30",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"1",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"31",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"2",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"32",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"3",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"33",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"4",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"34",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count,"5",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,"35",2);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length = 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_node_backup_count_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;  
+
+  // vrf_node_random_data_backup_nodes_names
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data,blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_random_data_backup_nodes_names_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_next_main_nodes_delegates_name  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_delegates_name_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_node_next_main_nodes_public_address  
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_public_address_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64; 
+
+  // vrf_node_next_main_nodes_node_backup_count
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"0",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"30",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"1",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"31",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"2",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"32",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"3",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"33",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"4",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"34",2);
+  }
+  if (memcmp(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count,"5",1) == 0)
+  {
+    memcpy(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,"35",2);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length = 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_node_backup_count_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;  
+
+  // vrf_node_next_main_nodes_backup_nodes_names
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  // convert the string to hexadecimal
+  for (count2 = 0, counter = 0; count2 < blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length; count2++, counter += 2)
+  {
+    sprintf(blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data+counter,"%02x",blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names[count2] & 0xFF);
+  }
+  blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length *= 2;
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data,blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length);  
+  count += blockchain_data.blockchain_reserve_bytes.vrf_node_next_main_nodes_backup_nodes_names_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_public_key_round_part_1
+  blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_1,VRF_PUBLIC_KEY_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_1,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_1;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_alpha_string_round_part_1
+  blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_1,BUFFER_SIZE);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_1,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_1; 
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_proof_round_part_1
+  blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_1,VRF_PROOF_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_1,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_1;  
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_beta_string_round_part_1
+  blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_1,VRF_BETA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_1,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_1;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_data_round_part_1
+  memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_1,"74727565",VRF_DATA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_1,VRF_DATA_LENGTH);
+  count += VRF_DATA_LENGTH;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_public_key_round_part_2
+  blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_2,VRF_PUBLIC_KEY_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_2,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_2;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_alpha_string_round_part_2
+  blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_2,BUFFER_SIZE);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_2,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_2; 
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_proof_round_part_2
+  blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_2,VRF_PROOF_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_2,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_2;  
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_beta_string_round_part_2
+  blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_2,VRF_BETA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_2,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_2;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_data_round_part_2
+  memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_2,"74727565",VRF_DATA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_2,VRF_DATA_LENGTH);
+  count += VRF_DATA_LENGTH;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_public_key_round_part_3
+  blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_3,VRF_PUBLIC_KEY_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_3,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_3;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_alpha_string_round_part_3
+  blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_3,BUFFER_SIZE);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_3,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_3;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64; 
+
+  // vrf_proof_round_part_3
+  blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_3,VRF_PROOF_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_3,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_3;  
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_beta_string_round_part_3
+  blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_3,VRF_BETA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_3,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_3;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_data_round_part_3
+  memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_3,"74727565",VRF_DATA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_3,VRF_DATA_LENGTH);
+  count += VRF_DATA_LENGTH;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_public_key_round_part_4
+  blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4,VRF_PUBLIC_KEY_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_length_round_part_4;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_alpha_string_round_part_4
+  blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4,BUFFER_SIZE);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_length_round_part_4; 
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_proof_round_part_4
+  blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4,VRF_PROOF_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_proof_data_length_round_part_4;  
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_beta_string_round_part_4
+  blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4 = strnlen(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4,VRF_BETA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4);
+  count += blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_length_round_part_4;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_data_round_part_4
+  memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4,"74727565",VRF_DATA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4,VRF_DATA_LENGTH);
+  count += VRF_DATA_LENGTH;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // vrf_data
+  memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data,"74727565",VRF_DATA_LENGTH);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.vrf_data,VRF_DATA_LENGTH);
+  count += VRF_DATA_LENGTH;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // next_block_verifiers_public_address_data  
+  blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data_length = 196;
+  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    // convert the string to hexadecimal
+    for (count2 = 0, counter = 0; count2 < XCASH_WALLET_LENGTH; count2++, counter += 2)
+    {
+      sprintf(blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count]+counter,"%02x",blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count][count2] & 0xFF);
+    }
+    memcpy(result+strnlen(result,BUFFER_SIZE),blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count],blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data_length);  
+    if (count+1 != BLOCK_VERIFIERS_AMOUNT)
+    {
+      memcpy(result+strnlen(result,BUFFER_SIZE),BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+    }
+  }    
+  count = strnlen(result,BUFFER_SIZE);
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // previous block hash
+  blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length = strnlen(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length);
+  count += blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length;
+  memcpy(result+count,BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+  count += 64;
+
+  // block_validation_node_signature_data  
+  blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length = BLOCK_VALIDATION_NODE_SIGNED_BLOCK_LENGTH;
+  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    // convert the string to hexadecimal
+    for (count2 = 0, counter = 0; count2 < XCASH_SIGN_DATA_LENGTH; count2++, counter += 2)
+    {
+      sprintf(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count]+counter,"%02x",blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count][count2] & 0xFF);
+    }
+    memcpy(result+strnlen(result,BUFFER_SIZE),blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length);  
+    if (count+1 != BLOCK_VERIFIERS_AMOUNT)
+    {
+      memcpy(result+strnlen(result,BUFFER_SIZE),BLOCKCHAIN_DATA_SEGMENT_STRING,64);
+    }
+  }  
+  count = strnlen(result,BUFFER_SIZE);
+  memcpy(result+count,BLOCKCHAIN_RESERVED_BYTES_END,62);
+  count += 62;
+
+  // ringct_version
+  blockchain_data.ringct_version_data_length = strnlen(blockchain_data.ringct_version_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.ringct_version_data,blockchain_data.ringct_version_data_length);
+  count += blockchain_data.ringct_version_data_length;
+
+  // transaction_amount
+  if (varint_encode((long long int)blockchain_data.transaction_amount,blockchain_data.transaction_amount_data) == 0)
+  {
+    BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR("Could not create the varint for the transaction amount\nFunction: blockchain_data_to_network_block_string");
+  }
+  blockchain_data.transaction_amount_data_length = strnlen(blockchain_data.transaction_amount_data,BUFFER_SIZE_NETWORK_BLOCK_DATA);
+  memcpy(result+count,blockchain_data.transaction_amount_data,blockchain_data.transaction_amount_data_length);  
+  count += blockchain_data.transaction_amount_data_length;
+
+  // get all of the transactions
+  for (count2 = 0; count2 < blockchain_data.transaction_amount; count2++)
+  {
+    memcpy(result+count,blockchain_data.transactions[count2],64);
+    count += 64;
+  }
+
+  return 1;
+
+  #undef BLOCKCHAIN_RESERVED_BYTES_LENGTH_TEXT
+  #undef BLOCKCHAIN_EXTRA_BYTES_LENGTH_TEXT
+  #undef BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR
 }
 
 int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLOCK_HASH, const char* PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES)
@@ -3452,7 +4242,7 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   } 
     
   // nonce
-  if (blockchain_data.nonce_data_length != 8 || (memcmp(blockchain_data.nonce_data,BLOCK_PRODUCER_NETWORK_BLOCK_NONCE,8) != 0 && memcmp(blockchain_data.nonce_data,CONSENSUS_NODE_NETWORK_BLOCK_NONCE,8) != 0))
+  if (blockchain_data.nonce_data_length != 8 || (memcmp(blockchain_data.nonce_data,BLOCK_PRODUCER_NETWORK_BLOCK_NONCE,8) != 0 && memcmp(blockchain_data.nonce_data,NETWORK_DATA_NODE_NETWORK_BLOCK_NONCE,8) != 0))
   {
     VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid network block nonce\nFunction: verify_network_block_data");
   }
@@ -3464,26 +4254,11 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   }
 
   // unlock_block
-  if (memcmp(BLOCK_HEIGHT,"0",1) == 0)
+  sscanf(BLOCK_HEIGHT, "%zu", &number);
+  if ((blockchain_data.unlock_block <= 2097091 && blockchain_data.unlock_block_data_length != 6) || (blockchain_data.unlock_block > 2097091 && blockchain_data.unlock_block_data_length != 8) || blockchain_data.unlock_block != number+60)
   {
-    if (get_current_block_height(current_block_height,0) == 0)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Could not get the current block height\nFunction: verify_network_block_data");
-    }
-    sscanf(current_block_height, "%zu", &number);
-    if ((blockchain_data.unlock_block <= 2097091 && blockchain_data.unlock_block_data_length != 6) || (blockchain_data.unlock_block > 2097091 && blockchain_data.unlock_block_data_length != 8) || blockchain_data.unlock_block != number+61)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid unlock_block\nFunction: verify_network_block_data");
-    }
+    VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid unlock_block\nFunction: verify_network_block_data");
   }
-  else
-  {
-    sscanf(BLOCK_HEIGHT, "%zu", &number);
-    if ((blockchain_data.unlock_block <= 2097091 && blockchain_data.unlock_block_data_length != 6) || (blockchain_data.unlock_block > 2097091 && blockchain_data.unlock_block_data_length != 8) || blockchain_data.unlock_block != number+60)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid unlock_block\nFunction: verify_network_block_data");
-    }
-  }  
 
   // block_reward_input
   if (blockchain_data.block_reward_input_data_length != 2 || memcmp(blockchain_data.block_reward_input_data,BLOCK_REWARD_INPUT,2) != 0)
@@ -3821,14 +4596,10 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   memset(blockchain_data.blockchain_reserve_bytes.vrf_data,0,strnlen(blockchain_data.blockchain_reserve_bytes.vrf_data,11));
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data,"74727565",VRF_DATA_LENGTH);
 
-  // previous_block_hash
-  if (PREVIOUS_BLOCK_HASH_SETTINGS == 1)
+  if (blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length != 64 || memcmp(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,previous_block_hash,64) != 0)
   {
-    if (blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length != 64 || memcmp(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,previous_block_hash,64) != 0)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid previous block hash\nFunction: verify_network_block_data");
-    }
-  }    
+    VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid previous block hash\nFunction: verify_network_block_data");
+  }  
 
   // block_validation_node_signature   
     // initialize the previous_network_block_reserve_bytes_block_verifiers_public_addresses
@@ -3845,7 +4616,7 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
     }
 
     // get the next block verifiers public addresses from the previous network blocks reserve bytes
-    message_copy1 = strstr(PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES,BLOCK_VALIDATION_NODE_SIGNATURE_DATA);
+    message_copy1 = strstr((char*)PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES,BLOCK_VALIDATION_NODE_SIGNATURE_DATA);
     count2 = strlen(PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES) - (strlen(message_copy1) + 64);
     count = strlen(PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES) - (strlen(message_copy1) + 64 + 26000);
     memcpy(previous_network_block_reserve_bytes_block_verifiers_public_addresses_data,&PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES[count],count2 - count);
@@ -3883,7 +4654,7 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
         // check the signed data
         for (count2 = 0; count2 < BLOCK_VERIFIERS_AMOUNT; count2++)
         {       
-          if (data_verify(0,previous_network_block_reserve_bytes_block_verifiers_public_addresses[count2],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count],network_block_string) == 1)
+          if (data_verify(previous_network_block_reserve_bytes_block_verifiers_public_addresses[count2],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count],network_block_string) == 1)
           {
             number++;
             break;
@@ -3934,6 +4705,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   char* data = (char*)calloc(1000,sizeof(char));
   char* previous_block_height = (char*)calloc(100,sizeof(char));
   char* block_height = (char*)calloc(100,sizeof(char));
+  std::size_t current_block_height;
   std::string previous_network_block_string;
   std::string network_block_string;
   std::string previous_data_hash;
@@ -3947,6 +4719,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   std::size_t count2 = 0;
 
   // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
   #define BLOCK_DATA_TOTAL_TEST 19
   #define RESERVE_BYTES_TOTAL_TEST 34
   #define NETWORK_BLOCK "0d0da5d5f1e00500000000000000000000000000000000000000000000000000000000000000050000000002b5d9ab0101fff9d8ab0101b2cce199a30202b1ae08c48f3b3e9ba6e22d9fdaf289eda8565179ebff7787883ecaf49f1ebdfba301159a7ed6a1065b708355d900b06e4e1c47238397723f4d379945b3bcdf10f09702807c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c64656c65676174656e616d65317c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c307c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174655f6261636b75705f312c64656c65676174655f6261636b75705f322c64656c65676174655f6261636b75705f332c64656c65676174655f6261636b75705f342c64656c65676174655f6261636b75705f357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174656e616d65327c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c58434131675463557337443761486f32756f533239474445706a4d576b52357a7a514a43337a78437742315231674d4c594263736d70414267575a394d5776764c57585633516868595a39376d63787356383854665a725032564d416d6152514a347c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c307c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174655f6261636b75705f312c64656c65676174655f6261636b75705f322c64656c65676174655f6261636b75705f332c64656c65676174655f6261636b75705f342c64656c65676174655f6261636b75705f357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174656e616d65337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c584341313036674d4a6a6e59706b4c70533768546f6544375443625531796464475263427a7173416b35425447327643776e4d7536504c5a6232385a36644543566853587038374d374865505369624c444b4777363433696a4b6e4d774c303536327c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c307c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174655f6261636b75705f312c64656c65676174655f6261636b75705f322c64656c65676174655f6261636b75705f332c64656c65676174655f6261636b75705f342c64656c65676174655f6261636b75705f357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174656e616d65337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c584341313036674d4a6a6e59706b4c70533768546f6544375443625531796464475263427a7173416b35425447327643776e4d7536504c5a6232385a36644543566853587038374d374865505369624c444b4777363433696a4b6e4d774c303536327c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c307c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c64656c65676174655f6261636b75705f312c64656c65676174655f6261636b75705f322c64656c65676174655f6261636b75705f332c64656c65676174655f6261636b75705f342c64656c65676174655f6261636b75705f357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c05f1c69a16ac265377454395bd133c9072b59fa3e0cd652f6f8e8d55fbff19927c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303035363536676635676866696a64696f76644a4450494f53677a663534683477363532343567643573313032316430673635316466383467643531363531663635643467353836343136643566345a36643534673635643473363534673635346673646734357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c7f78db0d006639548c88fa9685ba3d0fa64e626d426c37e28ad442f74cb80e39a5ed9b4fb397f01bfbc8f54dd8aea7590d0408ae433d4d111eaef0ed97b9074f608bbb1722abaafa8734616ce7e4350b7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c414079410cb5ed29a0f331a79cbf898d62b1f94c4d4752d4b9519668ada04f2201a277d60f09f8e50a5e4b0342aafdbd718a0761da52f3f7d3f0a38cc8cb05737c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c747275657c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c05f1c69a16ac265377454395bd133c9072b59fa3e0cd652f6f8e8d55fbff19927c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303035363536676635676866696a64696f76644a4450494f53677a663534683477363532343567643573313032316430673635316466383467643531363531663635643467353836343136643566345a36643534673635643473363534673635346673646734357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c7f78db0d006639548c88fa9685ba3d0fa64e626d426c37e28ad442f74cb80e39a5ed9b4fb397f01bfbc8f54dd8aea7590d0408ae433d4d111eaef0ed97b9074f608bbb1722abaafa8734616ce7e4350b7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c414079410cb5ed29a0f331a79cbf898d62b1f94c4d4752d4b9519668ada04f2201a277d60f09f8e50a5e4b0342aafdbd718a0761da52f3f7d3f0a38cc8cb05737c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c747275657c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c05f1c69a16ac265377454395bd133c9072b59fa3e0cd652f6f8e8d55fbff19927c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303035363536676635676866696a64696f76644a4450494f53677a663534683477363532343567643573313032316430673635316466383467643531363531663635643467353836343136643566345a36643534673635643473363534673635346673646734357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c7f78db0d006639548c88fa9685ba3d0fa64e626d426c37e28ad442f74cb80e39a5ed9b4fb397f01bfbc8f54dd8aea7590d0408ae433d4d111eaef0ed97b9074f608bbb1722abaafa8734616ce7e4350b7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c414079410cb5ed29a0f331a79cbf898d62b1f94c4d4752d4b9519668ada04f2201a277d60f09f8e50a5e4b0342aafdbd718a0761da52f3f7d3f0a38cc8cb05737c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c747275657c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c05f1c69a16ac265377454395bd133c9072b59fa3e0cd652f6f8e8d55fbff19927c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c30303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303035363536676635676866696a64696f76644a4450494f53677a663534683477363532343567643573313032316430673635316466383467643531363531663635643467353836343136643566345a36643534673635643473363534673635346673646734357c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c7f78db0d006639548c88fa9685ba3d0fa64e626d426c37e28ad442f74cb80e39a5ed9b4fb397f01bfbc8f54dd8aea7590d0408ae433d4d111eaef0ed97b9074f608bbb1722abaafa8734616ce7e4350b7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c414079410cb5ed29a0f331a79cbf898d62b1f94c4d4752d4b9519668ada04f2201a277d60f09f8e50a5e4b0342aafdbd718a0761da52f3f7d3f0a38cc8cb05737c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c747275657c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c747275657c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5843413176313851736635504b4c723847467231346a486b6a6766336d506d314d4156627377427339515037467747544c434534537759693831425270327672635631326d614d744377395445314e5a525679796e51336532633362376d785277337c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c00000000000000000000000000000000000000000000000000000000000000057c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631346d3250624c4832597436693672546734574d6a5a4b3842324850624e69347a47464d56534534724362673444634a6e3138486b734e5a58513936557451615272766639757532794a6f376571437a5a57326a6641566e597c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563151615254743652347737365a4c67534a58444d71684561506d4b6b3371414b4e7665524b34486578716e45755557776255626254373241524a683371376a5a7a614345486b54787246593570794d61476942595557426d517c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631616d716e55546263386448656243535a6b77414362445435434b6e6345555070594743786b4a317861586f393451794b586b685037634258327a616b796434466e7a34617757724834374c3878524e366553376d6f3942727c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c53696756316436315035577774726a54527a4237784850735436676a61476844763539596a6a52477066413863626d38576667687570634b6d637258387171444e43396a4646334b6d46527a7a675845336b36474c314d796d467439627c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c536967563155483236544230354133446441634659574355706d4850394863456e5a577731635645543973576e7a717130353644313175393773374e51694659524b34644866695774624d53614361394d31504d41705854784834564d7c424c4f434b434841494e5f52455345525645445f42595445535f454e447c000500000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000005"
@@ -4256,7 +5029,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
     pointer_reset_all;
     exit(0);
   }
-  for (count = 0; count < BLOCK_VALIDATION_NODES_TOTAL_AMOUNT; count++)
+  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
     blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
@@ -4329,6 +5102,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
       return true; 
     }
     sprintf(block_height,"%ld",get_block_res.block_header.height); 
+    current_block_height = (std::size_t)get_block_res.block_header.height;
     get_block_res.block_header.height--; 
     sprintf(previous_block_height,"%ld",get_block_res.block_header.height);  
   }
@@ -4344,6 +5118,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
       return true; 
     }
     memcpy(block_height,block_data.c_str(),strnlen(block_data.c_str(),100));
+    current_block_height = count;
     count--;
     sprintf(previous_block_height,"%ld",count); 
   } 
@@ -4408,7 +5183,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + block_height + "\",\r\n}";  
+  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";  
 
   // send the message to a random network data node
   while (string != "")
@@ -4425,7 +5200,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   }  
 
   // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + previous_block_height + "\",\r\n}";  
+  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
   // send the message to a random network data node
   while (string2 != "")

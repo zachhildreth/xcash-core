@@ -24,10 +24,6 @@ SOFTWARE.
 #ifndef crypto_vrf_H
 #define crypto_vrf_H
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
-
 /*
  * THREAD SAfe25519TY: crypto_vrf_keypair() is thread-safe25519 provided that
  * sodium_init() was called before.
@@ -81,7 +77,5 @@ int crypto_vrf_proof_to_hash(unsigned char *hash, const unsigned char *proof);
 void crypto_vrf_sk_to_pk(unsigned char *pk, const unsigned char *skpk);
 
 void crypto_vrf_sk_to_seed(unsigned char *seed, const unsigned char *skpk);
-#ifdef __cplusplus
-  }
-#endif
+
 #endif

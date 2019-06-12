@@ -2298,7 +2298,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string reserve_proof = "";
   tools::wallet2::transfer_container transfers;
   boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
-  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2427,7 +2427,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   // Variables
   std::string public_address = "";
-  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  tools::wallet2::transfer_container transfers;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2480,6 +2481,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
   }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
 
   // get the wallets public address
   auto print_address_sub = [this, &transfers, &public_address]()
@@ -2532,7 +2536,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
-bool simple_wallet::delegate_remove()
+bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
 {
   // structures
   struct network_data_nodes_list {
@@ -2542,7 +2546,8 @@ bool simple_wallet::delegate_remove()
 
   // Variables
   std::string public_address = "";
-  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  tools::wallet2::transfer_container transfers;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2595,6 +2600,9 @@ bool simple_wallet::delegate_remove()
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
   }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
 
   // get the wallets public address
   auto print_address_sub = [this, &transfers, &public_address]()
@@ -2657,7 +2665,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
   // Variables
   std::string public_address = "";
-  struct next_block_verifiers_list next_block_verifiers_list; // The list of block verifiers name, public address and IP address for the next round
+  tools::wallet2::transfer_container transfers;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2747,6 +2756,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
   }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
 
   // get the wallets public address
   auto print_address_sub = [this, &transfers, &public_address]()

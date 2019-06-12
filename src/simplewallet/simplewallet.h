@@ -226,7 +226,7 @@ namespace cryptonote
     bool version(const std::vector<std::string>& args);
     bool vote(const std::vector<std::string>& args);
     bool delegate_register(const std::vector<std::string>& args);
-    bool delegate_remove();
+    bool delegate_remove(const std::vector<std::string>& args);
     bool delegate_update(const std::vector<std::string>& args);
 
     uint64_t get_daemon_blockchain_height(std::string& err);
