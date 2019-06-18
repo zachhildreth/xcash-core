@@ -3376,6 +3376,7 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+
 std::string send_and_receive_data(std::string IP_address,std::string data2)
 {
   // Variables
@@ -3455,7 +3456,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3586,7 +3587,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3705,7 +3706,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3868,7 +3869,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3936,6 +3937,8 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   #undef MESSAGE
 }
 }
+
+
 
 class t_daemon
 {

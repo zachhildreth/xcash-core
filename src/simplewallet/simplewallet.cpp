@@ -2341,7 +2341,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2471,7 +2471,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2590,7 +2590,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2746,7 +2746,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2810,7 +2810,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   #undef XCASH_WALLET_PREFIX
   #undef MESSAGE
 }
-
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
@@ -4563,7 +4562,7 @@ bool simple_wallet::save_watch_only(const std::vector<std::string> &args/* = std
 
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::start_mining(const std::vector<std::string>& args)
-{
+{  
   if (!m_wallet->is_trusted_daemon())
   {
     fail_msg_writer() << tr("this command requires a trusted daemon. Enable with --trusted-daemon");

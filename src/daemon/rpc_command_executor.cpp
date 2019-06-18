@@ -5188,7 +5188,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   // send the message to a random network data node
   while (string != "")
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // verify the message
@@ -5205,7 +5205,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   // send the message to a random network data node
   while (string2 != "")
   {
-    string2 = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)((rand() % (NETWORK_DATA_NODES_AMOUNT - 1 + 1)) + 1)],MESSAGE);
+    string2 = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
   }
 
   // verify the message
