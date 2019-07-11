@@ -396,28 +396,14 @@ namespace nodetool
     }
     else if (nettype == cryptonote::STAGENET)
     {
-      full_addrs.insert("euseed1.x-cash.org:18280");
-      full_addrs.insert("euseed2.x-cash.org:18280");
-      full_addrs.insert("euseed3.x-cash.org:18280");
-      full_addrs.insert("usseed1.x-cash.org:18280");
-      full_addrs.insert("usseed2.x-cash.org:18280");
-      full_addrs.insert("usseed3.x-cash.org:18280");
-      full_addrs.insert("asiaseed1.x-cash.org:18280");
-      full_addrs.insert("asiaseed2.x-cash.org:18280");
     }
     else if (nettype == cryptonote::FAKECHAIN)
     {
     }
     else
     {
-      full_addrs.insert("euseed1.x-cash.org:18280");
-      full_addrs.insert("euseed2.x-cash.org:18280");
-      full_addrs.insert("euseed3.x-cash.org:18280");
-      full_addrs.insert("usseed1.x-cash.org:18280");
-      full_addrs.insert("usseed2.x-cash.org:18280");
-      full_addrs.insert("usseed3.x-cash.org:18280");
-      full_addrs.insert("asiaseed1.x-cash.org:18280");
-      full_addrs.insert("asiaseed2.x-cash.org:18280");
+      full_addrs.insert("159.69.21.219:18280");
+      full_addrs.insert("159.69.24.42:182800");
     }
     return full_addrs;
   }
