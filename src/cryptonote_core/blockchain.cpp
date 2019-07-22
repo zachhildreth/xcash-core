@@ -105,22 +105,7 @@ static const struct {
   { 1, 0, 0, 1531875600 },
 
   // version 7 starts from block 1, which is on or around July 18, 2018. This version includes the new POW cryptonight_v7 algorithm.
-  { 7, 1, 0, 1531962000 },
-  
-  // version 9 starts from block 106000, which is on or around Oct 16, 2018. This version includes a change to the new difficulty algorithm.
-  { 9, 20, 0, 1539550195 },
-
-  // version 10 starts from block 136000, which is on or around Nov 6, 2018. This version includes bullet proofs, public transactions, fixed ring size of 21 and a few other items.
-  { 10, 40, 0, 1540145330 },
-
-  // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
-  { 11, 60, 0, 1540146330 },
-
-  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to Cryptonight HeavyX and changes the block time to 2 minutes.
-  { 12, 80, 0, 1549310115 },
-
-  // version 13 starts from block 100, which is on or around Feb 15, 2019. This version changes the consensus mechanism to X-CASH proof of stake. It also changes the block time to 5 minutes, and doubles the block reward to adjust for the block time change.
-  { 13, 100, 0, 1550310115 },
+  { 13, 1, 0, 1531962000 },
 };
 static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
@@ -134,25 +119,7 @@ static const struct {
   { 1, 0, 0, 1531875600 },
 
   // version 7 starts from block 1, which is on or around July 18, 2018. This version includes the new POW cryptonight_v7 algorithm.
-  { 7, 1, 0, 1531962000 },
-
-  // version 8 starts from block 105000, which is on or around Oct 8, 2018. This version includes a new difficulty algorithm.
-  { 8, 105000, 0, 1538524800 },
-
-  // version 9 starts from block 125000, which is on or around Oct 20, 2018. This version includes a change to the new difficulty algorithm.
-  { 9, 125000, 0, 1539550195 },
-
-  // version 10 starts from block 136000, which is on or around Nov 6, 2018. This version includes bullet proofs, public transactions, fixed ring size of 21 and a few other items.
-  { 10, 136000, 0, 1540145330 },
-
-  // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
-  { 11, 137000, 0, 1540146330 },
-
-  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to CN/DOUBLE and changes the block time to 2 minutes.
-  { 12, 281000, 0, 1549310115 },
-
-  // version 13 starts from block 100, which is on or around Feb 15, 2019. This version changes the consensus mechanism to X-CASH proof of stake. It also changes the block time to 5 minutes, and doubles the block reward to adjust for the block time change.
-  { 13, 100, 0, 1550310115 },
+  { 13, 1, 0, 1531962000 },
 };
 static const uint64_t testnet_hard_fork_version_1_till = 1;
 

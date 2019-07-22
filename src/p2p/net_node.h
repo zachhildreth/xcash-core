@@ -127,8 +127,8 @@ namespace nodetool
     virtual std::map<std::string, time_t> get_blocked_hosts() { CRITICAL_REGION_LOCAL(m_blocked_hosts_lock); return m_blocked_hosts; }
   private:
     const std::vector<std::string> m_seed_nodes_list =
-    { "159.69.21.219:18280"
-    ,  "159.69.24.42:18280"
+    { "10.10.10.1:18280"
+    ,  "10.10.10.2:18280"
     };
     bool islimitup=false;
     bool islimitdown=false;
