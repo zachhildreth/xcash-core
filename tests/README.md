@@ -18,7 +18,7 @@ Tests are located in `tests/core_tests/`, and follow a straightforward naming co
 To run only X-CASH's core tests (after building):
 
 ```
-cd build/debug/tests/core
+cd build/debug/tests/core_tests
 ctest
 ```
 
