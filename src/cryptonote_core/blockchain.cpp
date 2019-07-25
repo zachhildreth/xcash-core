@@ -7010,7 +7010,7 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
   }
 
   // check if the block is valid in the X-CASH proof of stake
-  if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE)
+  /*if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE)
   {
     std::size_t block_height = (std::size_t)m_db->height();
     if (check_block_verifier_node_signed_block(bl, block_height, m_db->get_block_blob_from_height(block_height-1)) != true)
@@ -7020,7 +7020,7 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
       m_blocks_txs_check.clear();    
       return false;
     }
-  }
+  }*/
 
   m_db->block_txn_stop();
   return handle_block_to_main_chain(bl, id, bvc);
