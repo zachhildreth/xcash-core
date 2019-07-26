@@ -6335,7 +6335,21 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
     VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid previous block hash\nFunction: verify_network_block_data");
   }  
 
-  // block_validation_node_signature   
+  // block_validation_node_signature 
+  if (blockchain_data.block_height == HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+  {
+    // This is the first block of the xcash_proof_of_stake. Check if the main network data node signed the block
+    if (data_verify(NETWORK_DATA_NODE_PUBLIC_ADDRESS_1,blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[0],network_block_string) == 1)
+    {
+      number = 100;
+    }
+    else
+    {
+      number = 0;
+    }
+  }
+  else
+  {
     // initialize the previous_network_block_reserve_bytes_block_verifiers_public_addresses
     for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
     {
@@ -6396,10 +6410,11 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
         }
       }
     }
-    if (number < BLOCK_VERIFIERS_VALID_AMOUNT)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nThe block was not signed by the required amount of block validation nodes\nFunction: verify_network_block_data");
-    }
+  }
+  if (number < BLOCK_VERIFIERS_VALID_AMOUNT)
+  {
+    VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nThe block was not signed by the required amount of block validation nodes\nFunction: verify_network_block_data");
+  }
 
   // ringct_version
   if (blockchain_data.ringct_version_data_length != 2 || memcmp(blockchain_data.ringct_version_data,RINGCT_VERSION,2) != 0)
