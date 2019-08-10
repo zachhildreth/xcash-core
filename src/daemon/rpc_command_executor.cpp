@@ -3858,14 +3858,11 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
       if (memcmp(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count],"5369675631",10) == 0)
       {
         // check the signed data
-        for (count2 = 0; count2 < BLOCK_VERIFIERS_AMOUNT; count2++)
-        {       
-          if (data_verify(previous_network_block_reserve_bytes_block_verifiers_public_addresses[count2],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count],network_block_string) == 1)
-          {
-            number++;
-            break;
-          }
-        }
+        if (data_verify(previous_network_block_reserve_bytes_block_verifiers_public_addresses[count],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count],network_block_string) == 1)
+        {
+          number++;
+          break;
+        }       
       }
     }
     if (number < BLOCK_VERIFIERS_VALID_AMOUNT)
