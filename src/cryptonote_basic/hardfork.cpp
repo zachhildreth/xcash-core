@@ -323,16 +323,6 @@ int HardFork::get_voted_fork_index(uint64_t height) const
 HardFork::State HardFork::get_state(time_t t) const
 {
   CRITICAL_REGION_LOCAL(lock);
-
-  // no hard forks setup yet
-  if (heights.size() <= 1)
-    return Ready;
-
-  time_t t_last_fork = heights.back().time;
-  if (t >= t_last_fork + forked_time)
-    return LikelyForked;
-  if (t >= t_last_fork + update_time)
-    return UpdateNeeded;
   return Ready;
 }
 
