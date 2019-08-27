@@ -3934,6 +3934,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // Variables
   boost::asio::io_service http_service;
   boost::asio::streambuf message;
+  std::string string;
+
+  // add the end string to the data
+  data2 += SOCKET_END_STRING;
 
   // send the data to the server
   tcp::resolver resolver(http_service);
@@ -3948,13 +3952,11 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // send the message and read the response
   boost::asio::write(socket, message);
   boost::asio::streambuf response;
-  boost::asio::read_until(socket, response, SOCKET_END_STRING);
-  std::istream response_stream(&response);
-  std::string string;
-  response_stream >> string;
+  boost::asio::read_until(socket, response, "}");
+  std::istream response_stream(&response);  
+  std::getline(response_stream, string, '}');
   return string;
 }
-
 
 
 size_t string_count(const char* DATA, const char* STRING)
@@ -6461,15 +6463,8 @@ int get_random_block_verifier_node()
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
   }
-
-  // verify the message
-  if (verify_data(string,0) == 0)
-  {
-    color_print("Invalid network data node message","red");
-    return 0; 
-  } 
 
   // parse the message
   current_block_verifiers_list_public_address = string.substr(string.find("\"block_verifiers_public_address_list\": \"")+40,string.find("\"block_verifiers_IP_address_list\"")-5);

@@ -2151,6 +2151,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // Variables
   boost::asio::io_service http_service;
   boost::asio::streambuf message;
+  std::string string;
+
+  // add the end string to the data
+  data2 += SOCKET_END_STRING;
 
   // send the data to the server
   tcp::resolver resolver(http_service);
@@ -2165,10 +2169,9 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // send the message and read the response
   boost::asio::write(socket, message);
   boost::asio::streambuf response;
-  boost::asio::read_until(socket, response, SOCKET_END_STRING);
-  std::istream response_stream(&response);
-  std::string string;
-  response_stream >> string;
+  boost::asio::read_until(socket, response, "}");
+  std::istream response_stream(&response);  
+  std::getline(response_stream, string, '}');
   return string;
 }
 
@@ -4221,7 +4224,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   // send the message to a random network data node
   while (string != "")
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // verify the message
@@ -4238,7 +4241,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   // send the message to a random network data node
   while (string2 != "")
   {
-    string2 = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string2 = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // verify the message

@@ -3382,6 +3382,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // Variables
   boost::asio::io_service http_service;
   boost::asio::streambuf message;
+  std::string string;
+
+  // add the end string to the data
+  data2 += SOCKET_END_STRING;
 
   // send the data to the server
   tcp::resolver resolver(http_service);
@@ -3396,10 +3400,9 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   // send the message and read the response
   boost::asio::write(socket, message);
   boost::asio::streambuf response;
-  boost::asio::read_until(socket, response, SOCKET_END_STRING);
-  std::istream response_stream(&response);
-  std::string string;
-  response_stream >> string;
+  boost::asio::read_until(socket, response, "}");
+  std::istream response_stream(&response);  
+  std::getline(response_stream, string, '}');
   return string;
 }
 
@@ -3430,6 +3433,8 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
+  try
+  {
   // check if the wallet is open
   if (!m_wallet) return not_open(er);
 
@@ -3456,11 +3461,11 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3502,17 +3507,17 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
  
   // create the data
-  data2 = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF\",\r\n \"delegates_public_address\": \"" + req.delegate_public_address + "\",\r\n \"reserve_proof\": \"" + reserve_proof + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_public_address + "|" + reserve_proof + "|" + public_address + "|";
  
   // sign the data    
   data3 = m_wallet->sign(data2);
 
-  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+  data2 += data3 + "|";
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_node_to_block_verifiers_add_reserve_proof") == std::string::npos)
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "The vote was successfully added to the database")
     {
       count2++;
     }     
@@ -3530,6 +3535,12 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     er.message = "Failed to send the vote";
     return false; 
   } 
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+  }
+  return true;  
   
   #undef XCASH_WALLET_LENGTH
   #undef XCASH_WALLET_PREFIX
@@ -3561,6 +3572,8 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
+  try
+  {
   // check if the wallet is open
   if (!m_wallet) return not_open(er);
 
@@ -3587,18 +3600,18 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
   }
 
-   // get the wallet transfers   
+  // get the wallet transfers   
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
@@ -3613,7 +3626,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     };
     print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
     er.message = "Invalid address";
@@ -3621,17 +3634,17 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
  
   // create the data
-  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n \"delegate_name\": \"" + req.delegate_name + "\",\r\n \"delegates_IP_address\": \"" + req.delegate_IP_address + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + req.delegate_name + "|" + req.delegate_IP_address + "|" + public_address + "|";
  
   // sign the data    
   data3 = m_wallet->sign(data2);
 
-  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+  data2 += data3 + "|";
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_nodes_to_block_verifiers_register_delegates") == std::string::npos)
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Registered the delegate")
     {
       count2++;
     }     
@@ -3649,6 +3662,12 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     er.message = "Failed to register the delegate";
     return false; 
   } 
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+  }
+  return true;  
   
   #undef XCASH_WALLET_LENGTH
   #undef XCASH_WALLET_PREFIX
@@ -3680,6 +3699,8 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
+  try
+  {
   // check if the wallet is open
   if (!m_wallet) return not_open(er);
 
@@ -3706,18 +3727,18 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
   }
 
-   // get the wallet transfers   
+  // get the wallet transfers   
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
@@ -3732,7 +3753,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
     };
     print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
     er.message = "Invalid address";
@@ -3740,17 +3761,17 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
  
   // create the data
-  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REMOVE_DELEGATE\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REMOVE_DELEGATE|" + public_address + "|";
 
   // sign the data    
   data3 = m_wallet->sign(data2);
 
-  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+  data2 += data3 + "|";
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_nodes_to_block_verifiers_remove_delegates") == std::string::npos)
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Removed the delegate")
     {
       count2++;
     }     
@@ -3768,6 +3789,12 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to remove the delegate";
     return false; 
   } 
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+  }
+  return true;  
   
   #undef XCASH_WALLET_LENGTH
   #undef XCASH_WALLET_PREFIX
@@ -3799,6 +3826,8 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
+  try
+  {
   // check if the wallet is open
   if (!m_wallet) return not_open(er);
 
@@ -3869,11 +3898,11 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the message to a random network data node
   while (string.find("|") == std::string::npos)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3895,7 +3924,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     };
     print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
     er.message = "Invalid address";
@@ -3903,17 +3932,17 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
  
   // create the data
-  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n \"item\": \"" + req.item + "\",\r\n \"value\": \"" + req.value + "\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+  data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + req.item + "|" + req.value + "|" + public_address + "|";
   
   // sign the data    
   data3 = m_wallet->sign(data2);
 
-  data2 = data2.substr(0,data2.length()-1) + " \"xcash_proof_of_stake_signature\": \"" + data3 + "\",\r\n}" + SOCKET_END_STRING;
+  data2 += data3 + "|";
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2).find("Function: server_receive_data_socket_nodes_to_block_verifiers_update_delegates") == std::string::npos)
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
     {
       count2++;
     }     
@@ -3931,6 +3960,12 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information";
     return false; 
   } 
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+  }
+  return true;  
   
   #undef XCASH_WALLET_LENGTH
   #undef XCASH_WALLET_PREFIX
