@@ -6471,7 +6471,7 @@ int get_random_block_verifier_node()
   current_block_verifiers_list_IP_address = string.substr(string.find("\"block_verifiers_IP_address_list\": \"")+36,string.find("\"public_address\"")-5);
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0, data_count1 = 0, data_count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0, data_count1 = string.find("block_verifiers_IP_address_list")+35, data_count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     count3 = current_block_verifiers_list_public_address.find("|",count2);
     current_block_verifiers_list.block_verifiers_public_address[count] = current_block_verifiers_list_public_address.substr(count2,count3 - count2);
@@ -6524,6 +6524,8 @@ int get_random_block_verifier_node()
 
   current_block_verifier_public_address = current_block_verifiers_list.block_verifiers_public_address[count];
   current_block_verifier_IP_address = current_block_verifiers_list.block_verifiers_IP_address[count];
+
+  MGINFO_GREEN("Connected to delegate: " << current_block_verifier_IP_address << " to synchronize the blocks reserve bytes data");
   
   return 1;
 }
@@ -6894,6 +6896,8 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not allocate the memory needed on the heap",0);
     }
   }
+
+  MGINFO_GREEN("Synchronizing block " << block_height.c_str() << " with delegate " << current_block_verifier_IP_address);
 
   // get the block height
   sprintf(block_height,"%ld",current_block_height); 
