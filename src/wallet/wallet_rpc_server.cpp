@@ -3538,7 +3538,9 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote";
+    return false; 
   }
   return true;  
   
@@ -3665,7 +3667,9 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to register the delegate";
+    return false;
   }
   return true;  
   
@@ -3792,7 +3796,9 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to remove the delegate";
+    return false; 
   }
   return true;  
   
@@ -3963,7 +3969,9 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false;
   }
   return true;  
   

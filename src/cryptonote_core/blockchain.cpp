@@ -6897,7 +6897,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     }
   }
 
-  MGINFO_GREEN("Synchronizing block " << block_height.c_str() << " with delegate " << current_block_verifier_IP_address);
+  MGINFO_GREEN("Synchronizing block " << block_height << " with delegate " << current_block_verifier_IP_address);
 
   // get the block height
   sprintf(block_height,"%ld",current_block_height); 
