@@ -67,6 +67,12 @@ DISABLE_VS_WARNINGS(4355)
 
 namespace cryptonote
 {
+  bool block_verifier_settings = false;
+  const command_line::arg_descriptor<bool, false> arg_block_verifier  = {
+    "block-verifier"
+  , "Only run this if you are a block verifier"
+  , false
+  };
   const command_line::arg_descriptor<bool, false> arg_testnet_on  = {
     "testnet"
   , "Run on testnet. The wallet must be launched with --testnet flag."
@@ -263,6 +269,8 @@ namespace cryptonote
   {
     command_line::add_arg(desc, arg_data_dir);
 
+    command_line::add_arg(desc, arg_block_verifier);
+
     command_line::add_arg(desc, arg_test_drop_download);
     command_line::add_arg(desc, arg_test_drop_download_height);
 
@@ -296,6 +304,8 @@ namespace cryptonote
       const bool stagenet = command_line::get_arg(vm, arg_stagenet_on);
       m_nettype = testnet ? TESTNET : stagenet ? STAGENET : MAINNET;
     }
+
+    block_verifier_settings = command_line::get_arg(vm, arg_block_verifier);
 
     m_config_folder = command_line::get_arg(vm, arg_data_dir);
 
