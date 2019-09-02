@@ -44,6 +44,7 @@ using namespace epee;
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
+#include "cryptonote_core/cryptonote_core.h"
 #include "misc_language.h"
 #include "storages/http_abstract_invoke.h"
 #include "crypto/hash.h"
@@ -2262,6 +2263,26 @@ namespace cryptonote
     catch (const std::exception &e)
     {
       VERIFY_ROUND_STATISTICS_ERROR(CORE_RPC_ERROR_CODE_INTERNAL_ERROR,"Failed to get verify round statistics");
+    }
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+
+  bool core_rpc_server::on_get_path(const COMMAND_RPC_GET_PATH::request& req, COMMAND_RPC_GET_PATH::response& res, epee::json_rpc::error& error_resp)
+  {
+    // Variables
+    char buffer[1024];
+
+    memset(buffer,0,sizeof(buffer));
+    if (block_verifier_settings == 0 || readlink("/proc/self/exe",buffer,sizeof(buffer)-1) == -1)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+      error_resp.message = "Failed to get the path";
+      return false;
+    }
+    else
+    {
+      res.path = std::string(buffer) + "/verify_block.txt"; 
     }
     res.status = CORE_RPC_STATUS_OK;
     return true;

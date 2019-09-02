@@ -154,6 +154,7 @@ namespace cryptonote
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
         MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
         MAP_JON_RPC_WE("verify_round_statistics", on_verify_round_statistics, COMMAND_RPC_VERIFY_ROUND_STATISTICS)
+        MAP_JON_RPC_WE("get_path", on_get_path, COMMAND_RPC_GET_PATH)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -217,6 +218,7 @@ namespace cryptonote
     bool on_get_txpool_backlog(const COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::response& res, epee::json_rpc::error& error_resp);
     bool on_get_output_distribution(const COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::request& req, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::response& res, epee::json_rpc::error& error_resp);
     bool on_verify_round_statistics(const COMMAND_RPC_VERIFY_ROUND_STATISTICS::request& req, COMMAND_RPC_VERIFY_ROUND_STATISTICS::response& res, epee::json_rpc::error& error_resp);
+    bool on_get_path(const COMMAND_RPC_GET_PATH::request& req, COMMAND_RPC_GET_PATH::response& res, epee::json_rpc::error& error_resp);
     //-----------------------
 
 private:
