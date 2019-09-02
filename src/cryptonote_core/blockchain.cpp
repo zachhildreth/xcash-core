@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <stdlib.h>
+#include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/asio.hpp>
@@ -5777,6 +5778,15 @@ int get_random_block_verifier_node()
   return 1;
 }
 
+std::string get_path()
+{
+  // Variables
+  char buffer[1024];
+
+  memset(buffer,0,sizeof(buffer));
+  return readlink("/proc/self/exe",buffer,sizeof(buffer)-1) != -1 ? std::string(buffer) + "/verify_block.txt" : "";
+} 
+
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
 {
   // Variables
@@ -5921,6 +5931,32 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     color_print("Could not allocate the memory needed on the heap","red");
     exit(0);
   }
+
+  if (block_verifier_settings == 1)
+  {
+    // The block verifier has already verified the block using the xcash proof of stake program. Read the verify_block file and check if that datahash is in the network block
+    std::string block_verifier_data_path = get_path();
+    if (block_verifier_data_path == "")
+    {
+      color_print("Could not read the verify_block file","red");
+      exit(0);
+    }
+    std::ifstream ifs(block_verifier_data_path);
+    std::string block_verifier_data_hash((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
+    if (block_verifier_data_hash == "")
+    {
+      color_print("Could not read the verify_block file","red");
+      exit(0);
+    }
+    
+    // get the network block string 
+    network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+
+    // get the data hash
+    data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+
+    return data_hash == block_verifier_data_hash ? true : false;
+   }
 
   // initialize the blockchain_data struct 
   blockchain_data.network_version_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
