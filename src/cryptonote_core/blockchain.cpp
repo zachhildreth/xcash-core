@@ -5784,7 +5784,7 @@ std::string get_path()
   char buffer[1024];
 
   memset(buffer,0,sizeof(buffer));
-  return readlink("/proc/self/exe",buffer,sizeof(buffer)-1) != -1 ? std::string(buffer) + "/verify_block.txt" : "";
+  return readlink("/proc/self/exe",buffer,sizeof(buffer)-1) != -1 ? std::string(buffer).substr(0,strlen(buffer)-6) + "verify_block.txt" : "";
 } 
 
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)

@@ -2282,7 +2282,7 @@ namespace cryptonote
     }
     else
     {
-      res.path = std::string(buffer) + "/verify_block.txt"; 
+      res.path = std::string(buffer).substr(0,strlen(buffer)-6) + "verify_block.txt"; 
     }
     res.status = CORE_RPC_STATUS_OK;
     return true;
