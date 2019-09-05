@@ -1483,6 +1483,7 @@ namespace cryptonote
   {
     if(!m_starter_message_showed)
     {
+      srand(time(0));
       std::string main_message;
       if (m_offline)
         main_message = "The daemon is running offline and will not attempt to sync to the X-CASH network.";

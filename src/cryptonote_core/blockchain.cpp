@@ -3710,6 +3710,7 @@ bool Blockchain::update_next_cumulative_weight_limit()
 #define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
 #define BLOCKCHAIN_RESERVED_BYTES_DATA_HASH "02800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" // the reserve bytes data hash
 #define BLOCKCHAIN_DATA_SEGMENT_STRING "7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c"
+#define BLOCKCHAIN_DATA_SEGMENT_SIGN_DATA_STRING "7c424c4f434b434841494e5f444154415f5345474d454e545f535452494e477c5369675631"
 #define BLOCKCHAIN_RESERVED_BYTES_END "7c424c4f434b434841494e5f52455345525645445f42595445535f454e447c"
 #define BLOCKCHAIN_RESERVED_BYTES_START_DATA "424c4f434b434841494e5f52455345525645445f42595445535f5354415254"
 #define BLOCKCHAIN_RESERVED_BYTES_END_DATA "424c4f434b434841494e5f52455345525645445f42595445535f454e44"
@@ -4328,9 +4329,10 @@ int data_verify(const std::string PUBLIC_ADDRESS, const std::string DATA_SIGNATU
 
 int verify_data(const std::string MESSAGE, int settings)
 {
+
 // Constants
-const std::string public_address = MESSAGE.substr(MESSAGE.find(XCASH_WALLET_PREFIX),XCASH_WALLET_LENGTH);
-const std::string xcash_proof_of_stake_signature = MESSAGE.substr(MESSAGE.find(XCASH_SIGN_DATA_PREFIX),XCASH_SIGN_DATA_LENGTH);
+const std::string public_address = MESSAGE.substr(MESSAGE.find("|XCA")+1,XCASH_WALLET_LENGTH);
+const std::string xcash_proof_of_stake_signature = MESSAGE.substr(MESSAGE.find("|SigV1")+1,XCASH_SIGN_DATA_LENGTH);
 
 // Variables
 int count;
@@ -4344,6 +4346,7 @@ for (count = 0, count2 = 0; count < NETWORK_DATA_NODES_AMOUNT; count++)
 if (network_data_nodes_list.network_data_nodes_public_address[count] == public_address)
 {
 count2 = 1;
+break;
 }
 }
 }
@@ -4351,9 +4354,10 @@ else
 {
 for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
 {
-if (network_data_nodes_list.network_data_nodes_public_address[count] == public_address)
+if (current_block_verifiers_list.block_verifiers_public_address[count] == public_address)
 {
 count2 = 1;
+break;
 }
 }
 }
@@ -4362,7 +4366,7 @@ if (count2 != 1)
 {
 return 0;
 }
-return data_verify(public_address,xcash_proof_of_stake_signature,MESSAGE.substr(0,MESSAGE.length()-134)+"}");
+return data_verify(public_address,xcash_proof_of_stake_signature,MESSAGE.substr(0,MESSAGE.find("|XCA")+1));
 }
 
 int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_HEIGHT)
@@ -4374,6 +4378,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   size_t count;
   size_t count2;
   size_t count3;
+  size_t counter;
   size_t number;
   char* current_block_height = (char*)calloc(BUFFER_SIZE,sizeof(char));
   char* data2 = (char*)calloc(BUFFER_SIZE,sizeof(char));
@@ -4879,14 +4884,14 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   count += blockchain_data.blockchain_reserve_bytes.previous_block_hash_data_length + 64;
 
   // block_validation_node_signature_data
-  message_copy1 = strstr((char*)DATA+count,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length = (strlen(DATA) - strlen(message_copy1)) - count;
+  message_copy1 = strstr((char*)DATA,BLOCKCHAIN_DATA_SEGMENT_SIGN_DATA_STRING);
+  blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length = XCASH_SIGN_DATA_LENGTH*2;
   
-  size_t count5 = string_count(DATA,"5369675631");
-  for (count3 = 0; count3 < count5; count3++)
+  for (counter = 64, count3 = 0; count3 < BLOCK_VERIFIERS_AMOUNT; count3++)
   { 
-    memcpy(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count3],&DATA[count],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length);
+    memcpy(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count3],&message_copy1[counter],blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length);
     count += blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length + 64;
+    counter += blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length + 64;
     // convert the hexadecimal string to a string
     for (number = 0, count2 = 0; number < blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data_length; count2++, number += 2)
     {
@@ -5301,7 +5306,7 @@ int blockchain_data_to_network_block_string(char *result)
   #undef BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR
 }
 
-int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLOCK_HASH, const char* PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES)
+int verify_network_block_data(const char* PREVIOUS_BLOCK_HASH, const char* PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES)
 {
   // Variables
   size_t count;
@@ -5400,10 +5405,14 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   }
 
   // previous_block_hash
-  if (blockchain_data.previous_block_hash_data_length != 64 || memcmp(blockchain_data.previous_block_hash_data,PREVIOUS_BLOCK_HASH,64) != 0)
+fprintf(stderr,"%s|%s|%zu|",PREVIOUS_BLOCK_HASH,blockchain_data.previous_block_hash_data,blockchain_data.previous_block_hash_data_length);
+  if (blockchain_data.block_height != HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
   {
-    VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid previous block hash\nFunction: verify_network_block_data");
-  } 
+    if (blockchain_data.previous_block_hash_data_length != 64 || memcmp(blockchain_data.previous_block_hash_data,PREVIOUS_BLOCK_HASH,64) != 0)
+    {
+      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid network_block_string\nInvalid previous block hash\nFunction: verify_network_block_data");
+    } 
+  }
   
   // nonce
   if (blockchain_data.nonce_data_length != sizeof(BLOCK_PRODUCER_NETWORK_BLOCK_NONCE)-1 || (memcmp(blockchain_data.nonce_data,BLOCK_PRODUCER_NETWORK_BLOCK_NONCE,sizeof(BLOCK_PRODUCER_NETWORK_BLOCK_NONCE)-1) != 0 && memcmp(blockchain_data.nonce_data,CONSENSUS_NODE_NETWORK_BLOCK_NONCE,sizeof(BLOCK_PRODUCER_NETWORK_BLOCK_NONCE)-1) != 0))
@@ -5418,8 +5427,8 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   }
 
   // unlock_block
-  sscanf(BLOCK_HEIGHT, "%zu", &number);  
-  if ((blockchain_data.unlock_block <= 2097091 && blockchain_data.unlock_block_data_length != 6) || (blockchain_data.unlock_block > 2097091 && blockchain_data.unlock_block_data_length != 8) || blockchain_data.unlock_block != (number + UNLOCK_BLOCK_AMOUNT))
+  //sscanf(BLOCK_HEIGHT, "%zu", &number);  
+  if ((blockchain_data.unlock_block <= 2097091 && blockchain_data.unlock_block_data_length != 6) || (blockchain_data.unlock_block > 2097091 && blockchain_data.unlock_block_data_length != 8) || blockchain_data.unlock_block != (blockchain_data.block_height + UNLOCK_BLOCK_AMOUNT))
   {
     VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid unlock_block");
   }
@@ -5437,20 +5446,10 @@ int verify_network_block_data(const char* BLOCK_HEIGHT, const char* PREVIOUS_BLO
   }
 
   // block_height
-  if (memcmp(BLOCK_HEIGHT,"0",1) == 0)
+  if ((blockchain_data.block_height <= 2097151 && blockchain_data.block_height_data_length != 6) || (blockchain_data.block_height > 2097151 && blockchain_data.block_height_data_length != 8))
   {
-    if ((blockchain_data.block_height <= 2097151 && blockchain_data.block_height_data_length != 6) || (blockchain_data.block_height > 2097151 && blockchain_data.block_height_data_length != 8) || blockchain_data.block_height != number)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid block_height");
-    }
+    VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid block_height");
   }
-  else
-  {
-    if ((blockchain_data.block_height <= 2097151 && blockchain_data.block_height_data_length != 6) || (blockchain_data.block_height > 2097151 && blockchain_data.block_height_data_length != 8))
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid block_height");
-    }
-  }  
 
   // block_reward_output
   if (blockchain_data.block_reward_output_data_length != sizeof(BLOCK_REWARD_OUTPUT)-1 || memcmp(blockchain_data.block_reward_output_data,BLOCK_REWARD_OUTPUT,sizeof(BLOCK_REWARD_OUTPUT)-1) != 0)
@@ -5699,8 +5698,8 @@ int get_random_block_verifier_node()
   std::size_t count3 = 0;
   std::size_t data_count1 = 0;
   std::size_t data_count2 = 0;
-  std::string reserve_bytes_database_vote_count_data[100];
-  int reserve_bytes_database_vote_count[100];
+  std::string reserve_bytes_database_vote_count_data[BLOCK_VERIFIERS_AMOUNT];
+  int reserve_bytes_database_vote_count[BLOCK_VERIFIERS_AMOUNT];
   std::string current_block_verifiers_list_public_address;
   std::string current_block_verifiers_list_IP_address;
   int settings;
@@ -5733,18 +5732,15 @@ int get_random_block_verifier_node()
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     string = send_and_receive_data(current_block_verifiers_list.block_verifiers_IP_address[count],NODES_TO_BLOCK_VERIFIERS_RESERVE_BYTES_DATABASE_SYNC_CHECK_ALL_UPDATE);
-    MGINFO_GREEN("string = " << string);
 
     // add the data hash to the string array only if it is a verified message
-    reserve_bytes_database_vote_count_data[count] = verify_data(string,1) == 1 ? string.substr(string.find("\"data_hash\"")+14,DATA_HASH_LENGTH) : "";
-    MGINFO_GREEN("reserve_bytes_database_vote_count_data = " << reserve_bytes_database_vote_count_data[count]);
+    reserve_bytes_database_vote_count_data[count] = verify_data(string,1) == 1 ? string.substr(72,DATA_HASH_LENGTH) : "";
   }
 
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     // count each vote count for the reserve bytes database
     reserve_bytes_database_vote_count[count] = std::count(reserve_bytes_database_vote_count_data,reserve_bytes_database_vote_count_data+BLOCK_VERIFIERS_AMOUNT,reserve_bytes_database_vote_count_data[count]);
-    MGINFO_GREEN(reserve_bytes_database_vote_count[count]);
   } 
 
   // check if any of the results are valid
@@ -5764,12 +5760,11 @@ int get_random_block_verifier_node()
   }
 
   // select a random block verifier to sync the database from that was synced
-  count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT + 1);
+  count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
   while (reserve_bytes_database_vote_count[count] < BLOCK_VERIFIERS_VALID_AMOUNT || reserve_bytes_database_vote_count_data[count] == "")
   {
-    count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT + 1);
+    count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
   }
-
   current_block_verifier_public_address = current_block_verifiers_list.block_verifiers_public_address[count];
   current_block_verifier_IP_address = current_block_verifiers_list.block_verifiers_IP_address[count];
 
@@ -5791,6 +5786,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
 {
   // Variables
   char* data = (char*)calloc(1000,sizeof(char));
+  char* data2 = (char*)calloc(1000,sizeof(char));
   char* block_height = (char*)calloc(100,sizeof(char));
   std::string network_block_string;
   std::string previous_data_hash;
@@ -5911,11 +5907,9 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   { \
     color_print(message,"red"); \
     pointer_reset_all; \
+    get_random_block_verifier_node(); \
     return false; \
-    while (get_random_block_verifier_node() == 0) \
-    { \
-    } \
-  } \
+  }
 
   // check if the memory needed was allocated on the heap successfully
   if (data == NULL || block_height == NULL)
@@ -5984,7 +5978,9 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
   blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
   blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
-  blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+  blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));  
+  blockchain_data.blockchain_reserve_bytes.vrf_secret_key_data_round_part_4 = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+  blockchain_data.blockchain_reserve_bytes.vrf_secret_key_round_part_4 = (unsigned char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4 = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
   blockchain_data.blockchain_reserve_bytes.vrf_public_key_round_part_4 = (unsigned char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
   blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4 = (char*)calloc(BUFFER_SIZE,sizeof(char));
@@ -6000,7 +5996,8 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   // check if the memory needed was allocated on the heap successfully
   if (blockchain_data.network_version_data == NULL || blockchain_data.timestamp_data == NULL || blockchain_data.previous_block_hash_data == NULL || blockchain_data.nonce_data == NULL || blockchain_data.block_reward_transaction_version_data == NULL || blockchain_data.unlock_block_data == NULL || blockchain_data.block_reward_input_data == NULL || blockchain_data.vin_type_data == NULL || blockchain_data.block_height_data == NULL || blockchain_data.block_reward_output_data == NULL || blockchain_data.block_reward_data == NULL || blockchain_data.stealth_address_output_tag_data == NULL || blockchain_data.stealth_address_output_data == NULL || blockchain_data.extra_bytes_size_data == NULL || blockchain_data.transaction_public_key_tag_data == NULL || blockchain_data.transaction_public_key_data == NULL || blockchain_data.extra_nonce_tag_data == NULL || blockchain_data.reserve_bytes_size_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data == NULL || blockchain_data.blockchain_reserve_bytes.previous_block_hash_data == NULL)
   {
-    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not allocate the memory needed on the heap",0);
+    color_print("Could not allocate the memory needed on the heap","red");
+    exit(0);
   }
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
@@ -6008,11 +6005,18 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
     blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
     blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key[count] = (unsigned char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key[count] = (unsigned char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_random_data[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
+    blockchain_data.blockchain_reserve_bytes.block_verifiers_random_data_text[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
 
     // check if the memory needed was allocated on the heap successfully
-    if (blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count] == NULL)
+    if (blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key[count] == NULL)
     {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not allocate the memory needed on the heap",0);
+      color_print("Could not allocate the memory needed on the heap","red");
+      exit(0);
     }
   }
   blockchain_data.ringct_version_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
@@ -6024,7 +6028,8 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     // check if the memory needed was allocated on the heap successfully
     if (blockchain_data.transactions[count] == NULL)
     {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not allocate the memory needed on the heap",0);
+      color_print("Could not allocate the memory needed on the heap","red");
+      exit(0);
     }
   }
 
@@ -6048,19 +6053,20 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   // get the network block string 
   network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
 
+  // get the data hash
+  data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
+
   // check if this is the start block of the network
   if (current_block_height == HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
   {
     // check if the main network data node signed the network block string
 
-    // get the data hash
-    data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+66,DATA_HASH_LENGTH);
-
     // create the message
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    while (string != "")
+    string = "";
+    while (string == "")
     {
       string = send_and_receive_data(current_block_verifier_IP_address,message);
     }
@@ -6072,43 +6078,43 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     }  
 
     // get the network block string
-    count = string.find("\"reserve_bytes\": \"")+18;
-    count2 = string.find(",\r\n \"public_address\"");
-    network_block_string = string.substr(count,count2 - count);
+    string = string.substr(43,string.find("|",43)-43);
 
     // check if the data hash matches the network block string
     memset(data,0,strlen(data));
-    crypto_hash_sha512((unsigned char*)data,(const unsigned char*)network_block_string.c_str(),strlen(network_block_string.c_str()));
-    if (memcmp(data,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
+    crypto_hash_sha512((unsigned char*)data,(const unsigned char*)string.c_str(),strlen(string.c_str()));
+
+    // convert the SHA512 data hash to a string
+    for (count2 = 0, count = 0; count2 < DATA_HASH_LENGTH / 2; count2++, count += 2)
+    {
+      sprintf(data2+count,"%02x",data[count2] & 0xFF);
+    }
+
+    if (memcmp(data2,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash",1);
     }
 
     // convert the network_block_string to a blockchain_data struct
-    if (network_block_string_to_blockchain_data(network_block_string.c_str(),(const char*)block_height) == 0)
+    if (network_block_string_to_blockchain_data(string.c_str(),(const char*)block_height) == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
 
     // verify the network block string
-    if (verify_network_block_data(block_height,network_block_string.substr(14,64).c_str(),previous_network_block_string.c_str()) == 0)
+    if (verify_network_block_data("","") == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
   }
   else
   {
-    // get the data hash
-    data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+66,DATA_HASH_LENGTH);
-
-    // get the previous data hash
-    previous_data_hash = previous_network_block_string.substr(previous_network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+66,DATA_HASH_LENGTH);
-
     // create the message
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    while (string != "")
+    string = "";
+    while (string == "")
     {
       string = send_and_receive_data(current_block_verifier_IP_address,message);
     }
@@ -6123,7 +6129,8 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
     // send the message to a random network data node
-    while (string2 != "")
+    string2 = "";
+    while (string2 == "")
     {
       string2 = send_and_receive_data(current_block_verifier_IP_address,message);
     }
@@ -6135,39 +6142,34 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     }  
 
     // get the network block string
-    count = string.find("\"reserve_bytes\": \"")+18;
-    count2 = string.find(",\r\n \"public_address\"");
-    network_block_string = string.substr(count,count2 - count);
+    string = string.substr(43,string.find("|",43)-43);
 
     // get the previous_network block string
-    count = string.find("\"reserve_bytes\": \"")+18;
-    count2 = string.find(",\r\n \"public_address\"");
-    previous_network_block_string = string.substr(count,count2 - count);
+    string2 = string2.substr(43,string2.find("|",43)-43);
 
     // check if the data hash matches the network block string
     memset(data,0,strlen(data));
-    crypto_hash_sha512((unsigned char*)data,(const unsigned char*)network_block_string.c_str(),strlen(network_block_string.c_str()));
-    if (memcmp(data,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
+    crypto_hash_sha512((unsigned char*)data,(const unsigned char*)string.c_str(),strlen(string.c_str()));
+
+    // convert the SHA512 data hash to a string
+    for (count2 = 0, count = 0; count2 < DATA_HASH_LENGTH / 2; count2++, count += 2)
     {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash",1);
+      sprintf(data2+count,"%02x",data[count2] & 0xFF);
     }
 
-    // check if the previous data hash matches the previous_network block string
-    memset(data,0,strlen(data));
-    crypto_hash_sha512((unsigned char*)data,(const unsigned char*)previous_network_block_string.c_str(),strlen(previous_network_block_string.c_str()));
-    if (memcmp(data,previous_data_hash.c_str(),DATA_HASH_LENGTH) != 0)
+    if (memcmp(data2,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash",1);
     }
 
     // convert the network_block_string to a blockchain_data struct
-    if (network_block_string_to_blockchain_data(network_block_string.c_str(),(const char*)block_height) == 0)
+    if (network_block_string_to_blockchain_data(string.c_str(),(const char*)block_height) == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
 
     // verify the network block string
-    if (verify_network_block_data(block_height,network_block_string.substr(14,64).c_str(),previous_network_block_string.c_str()) == 0)
+    if (verify_network_block_data(string.substr(14,64).c_str(),string2.c_str()) == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
