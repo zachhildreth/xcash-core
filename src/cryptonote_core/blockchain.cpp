@@ -5306,7 +5306,7 @@ int blockchain_data_to_network_block_string(char *result)
   #undef BLOCKCHAIN_DATA_TO_NETWORK_BLOCK_ERROR
 }
 
-int verify_network_block_data(const char* PREVIOUS_BLOCK_HASH, const char* PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES)
+int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const char* PREVIOUS_BLOCK_HASH, const char* PREVIOUS_NETWORK_BLOCK_RESERVE_BYTES)
 {
   // Variables
   size_t count;
@@ -5405,7 +5405,6 @@ int verify_network_block_data(const char* PREVIOUS_BLOCK_HASH, const char* PREVI
   }
 
   // previous_block_hash
-fprintf(stderr,"%s|%s|%zu|",PREVIOUS_BLOCK_HASH,blockchain_data.previous_block_hash_data,blockchain_data.previous_block_hash_data_length);
   if (blockchain_data.block_height != HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
   {
     if (blockchain_data.previous_block_hash_data_length != 64 || memcmp(blockchain_data.previous_block_hash_data,PREVIOUS_BLOCK_HASH,64) != 0)
@@ -5578,10 +5577,18 @@ fprintf(stderr,"%s|%s|%zu|",PREVIOUS_BLOCK_HASH,blockchain_data.previous_block_h
   memset(blockchain_data.blockchain_reserve_bytes.vrf_data,0,strnlen(blockchain_data.blockchain_reserve_bytes.vrf_data,11));
   memcpy(blockchain_data.blockchain_reserve_bytes.vrf_data,VRF_DATA,sizeof(VRF_DATA)-1);
 
+  // get the network block string
+  memset(network_block_string,0,strnlen(network_block_string,BUFFER_SIZE));
+  memcpy(network_block_string,NETWORK_BLOCK_RESERVE_BYTES,strnlen(NETWORK_BLOCK_RESERVE_BYTES,BUFFER_SIZE));
+
   // block_validation_node_signature 
   if (blockchain_data.block_height == HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
   {
     // This is the first block of the xcash_proof_of_stake. Check if the main network data node signed the block
+
+    // replace the main network data nodes block validation signature with the GET_BLOCK_TEMPLATE_BLOCK_VERIFIERS_SIGNATURE_DATA
+    string_replace(network_block_string,BUFFER_SIZE,blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[0],GET_BLOCK_TEMPLATE_BLOCK_VERIFIERS_SIGNATURE_DATA);
+
     if (data_verify(NETWORK_DATA_NODE_PUBLIC_ADDRESS_1,blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[0],network_block_string) == 1)
     {
       number = 100;
@@ -5611,12 +5618,6 @@ fprintf(stderr,"%s|%s|%zu|",PREVIOUS_BLOCK_HASH,blockchain_data.previous_block_h
         memcpy(data,&data2[number],2);
         previous_network_block_reserve_bytes_block_verifiers_public_addresses[count][count3] = (int)strtol(data, NULL, 16);
       }      
-    }
-
-    // create a network block string
-    if (blockchain_data_to_network_block_string(network_block_string) == 0)
-    {
-      VERIFY_NETWORK_BLOCK_DATA_ERROR("Could not convert the blockchain struct to a network block string");
     }
 
     // replace the block validation signatures with the GET_BLOCK_TEMPLATE_BLOCK_VERIFIERS_SIGNATURE_DATA
@@ -6102,7 +6103,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     }
 
     // verify the network block string
-    if (verify_network_block_data("","") == 0)
+    if (verify_network_block_data(string.c_str(),"","") == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
@@ -6169,7 +6170,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     }
 
     // verify the network block string
-    if (verify_network_block_data(string.substr(14,64).c_str(),string2.c_str()) == 0)
+    if (verify_network_block_data(string.c_str(),string.substr(14,64).c_str(),string2.c_str()) == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
