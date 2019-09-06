@@ -2670,7 +2670,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    fail_msg_writer() << tr("Failed to remove the delegate");
   }
   return true;  
   
@@ -2833,7 +2833,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    fail_msg_writer() << tr("Failed to update the delegate");
   }
   return true;  
   
