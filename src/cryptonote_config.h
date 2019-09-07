@@ -192,7 +192,7 @@
 #define HF_VERSION_PROOF_OF_STAKE 13
 #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 240501 // The first block of the X-CASH proof of stake
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
-#define SEND_DATA_PORT "8000" // The port that is used by all nodes to send and receive data
+#define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 #define BLOCK_VERIFIERS_VALID_AMOUNT 4 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_AMOUNT 4 // The amount of block verifiers in a round
