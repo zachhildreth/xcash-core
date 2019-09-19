@@ -2724,9 +2724,14 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   }
 
   // check if the item to update is a valid item
-  if (args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "pool_mode" && args[0] != "fee_structure" && args[0] != "server_settings")
+  if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "pool_mode" && args[0] != "fee_structure" && args[0] != "server_settings")
   {
     fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings");
+    return true;  
+  }
+  if (args[0] == "IP_address" && (args[1].length() > 255 || args[1].find(":") != std::string::npos)
+  {
+    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
     return true;  
   }
   if (args[0] == "about" && args[1].length() > 1024)
