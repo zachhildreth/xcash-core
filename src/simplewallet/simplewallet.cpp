@@ -2320,8 +2320,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -2436,9 +2434,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to register the delegate");
   }
   return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+
   #undef MESSAGE
 }
 
@@ -2463,8 +2459,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -2568,9 +2562,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to register the delegate");
   }
   return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+
   #undef MESSAGE
 }
 
@@ -2595,8 +2587,6 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -2699,10 +2689,8 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   {
     fail_msg_writer() << tr("Failed to remove the delegate");
   }
-  return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+  return true; 
+
   #undef MESSAGE
 }
 
@@ -2727,8 +2715,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -2874,9 +2860,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to update the delegate");
   }
   return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+
   #undef MESSAGE
 }
 

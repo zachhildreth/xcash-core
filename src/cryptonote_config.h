@@ -191,14 +191,20 @@
 // X-CASH Proof Of Stake
 #define HF_VERSION_PROOF_OF_STAKE 13
 #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 240501 // The first block of the X-CASH proof of stake
+#define BLOCK_TIME 5 // the block time in minutes
+#define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
+#define BLOCK_TEMPLATE_BUFFER_SIZE 5000
+#define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+#define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+#define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix of a xcash_proof_of_stake_signature for the signed data
+#define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed datas
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
 #define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 10 // The maximum amount of socket_connection_timeouts
 #define SOCKET_CONNECTION_TIMEOUT_SETTINGS 1000 // The time in milliseconds, to wait before a connection is cancelled
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 #define BLOCK_VERIFIERS_VALID_AMOUNT 4 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_AMOUNT 4 // The amount of block verifiers in a round
-#define BLOCK_TEMPLATE_BUFFER_SIZE 5000
 #define NETWORK_DATA_NODES_AMOUNT 2 // The amount of network data nodes
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"

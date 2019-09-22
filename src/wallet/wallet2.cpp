@@ -10299,13 +10299,13 @@ std::string wallet2::sign(const std::string &data) const
   const cryptonote::account_keys &keys = m_account.get_keys();
   crypto::signature signature;
   crypto::generate_signature(hash, keys.m_account_address.m_spend_public_key, keys.m_spend_secret_key, signature);
-  return std::string("SigV1") + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
+  return std::string(XCASH_SIGN_DATA_PREFIX) + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
 }
 
 bool wallet2::verify(const std::string &data, const cryptonote::account_public_address &address, const std::string &signature) const
 {
-  const size_t header_len = strlen("SigV1");
-  if (signature.size() < header_len || signature.substr(0, header_len) != "SigV1") {
+  const size_t header_len = sizeof(XCASH_SIGN_DATA_PREFIX)-1;
+  if (signature.size() < header_len || signature.substr(0, header_len) != XCASH_SIGN_DATA_PREFIX) {
     LOG_PRINT_L0("Signature header check error");
     return false;
   }

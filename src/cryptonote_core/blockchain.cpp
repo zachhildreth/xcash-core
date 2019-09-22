@@ -3688,15 +3688,8 @@ bool Blockchain::update_next_cumulative_weight_limit()
 #define NODES_TO_BLOCK_VERIFIERS_RESERVE_BYTES_DATABASE_SYNC_CHECK_ALL_UPDATE "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_RESERVE_BYTES_DATABASE_SYNC_CHECK_ALL_UPDATE\",\r\n}"
 
 // Blockchain
-#define XCASH_WALLET_LENGTH 98 // The length of a XCA addres
-#define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
-#define XCASH_PROOF_OF_STAKE_BLOCK_HEIGHT 240501 // the start block height for X-CASH proof of stake
-#define BLOCK_TIME 5 // the block time in minutes
-#define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define UNLOCK_BLOCK_AMOUNT 60 // The default unlock block amount for a block reward transaction
 #define MAXIMUM_TRANSACATIONS_PER_BLOCK 1000000 // The maximum amount of transaction per block
-#define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix of a xcash_proof_of_stake_signature for the signed data
-#define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed datas
 
 // network block string
 #define BLOCK_PRODUCER_NETWORK_BLOCK_NONCE "00000000" // the network block nonce used when the block producer creates the block
@@ -4317,7 +4310,7 @@ int data_verify(const std::string PUBLIC_ADDRESS, const std::string DATA_SIGNATU
     return 0;
   }
 
-  if (DATA_SIGNATURE.size() < 5 || DATA_SIGNATURE.substr(0, 5) != XCASH_SIGN_DATA_PREFIX)
+  if (DATA_SIGNATURE.size() < sizeof(XCASH_SIGN_DATA_PREFIX)-1 || DATA_SIGNATURE.substr(0, sizeof(XCASH_SIGN_DATA_PREFIX)-1) != XCASH_SIGN_DATA_PREFIX)
   {
     return 0;
   }  

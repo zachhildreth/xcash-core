@@ -3438,9 +3438,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   int count2;
   int count3;
 
-  // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+  // define macros  
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -3504,7 +3502,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     };
     print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,3) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
     er.message = "Invalid address";
@@ -3559,10 +3557,8 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     er.message = "Failed to send the vote";
     return false; 
   }
-  return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+  return true; 
+
   #undef MESSAGE
 }
 
@@ -3587,8 +3583,6 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -3695,10 +3689,8 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     er.message = "Failed to register the delegate";
     return false;
   }
-  return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+  return true; 
+
   #undef MESSAGE
 }
 
@@ -3723,8 +3715,6 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -3832,9 +3822,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false; 
   }
   return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+
   #undef MESSAGE
 }
 
@@ -3859,8 +3847,6 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   int count3;
 
   // define macros
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 
   try
@@ -4011,10 +3997,8 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information";
     return false;
   }
-  return true;  
-  
-  #undef XCASH_WALLET_LENGTH
-  #undef XCASH_WALLET_PREFIX
+  return true; 
+
   #undef MESSAGE
 }
 }
