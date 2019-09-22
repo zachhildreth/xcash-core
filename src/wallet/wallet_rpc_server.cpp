@@ -27,8 +27,11 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+#include <thread>
+#include <future>
 #include <boost/format.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
@@ -3392,7 +3395,14 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-  boost::asio::connect(socket, data);
+
+  std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
+  auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
+  if (status == std::future_status::timeout)
+  {
+    socket.cancel();
+    return "socket_timeout";
+  }
 
   std::ostream http_request(&message);
   http_request << data2;
@@ -3459,9 +3469,16 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3600,9 +3617,16 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false; 
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3729,9 +3753,16 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
   }
 
   // initialize the current_block_verifiers_list struct
@@ -3902,9 +3933,16 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information";
+    return false; 
   }
 
   // initialize the current_block_verifiers_list struct

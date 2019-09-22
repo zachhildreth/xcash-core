@@ -34,6 +34,7 @@
  * \brief Source file that defines simple_wallet class.
  */
 #include <thread>
+#include <future>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -44,6 +45,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
 #include <boost/asio/ip/address.hpp>
 #include "include_base_utils.h"
 #include "common/i18n.h"
@@ -2274,7 +2276,14 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-  boost::asio::connect(socket, data);
+
+  std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
+  auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
+  if (status == std::future_status::timeout)
+  {
+    socket.cancel();
+    return "socket_timeout";
+  }
 
   std::ostream http_request(&message);
   http_request << data2;
@@ -2344,9 +2353,15 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\n");
+    return true; 
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2481,9 +2496,15 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\n");
+    return true; 
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2607,9 +2628,15 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    fail_msg_writer() << tr("Failed to remove the delegate\n");
+    return true; 
   }
 
   // initialize the current_block_verifiers_list struct
@@ -2637,7 +2664,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   
   if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
-    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    fail_msg_writer() << tr("Failed to remove the delegate\nInvalid public address. Only XCA addresses are allowed.");
     return true;  
   }
  
@@ -2729,7 +2756,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings");
     return true;  
   }
-  if (args[0] == "IP_address" && (args[1].length() > 255 || args[1].find(":") != std::string::npos)
+  if (args[0] == "IP_address" && (args[1].length() > 255 || args[1].find(":") != std::string::npos))
   {
     fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
     return true;  
@@ -2775,9 +2802,15 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    fail_msg_writer() << tr("Failed to update the delegates information\n");
+    return true; 
   }
 
   // initialize the current_block_verifiers_list struct

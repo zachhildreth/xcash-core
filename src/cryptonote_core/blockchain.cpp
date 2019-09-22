@@ -28,6 +28,8 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <thread>
+#include <future>
 #include <algorithm>
 #include <cstdio>
 #include <stdlib.h>
@@ -35,6 +37,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/thread.hpp>
  
@@ -3926,7 +3929,14 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-  boost::asio::connect(socket, data);
+
+  std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
+  auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
+  if (status == std::future_status::timeout)
+  {
+    socket.cancel();
+    return "socket_timeout";
+  }
 
   std::ostream http_request(&message);
   http_request << data2;
@@ -5314,9 +5324,15 @@ int get_random_block_verifier_node()
   int settings;
 
   // send the message to a random network data node
-  while (string.find("|") == std::string::npos)
+  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
+  }
+ 
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    color_print("Block verifiers are not in sync","red");
+    exit(0);
   }
 
   // parse the message
@@ -5678,10 +5694,14 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    string = "";
-    while (string == "")
+    for (count = 0; string != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
     {
       string = send_and_receive_data(current_block_verifier_IP_address,message);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
     }
 
     // verify the message
@@ -5726,10 +5746,14 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    string = "";
-    while (string == "")
+    for (count = 0; string != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
     {
       string = send_and_receive_data(current_block_verifier_IP_address,message);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
     }
 
     // verify the message
@@ -5742,10 +5766,14 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
     // send the message to a random network data node
-    string2 = "";
-    while (string2 == "")
+    for (count = 0; string2 != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
     {
       string2 = send_and_receive_data(current_block_verifier_IP_address,message);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
     }
 
     // verify the message
