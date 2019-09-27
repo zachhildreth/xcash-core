@@ -110,7 +110,25 @@ static const struct {
   { 1, 0, 0, 1531875600 },
 
   // version 7 starts from block 1, which is on or around July 18, 2018. This version includes the new POW cryptonight_v7 algorithm.
-  { 13, 1, 0, 1531962000 },
+  { 7, 1, 0, 1531962000 },
+
+  // version 8 starts from block 95085, which is on or around Oct 8, 2018. This version includes a new difficulty algorithm.
+  { 8, 95085, 0, 1538524800 },
+  
+  // version 9 starts from block 106000, which is on or around Oct 16, 2018. This version includes a change to the new difficulty algorithm.
+  { 9, 106000, 0, 1539550195 },
+
+  // version 10 starts from block 136000, which is on or around Nov 6, 2018. This version includes bullet proofs, public transactions, fixed ring size of 21 and a few other items.
+  { 10, 136000, 0, 1540145330 },
+
+  // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
+  { 11, 137000, 0, 1540146330 },
+
+  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to Cryptonight HeavyX and changes the block time to 2 minutes.
+  { 12, 281000, 0, 1549310115 },
+
+  // version 13 starts from block 440875, which is on or around Feb 15, 2019. This version changes the consensus mechanism from proof of work to delegated proof of privacy stake (DPOPS), changes the block time from 2 to 5 minutes, and double the block reward.
+  { 13, 440875, 0, 1561310115 },
 };
 static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
@@ -3922,15 +3940,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-
+  
   std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
   auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
-  if (status == std::future_status::timeout)
-  {
-    socket.cancel();
-    return "socket_timeout";
-  }
-
+  
   std::ostream http_request(&message);
   http_request << data2;
  
@@ -3942,6 +3955,7 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   std::getline(response_stream, string, '}');
   return string;
 }
+
 
 
 size_t string_count(const char* DATA, const char* STRING)
@@ -5317,7 +5331,7 @@ int get_random_block_verifier_node()
   int settings;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
   }

@@ -2276,15 +2276,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-
+  
   std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
   auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
-  if (status == std::future_status::timeout)
-  {
-    socket.cancel();
-    return "socket_timeout";
-  }
-
+  
   std::ostream http_request(&message);
   http_request << data2;
  
@@ -2351,7 +2346,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -2490,7 +2485,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -2618,7 +2613,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -2788,7 +2783,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -3229,7 +3224,7 @@ simple_wallet::simple_wallet()
                            tr("Returns version information"));
   m_cmd_binder.set_handler("vote",
                            boost::bind(&simple_wallet::vote, this, _1),
-                           tr("vote <delegates_public_address>"),
+                           tr("vote <delegates_name | delegates_public_address>"),
                            tr("Votes for a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("delegate_register",
                            boost::bind(&simple_wallet::delegate_register, this, _1),

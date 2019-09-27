@@ -2085,10 +2085,10 @@ namespace wallet_rpc
   {
     struct request
     {
-      std::string delegate_public_address;
+      std::string delegate_data;
  
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(delegate_public_address)
+        KV_SERIALIZE(delegate_data)
       END_KV_SERIALIZE_MAP()
     };
  

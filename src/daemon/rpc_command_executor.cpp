@@ -2210,15 +2210,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-
+  
   std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
   auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
-  if (status == std::future_status::timeout)
-  {
-    socket.cancel();
-    return "socket_timeout";
-  }
-
+  
   std::ostream http_request(&message);
   http_request << data2;
  
@@ -2230,6 +2225,7 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   std::getline(response_stream, string, '}');
   return string;
 }
+
 
 
 size_t string_count(const char* DATA, const char* STRING)

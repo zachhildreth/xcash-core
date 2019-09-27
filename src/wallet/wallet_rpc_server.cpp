@@ -3395,15 +3395,10 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   tcp::resolver::query query(IP_address, SEND_DATA_PORT);
   tcp::resolver::iterator data = resolver.resolve(query);
   tcp::socket socket(http_service);
-
+  
   std::future<tcp::resolver::iterator> conn_result = boost::asio::async_connect(socket,data,boost::asio::use_future);
   auto status = conn_result.wait_for(std::chrono::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS));
-  if (status == std::future_status::timeout)
-  {
-    socket.cancel();
-    return "socket_timeout";
-  }
-
+  
   std::ostream http_request(&message);
   http_request << data2;
  
@@ -3415,6 +3410,7 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
   std::getline(response_stream, string, '}');
   return string;
 }
+
 
 bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er)
 {
@@ -3467,7 +3463,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -3522,7 +3518,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
  
   // create the data
-  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_public_address + "|" + reserve_proof + "|" + public_address + "|";
+  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_data + "|" + reserve_proof + "|" + public_address + "|";
  
   // sign the data    
   data3 = m_wallet->sign(data2);
@@ -3611,7 +3607,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -3743,7 +3739,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
@@ -3868,11 +3864,17 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false;
   }
 
-    // check if the item to update is a valid item
-  if (req.item != "about" && req.item != "website" && req.item != "team" && req.item != "pool_mode" && req.item != "fee_structure" && req.item != "server_settings")
+  // check if the item to update is a valid item
+  if (req.item != "IP_address" && req.item != "about" && req.item != "website" && req.item != "team" && req.item != "pool_mode" && req.item != "fee_structure" && req.item != "server_settings")
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
     er.message = "Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings";
+    return false;
+  }
+  if (req.item == "IP_address" && (req.value.length() > 255 || req.value.find(":") != std::string::npos))
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255";
     return false;
   }
   if (req.item == "about" && req.value.length() > 1024)
@@ -3919,7 +3921,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; 
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
   }
