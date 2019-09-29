@@ -38,6 +38,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <cmath>
 #include <ctype.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -2310,9 +2311,11 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2357,8 +2360,11 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     return true; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -2415,7 +2421,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     message_writer(console_color_green, false) << "Vote has been sent successfully";             
   } 
@@ -2449,9 +2455,11 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2496,8 +2504,11 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     return true; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -2543,7 +2554,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     message_writer(console_color_green, false) << "The delegate has been registered successfully";             
   } 
@@ -2577,9 +2588,11 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2624,8 +2637,11 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
     return true; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -2671,7 +2687,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     message_writer(console_color_green, false) << "The delegate has been removed successfully";             
   } 
@@ -2705,9 +2721,11 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2794,8 +2812,11 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     return true; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -2841,7 +2862,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
   } 

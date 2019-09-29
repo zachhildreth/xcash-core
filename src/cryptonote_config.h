@@ -205,6 +205,7 @@
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 #define BLOCK_VERIFIERS_AMOUNT 4 // The amount of block verifiers in a round
 #define BLOCK_VERIFIERS_VALID_AMOUNT 4 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.67 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 #define NETWORK_DATA_NODES_AMOUNT 2 // The amount of network data nodes
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"

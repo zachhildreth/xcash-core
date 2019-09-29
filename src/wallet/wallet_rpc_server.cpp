@@ -36,6 +36,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include <cstdint>
+#include <cmath>
 #include "include_base_utils.h"
 using namespace epee;
  
@@ -3430,9 +3431,11 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros  
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -3475,8 +3478,11 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     return false;
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3535,7 +3541,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     res.vote_status = "success";
     return true;            
@@ -3574,9 +3580,11 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -3619,8 +3627,11 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     return false; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3667,7 +3678,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     res.delegate_register_status = "success";
     return true;            
@@ -3706,9 +3717,11 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -3751,8 +3764,11 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false;
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3799,7 +3815,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     res.delegate_remove_status = "success";
     return true;            
@@ -3838,9 +3854,11 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  int count; 
-  int count2;
-  int count3;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -3933,8 +3951,11 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false; 
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
@@ -3981,7 +4002,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
 
   // check the result of the data
-  if (count2 >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     res.delegate_update_status = "success";
     return true;            

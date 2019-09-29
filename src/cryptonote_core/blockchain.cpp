@@ -32,6 +32,7 @@
 #include <future>
 #include <algorithm>
 #include <cstdio>
+#include <cmath>
 #include <stdlib.h>
 #include <fstream>
 #include <boost/filesystem.hpp>
@@ -5324,6 +5325,8 @@ int get_random_block_verifier_node()
   std::size_t count3 = 0;
   std::size_t data_count1 = 0;
   std::size_t data_count2 = 0;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
   std::string reserve_bytes_database_vote_count_data[BLOCK_VERIFIERS_AMOUNT];
   int reserve_bytes_database_vote_count[BLOCK_VERIFIERS_AMOUNT];
   std::string current_block_verifiers_list_public_address;
@@ -5342,12 +5345,15 @@ int get_random_block_verifier_node()
     exit(0);
   }
 
+  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   // parse the message
   current_block_verifiers_list_public_address = string.substr(string.find("\"block_verifiers_public_address_list\": \"")+40,(string.find("\"",string.find("\"block_verifiers_public_address_list\": \"")+40)) - (string.find("\"block_verifiers_public_address_list\": \"")+40));
   current_block_verifiers_list_IP_address = string.substr(string.find("\"block_verifiers_IP_address_list\": \"")+36,(string.find("\"",string.find("\"block_verifiers_IP_address_list\": \"")+36)) - (string.find("\"block_verifiers_IP_address_list\": \"")+36));
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0, data_count1 = 0, data_count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0, count3 = 0, data_count1 = 0, data_count2 = 0; count < total_delegates; count++)
   {
     count3 = current_block_verifiers_list_public_address.find("|",count2);
     current_block_verifiers_list.block_verifiers_public_address[count] = current_block_verifiers_list_public_address.substr(count2,count3 - count2);
@@ -5378,7 +5384,7 @@ int get_random_block_verifier_node()
   // check if any of the results are valid
   for (count = 0, settings = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    if (reserve_bytes_database_vote_count[count] >= BLOCK_VERIFIERS_VALID_AMOUNT)
+    if (reserve_bytes_database_vote_count[count] >= (int)total_delegates_valid_amount)
     {
       settings = 1;
       break;
@@ -5393,7 +5399,7 @@ int get_random_block_verifier_node()
 
   // select a random block verifier to sync the database from that was synced
   count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
-  while (reserve_bytes_database_vote_count[count] < BLOCK_VERIFIERS_VALID_AMOUNT || reserve_bytes_database_vote_count_data[count] == "")
+  while (reserve_bytes_database_vote_count[count] < (int)total_delegates_valid_amount || reserve_bytes_database_vote_count_data[count] == "")
   {
     count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
   }
