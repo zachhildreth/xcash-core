@@ -201,7 +201,7 @@
 #define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed datas
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
 #define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
-#define SOCKET_CONNECTION_TIMEOUT_SETTINGS 1000 // The time in milliseconds, to wait before a connection is cancelled
+#define SOCKET_CONNECTION_TIMEOUT_SETTINGS 2000 // The time in milliseconds, to wait before a connection is cancelled
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 #define BLOCK_VERIFIERS_AMOUNT 4 // The amount of block verifiers in a round
 #define BLOCK_VERIFIERS_VALID_AMOUNT 4 // The amount of block verifiers that need to vote true for the part of the round to be valid.
