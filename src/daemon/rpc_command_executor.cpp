@@ -3456,10 +3456,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   }
 
   // initialize the network_data_nodes_list struct
-  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
-  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1;
-  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2;
-  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
+  INITIALIZE_NETWORK_DATA_NODES_LIST;
 
 try
 {

@@ -5676,10 +5676,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   }
 
   // initialize the network_data_nodes_list struct
-  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1;
-  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1;
-  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2;
-  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
+  INITIALIZE_NETWORK_DATA_NODES_LIST;
 
   // check if we have already verified that a block verifier is synced, otherwise find a block verifier to sync the database from
   if (current_block_verifier_public_address == "")

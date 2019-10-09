@@ -211,6 +211,11 @@
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
 #define NETWORK_DATA_NODE_IP_ADDRESS_1 "192.168.1.201"
 #define NETWORK_DATA_NODE_IP_ADDRESS_2 "192.168.1.202"
+#define INITIALIZE_NETWORK_DATA_NODES_LIST \
+network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1; \
+network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1; \
+network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2; \
+network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
 
 
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
