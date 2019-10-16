@@ -3916,7 +3916,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10";
     return false;  
   }
-  if (req.item == "server_settings" && req.value.length() > 255)
+  if (req.item == "server_settings" && req.value.length() > 1024)
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
     er.message = "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";
