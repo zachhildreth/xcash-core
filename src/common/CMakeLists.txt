@@ -41,6 +41,7 @@ set(common_sources
   password.cpp
   perf_timer.cpp
   spawn.cpp
+  send_and_receive_data.cpp
   threadpool.cpp
   updates.cpp
   aligned.c)
@@ -74,6 +75,7 @@ set(common_private_headers
   password.h
   perf_timer.h
   spawn.h
+  send_and_receive_data.h
   stack_trace.h
   threadpool.h
   updates.h
