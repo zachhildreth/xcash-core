@@ -194,8 +194,8 @@
 
 // Blockchain
 #define HF_VERSION_PROOF_OF_STAKE 13
-//#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 449850 // The first block of the X-CASH proof of stake
-#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 440875 // The first block of the X-CASH proof of stake
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 449850 // The first block of the X-CASH proof of stake
+//#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 440875 // The first block of the X-CASH proof of stake
 #define BLOCK_TIME 5 // the block time in minutes
 #define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
@@ -216,7 +216,7 @@
 #define BLOCK_VERIFIERS_VALID_AMOUNT 18 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.67 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
-/*// Network data nodes
+// Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1h3yJ318hJGTFeXfYyEcyE7G4hX7jrCbvz21VecJGhf64Tw51yWii2Q1e76fJbB26Ea8CRipmdW6ZHQcRrLKx3cxRkr5M12"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1dNsv9cGc5kPMrgpdTkGttM17uR2JvCpmraGschxYSEt3MK4NRmmgyc13CTYWBGDNefdem5MFsG384DuUpGKc3ShZa4R56e"
@@ -239,9 +239,8 @@ network_data_nodes_list.network_data_nodes_public_address[3] = NETWORK_DATA_NODE
 network_data_nodes_list.network_data_nodes_IP_address[3] = NETWORK_DATA_NODE_IP_ADDRESS_4; \
 network_data_nodes_list.network_data_nodes_public_address[4] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_5; \
 network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_ADDRESS_5;
-*/
 
-// Network data nodes test
+/*// Network data nodes test
 #define NETWORK_DATA_NODES_AMOUNT 2 // The amount of network data nodes
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
@@ -251,8 +250,7 @@ network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_
 network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1; \
 network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1; \
 network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2; \
-network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;
-
+network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2;*/
 
 
 
