@@ -2379,7 +2379,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "The vote was successfully added to the database")
     {
@@ -2509,7 +2509,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Registered the delegate")
     {
@@ -2639,7 +2639,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Removed the delegate")
     {
@@ -2811,7 +2811,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
     {

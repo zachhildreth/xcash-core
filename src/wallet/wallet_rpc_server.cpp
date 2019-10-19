@@ -3498,7 +3498,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "The vote was successfully added to the database")
     {
@@ -3632,7 +3632,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Registered the delegate")
     {
@@ -3766,7 +3766,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Removed the delegate")
     {
@@ -3950,7 +3950,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
     {
