@@ -2399,7 +2399,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
+    fail_msg_writer() << tr("Failed to send the vote");
   }
   return true;  
 
@@ -2566,17 +2566,17 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   // error check
   if (m_wallet->key_on_device())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    fail_msg_writer() << tr("Failed to remove the delegate\nCommand not supported by HW wallet");
     return true;
   }
   if (m_wallet->watch_only() || m_wallet->multisig())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Failed to remove the delegate\nThe reserve proof can be generated only by a full wallet");
     return true;
   }
   if (!try_connect_to_daemon())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    fail_msg_writer() << tr("Failed to remove the delegate\nFailed to connect to the daemon");
     return true;
   }
 
@@ -2696,17 +2696,17 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   // error check
   if (m_wallet->key_on_device())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
     return true;
   }
   if (m_wallet->watch_only() || m_wallet->multisig())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Failed to update the delegate\nThe reserve proof can be generated only by a full wallet");
     return true;
   }
   if (!try_connect_to_daemon())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    fail_msg_writer() << tr("Failed to update the delegate\nFailed to connect to the daemon");
     return true;
   }
 
