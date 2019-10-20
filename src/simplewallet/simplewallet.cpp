@@ -2289,10 +2289,16 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 1
 
   try
   {
   // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return true;
+  }    
   if (m_wallet->key_on_device())
   {
     fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
@@ -2410,6 +2416,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
   return true;  
 
+  #undef PARAMETER_AMOUNT
   #undef MESSAGE
 }
 
@@ -2437,10 +2444,16 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 2
 
   try
   {
   // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return true;
+  }  
   if (m_wallet->key_on_device())
   {
     fail_msg_writer() << tr("Failed to register the delegate\nCommand not supported by HW wallet");
@@ -2540,6 +2553,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   return true;  
 
+  #undef PARAMETER_AMOUNT
   #undef MESSAGE
 }
 
@@ -2567,10 +2581,16 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 0
 
   try
   {
   // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return true;
+  }  
   if (m_wallet->key_on_device())
   {
     fail_msg_writer() << tr("Failed to remove the delegate\nCommand not supported by HW wallet");
@@ -2670,6 +2690,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   }
   return true; 
 
+  #undef PARAMETER_AMOUNT
   #undef MESSAGE
 }
 
@@ -2697,10 +2718,16 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 2
 
   try
   {
   // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return true;
+  }  
   if (m_wallet->key_on_device())
   {
     fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
@@ -2842,6 +2869,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   }
   return true;  
 
+  #undef PARAMETER_AMOUNT
   #undef MESSAGE
 }
 
