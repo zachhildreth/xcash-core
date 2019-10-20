@@ -3488,6 +3488,14 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
      er.message = "Failed to send the vote";
      return false;  
   }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the vote\nReserve proof is over the maximum length";
+    return false;  
+  }
  
   // create the data
   data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_data + "|" + reserve_proof + "|" + public_address + "|";

@@ -2369,6 +2369,13 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to send the vote\nFailed to create the reserve proof");
     return true;  
   }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
  
   // create the data
   data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + args.front() + "|" + reserve_proof + "|" + public_address + "|";
