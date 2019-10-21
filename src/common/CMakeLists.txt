@@ -44,7 +44,8 @@ set(common_sources
   send_and_receive_data.cpp
   threadpool.cpp
   updates.cpp
-  aligned.c)
+  aligned.c
+  blocking_tcp_client.cpp)
 
 if (STACK_TRACE)
   list(APPEND common_sources stack_trace.cpp)
@@ -79,7 +80,8 @@ set(common_private_headers
   stack_trace.h
   threadpool.h
   updates.h
-  aligned.h)
+  aligned.h
+  blocking_tcp_client.h)
 
 xcash_private_headers(common
   ${common_private_headers})
