@@ -55,7 +55,7 @@ std::string client::read_until(char until, boost::posix_time::time_duration time
 
 void client::write_line(const std::string &line, boost::posix_time::time_duration timeout)
 {
-  std::string data = line + "\n";
+  std::string data = line ;//+ "\n";
   deadline_.expires_from_now(timeout);
 
   boost::system::error_code ec = boost::asio::error::would_block;

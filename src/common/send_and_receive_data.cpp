@@ -18,10 +18,11 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
     // send the message and read the response
     c.write_line(data2, timeout);
     string = c.read_until('}', timeout);
-    //std::cout << string;
+    //std::cout << string << std::endl << std::endl;
   }
-  catch (...)
+  catch (std::exception &ex)
   {
+    //std::cout << ex.what() << std::endl;
     return "";
   }
   return string;
