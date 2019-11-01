@@ -4074,7 +4074,7 @@ int varint_encode(long long int number, char *result, const size_t RESULT_TOTAL_
   // check if it should not be encoded
   if (number <= 0xFF)
   {
-    sprintf(result,"%02llx",number);
+    snprintf(result,RESULT_TOTAL_LENGTH,"%02llx",number);
     return 1;
   }
 
@@ -4118,7 +4118,7 @@ int varint_encode(long long int number, char *result, const size_t RESULT_TOTAL_
 
  for (count = 0, count2 = 0; count < length; count++)
  {
-   if (count % 8 == 0 && count != 0)
+   if (count % BITS_IN_BYTE == 0 && count != 0)
    {
      // reverse the binary bits
      binary_number_copy = 0;       
@@ -4177,7 +4177,7 @@ int varint_encode(long long int number, char *result, const size_t RESULT_TOTAL_
   // create the varint encoded string
   for (count = 0, count2 = 0; count <= length; count++, count2 += 2)
   {
-    sprintf(result+count2,"%02x",binary_numbers[length-count] & 0xFF);
+    snprintf(result+count2,RESULT_TOTAL_LENGTH,"%02x",binary_numbers[length-count] & 0xFF);
   }
   
   return 1;    
@@ -5126,7 +5126,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
 
   // blockchain_reserve_bytes
   // block_producer_delegates_name
-  if (blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length < 10 || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length > 40)
+  if (blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length < MINIMUM_BUFFER_SIZE_DELEGATES_NAME*2 || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data_length > MAXIMUM_BUFFER_SIZE_DELEGATES_NAME*2)
   {
     VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid block_producer_delegates_name");
   }
@@ -5144,7 +5144,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
   }
 
   // block_producer_backup_nodes_names
-  if (blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length < 58 || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length > 208 || string_count(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data,"2c") != 4)
+  if (blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length < MINIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES*2 || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data_length > MAXIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES*2 || string_count(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data,"2c") != 4)
   {  
     VERIFY_NETWORK_BLOCK_DATA_ERROR("Invalid block_producer_backup_nodes_names");
   }

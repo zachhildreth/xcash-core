@@ -206,6 +206,13 @@
 #define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed data
 #define BUFFER_SIZE_RESERVE_PROOF 10000 // The maximum length of a reserve proof
 
+// Lengths
+#define BITS_IN_BYTE 8 // 8 bits in 1 byte
+#define MAXIMUM_BUFFER_SIZE_DELEGATES_NAME 100 // The maximum length of the block verifiers name
+#define MINIMUM_BUFFER_SIZE_DELEGATES_NAME 5 // The minimum length of the block verifiers name
+#define MAXIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 505 // The maximum length of the block verifiers name
+#define MINIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 30 // The minimum length of the block verifiers name
+
 // Network
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
 #define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
