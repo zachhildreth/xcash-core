@@ -5304,7 +5304,7 @@ int get_random_block_verifier_node()
     exit(0);
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // parse the message

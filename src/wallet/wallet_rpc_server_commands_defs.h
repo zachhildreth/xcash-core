@@ -2108,10 +2108,12 @@ namespace wallet_rpc
     {
       std::string delegate_name;
       std::string delegate_IP_address;
+      std::string delegates_public_key;
  
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(delegate_name)
         KV_SERIALIZE(delegate_IP_address)
+        KV_SERIALIZE(delegates_public_key)
       END_KV_SERIALIZE_MAP()
     };
  

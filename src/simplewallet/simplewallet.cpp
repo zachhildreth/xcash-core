@@ -2333,7 +2333,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     return true; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2488,7 +2488,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     return true; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2521,7 +2521,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
  
   // create the data  
-  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
   // sign the data    
   data3 = m_wallet->sign(data2);
@@ -2625,7 +2625,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
     return true; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2785,6 +2785,11 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255");
     return true;  
   }
+  if (args[0] == "public_key" && args[1].length() != DELEGATES_PUBLIC_KEY_LENGTH)
+  {
+    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public key");
+    return true;  
+  }
 
   // ask for the password
   SCOPED_WALLET_UNLOCK();
@@ -2804,7 +2809,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     return true; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -3242,7 +3247,7 @@ simple_wallet::simple_wallet()
                            tr("Votes for a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("delegate_register",
                            boost::bind(&simple_wallet::delegate_register, this, _1),
-                           tr("delegate_register <delegates_name> <delegates_IP_address>"),
+                           tr("delegate_register <delegates_name> <delegates_IP_address> <delegates_public_key>"),
                            tr("Registers a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("delegate_remove",
                            boost::bind(&simple_wallet::delegate_remove, this, _1),
@@ -3250,7 +3255,7 @@ simple_wallet::simple_wallet()
                            tr("Removes a registered delegate from the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("delegate_update",
                            boost::bind(&simple_wallet::delegate_update, this, _1),
-                           tr("delegate_update <item: about, website, team, pool_mode, fee_structure and server_settings> <value>"),
+                           tr("delegate_update <item: about, website, team, pool_mode, fee_structure, server_settings and public key> <value>"),
                            tr("Updates a registered delegates data, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),

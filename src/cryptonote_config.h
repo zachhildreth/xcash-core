@@ -212,6 +212,7 @@
 #define MINIMUM_BUFFER_SIZE_DELEGATES_NAME 5 // The minimum length of the block verifiers name
 #define MAXIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 505 // The maximum length of the block verifiers name
 #define MINIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 30 // The minimum length of the block verifiers name
+#define DELEGATES_PUBLIC_KEY_LENGTH 64 // The delegates public key length for signing and verifying messages
 
 // Network
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data

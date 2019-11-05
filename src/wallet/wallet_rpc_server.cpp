@@ -28,7 +28,6 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 #include <thread>
-#include <future>
 #include <boost/format.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/use_future.hpp>
@@ -3444,7 +3443,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     return false;
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -3598,7 +3597,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     return false; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -3632,7 +3631,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
  
   // create the data
-  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + req.delegate_name + "|" + req.delegate_IP_address + "|" + public_address + "|";
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + req.delegate_name + "|" + req.delegate_IP_address + "|" + req.delegates_public_key + "|" + public_address + "|";
  
   // sign the data    
   data3 = m_wallet->sign(data2);
@@ -3732,7 +3731,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false;
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -3899,6 +3898,12 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";
     return false;
   }
+  if (req.item == "public_key" && req.value.length() != DELEGATES_PUBLIC_KEY_LENGTH)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to update the delegates information\nInvalid public key";
+    return false;
+  }
 
   // initialize the network_data_nodes_list struct
   INITIALIZE_NETWORK_DATA_NODES_LIST;
@@ -3916,7 +3921,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 2;
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
