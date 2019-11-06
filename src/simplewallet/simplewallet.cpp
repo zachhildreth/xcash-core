@@ -2444,7 +2444,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
-  #define PARAMETER_AMOUNT 2
+  #define PARAMETER_AMOUNT 3
 
   try
   {
