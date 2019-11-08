@@ -306,7 +306,8 @@ namespace cryptonote
     uint64_t diff_v2 = max_block_height > last_block_v1 ? std::min(abs_diff, max_block_height - last_block_v1) : 0;
  
     // calculate the number of days that the blockchain is behind the network
-    uint64_t current_height = m_core.get_current_blockchain_height();
+    uint64_t current_block_height = m_core.get_current_blockchain_height();
+    uint64_t maximum_block_height = hshd.current_height;
     uint64_t one_minute_blocks = 0;
     uint64_t two_minute_blocks = 0;
     uint64_t five_minute_blocks = 0;
@@ -318,18 +319,14 @@ namespace cryptonote
  
     if (abs_diff > 0)
     {
-      if (current_height < HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME)
+      if (maximum_block_height < HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME)
       {
         days = abs_diff / ONE_MINUTE_BLOCKS_PER_DAY;
       }
  
-      else if (current_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+      else if (maximum_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
       {
-        one_minute_blocks = (HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - (current_height - abs_diff));
-        if (one_minute_blocks < 0)
-        {
-          one_minute_blocks = 0;
-        }
+        one_minute_blocks = current_block_height < HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME ? HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - current_block_height : 0;
         two_minute_blocks = abs_diff - one_minute_blocks;
         if (one_minute_blocks > 0)
         {
@@ -341,18 +338,10 @@ namespace cryptonote
         }
       }
  
-      else if (current_height >= HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+      else if (maximum_block_height >= HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
       {
-        one_minute_blocks = (HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - (current_height - abs_diff));
-        if (one_minute_blocks < 0)
-        {
-          one_minute_blocks = 0;
-        }
-        two_minute_blocks = (HF_BLOCK_HEIGHT_PROOF_OF_STAKE - (current_height - abs_diff)) - one_minute_blocks;
-        if (two_minute_blocks < 0)
-        {
-          two_minute_blocks = 0;
-        }
+        one_minute_blocks = current_block_height < HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME ? HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME - current_block_height : 0;
+        two_minute_blocks = current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE ? HF_BLOCK_HEIGHT_PROOF_OF_STAKE - current_block_height - one_minute_blocks : 0;
         five_minute_blocks = abs_diff - one_minute_blocks - two_minute_blocks;
         if (one_minute_blocks > 0 && two_minute_blocks > 0)
         {
@@ -377,11 +366,11 @@ namespace cryptonote
       days = 0;
     }
  
-    MCLOG(is_inital ? el::Level::Info : el::Level::Debug, "global", context <<  "Sync data returned a new top block candidate: " << m_core.get_current_blockchain_height() << " -> " << hshd.current_height
+    MCLOG(is_inital ? el::Level::Info : el::Level::Debug, "global", context <<  "Sync data returned a new top block candidate: " << current_block_height << " -> " << maximum_block_height
       << " [Your node is " << abs_diff << " blocks (" << days << " days) "
       << (0 <= diff ? std::string("behind") : std::string("ahead"))
       << "] " << ENDL << "SYNCHRONIZATION started");
-      if (hshd.current_height >= m_core.get_current_blockchain_height() + 5) // don't switch to unsafe mode just for a few blocks
+      if (maximum_block_height >= current_block_height + 5) // don't switch to unsafe mode just for a few blocks
         m_core.safesyncmode(false);
     }
     LOG_PRINT_L1("Remote blockchain height: " << hshd.current_height << ", id: " << hshd.top_id);
