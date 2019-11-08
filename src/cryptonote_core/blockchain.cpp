@@ -5202,7 +5202,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
 
     if (data_verify(NETWORK_DATA_NODE_PUBLIC_ADDRESS_1,blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[0],network_block_string) == 1)
     {
-      number = 100;
+      number = BLOCK_VERIFIERS_AMOUNT;
     }
     else
     {
@@ -5551,7 +5551,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
 
     return data_hash == block_verifier_data_hash ? true : false;
- }
+  }
 
   // initialize the blockchain_data struct 
   blockchain_data.network_version_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char));
