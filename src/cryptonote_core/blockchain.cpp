@@ -4400,48 +4400,6 @@ int data_verify(const std::string PUBLIC_ADDRESS, const std::string DATA_SIGNATU
   return crypto::check_signature(hash, info.address.m_spend_public_key, s) == true ? 1 : 0;
 }
 
-int verify_data(const std::string MESSAGE, int settings)
-{
-
-// Constants
-const std::string public_address = MESSAGE.substr(MESSAGE.find("|XCA")+1,XCASH_WALLET_LENGTH);
-const std::string xcash_proof_of_stake_signature = MESSAGE.substr(MESSAGE.find("|SigV1")+1,XCASH_SIGN_DATA_LENGTH);
-
-// Variables
-int count;
-int count2;
-
-if (settings == 0)
-{
-// check if the public address is in the network_data_nodes_list struct
-for (count = 0, count2 = 0; count < NETWORK_DATA_NODES_AMOUNT; count++)
-{
-if (network_data_nodes_list.network_data_nodes_public_address[count] == public_address)
-{
-count2 = 1;
-break;
-}
-}
-}
-else
-{
-for (count = 0, count2 = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
-{
-if (current_block_verifiers_list.block_verifiers_public_address[count] == public_address)
-{
-count2 = 1;
-break;
-}
-}
-}
-
-if (count2 != 1)
-{
-return 0;
-}
-return data_verify(public_address,xcash_proof_of_stake_signature,MESSAGE.substr(0,MESSAGE.find("|XCA")+1));
-}
-
 int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_HEIGHT)
 {
   // Constants
@@ -5643,16 +5601,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
   // send the message to a random block verifier node
-  string = send_and_receive_data(current_block_verifier_IP_address,message);
-
-  // verify the message
-  if (verify_data(string,1) == 0)
-  {    
-    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-  } 
-
-  // get the network block string
-  string = string.substr(43,string.find("|",43)-43); 
+  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(43,string.find("|",43)-43);
 
   // check if the data hash matches the network block string
   memset(data,0,strlen(data));
@@ -5682,16 +5631,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
     // send the message to a random network data node
-    previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message);
-
-    // verify the message
-    if (verify_data(previous_block_reserve_bytes,1) == 0)
-    {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }      
-
-    // get the previous_network block string
-    previous_block_reserve_bytes = previous_block_reserve_bytes.substr(43,string2.find("|",43)-43);
+    previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message).substr(43,string2.find("|",43)-43);
   }    
 
   // verify the network block string
