@@ -3466,53 +3466,13 @@ try
   network_block_string = get_block_res.blob;
 
   // get the data hash
-  data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+  data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
   // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}"; 
+  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
-  // send the message to a random network data node
-  for (count = 0; string != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],message);
-  }
-
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-  {
-    VERIFY_ROUND_STATISTICS_ERROR;
-  }
-
-  // verify the message
-  if (verify_data(string,0) == 0)
-  {    
-    VERIFY_ROUND_STATISTICS_ERROR;
-  }  
-
-  // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
-
-  // send the message to a random network data node
-  for (count = 0; string2 != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string2 = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],message);
-  }
-
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-  {
-    VERIFY_ROUND_STATISTICS_ERROR;
-  }
-
-  // verify the message
-  if (verify_data(string2,0) == 0)
-  {
-    VERIFY_ROUND_STATISTICS_ERROR;
-  }  
-
-  // get the network block string
-  string = string.substr(43,string.find("|",43)-43);
-
-  // get the previous_network block string
-  string2 = string2.substr(43,string2.find("|",43)-43);
+  // send the message to a random block verifier node
+  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // check if the data hash matches the network block string
   memset(data,0,strlen(data));
@@ -3526,14 +3486,20 @@ try
 
   if (memcmp(data2,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
   {
-    VERIFY_ROUND_STATISTICS_ERROR;
+    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash",1);
   }
 
   // convert the network_block_string to a blockchain_data struct
   if (network_block_string_to_blockchain_data(string.c_str(),(const char*)block_height) == 0)
   {
-    VERIFY_ROUND_STATISTICS_ERROR;
+    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
   }
+
+  // create the message
+  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
+
+  // send the message to a random network data node
+  string2 = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // print the network block string
   // print the block data, reserve bytes and transactions in a different color
