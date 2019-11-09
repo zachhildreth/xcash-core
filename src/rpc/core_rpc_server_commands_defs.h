@@ -2290,24 +2290,4 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-
-  struct COMMAND_RPC_GET_PATH
-  {
-    struct request
-    { 
-      BEGIN_KV_SERIALIZE_MAP()
-      END_KV_SERIALIZE_MAP()
-    };
- 
-    struct response
-    {
-     std::string status;
-      std::string path;
- 
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(status)
-        KV_SERIALIZE(path)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
 }

@@ -2268,25 +2268,6 @@ namespace cryptonote
     return true;
   }
 
-  bool core_rpc_server::on_get_path(const COMMAND_RPC_GET_PATH::request& req, COMMAND_RPC_GET_PATH::response& res, epee::json_rpc::error& error_resp)
-  {
-    // Variables
-    char buffer[1024];
-
-    memset(buffer,0,sizeof(buffer));
-    if (block_verifier_settings == 0 || readlink("/proc/self/exe",buffer,sizeof(buffer)-1) == -1)
-    {
-      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Failed to get the path";
-      return false;
-    }
-    else
-    {
-      res.path = std::string(buffer).substr(0,strlen(buffer)-6) + "verify_block.txt"; 
-    }
-    res.status = CORE_RPC_STATUS_OK;
-    return true;
-  }
 
 
   const command_line::arg_descriptor<std::string, false, true, 2> core_rpc_server::arg_rpc_bind_port = {

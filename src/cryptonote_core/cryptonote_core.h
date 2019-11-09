@@ -65,8 +65,6 @@ namespace cryptonote
   extern const command_line::arg_descriptor<difficulty_type> arg_fixed_difficulty;
   extern const command_line::arg_descriptor<bool> arg_offline;
 
-  extern bool block_verifier_settings;
-
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
