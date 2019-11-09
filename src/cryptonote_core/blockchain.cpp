@@ -3924,6 +3924,7 @@ struct current_block_verifiers_list current_block_verifiers_list; // The data fo
 struct blockchain_data blockchain_data; // The data for a new block to be added to the network.
 std::string current_block_verifier_public_address = "";
 std::string current_block_verifier_IP_address = "";
+std::string previous_block_reserve_bytes = "";
 
 
 
@@ -5285,7 +5286,6 @@ int get_random_block_verifier_node()
   std::size_t data_count1 = 0;
   std::size_t data_count2 = 0;
   std::size_t total_delegates;
-  std::size_t total_delegates_valid_amount;
   std::string reserve_bytes_database_vote_count_data[BLOCK_VERIFIERS_AMOUNT];
   int reserve_bytes_database_vote_count[BLOCK_VERIFIERS_AMOUNT];
   std::string current_block_verifiers_list_public_address;
@@ -5296,6 +5296,7 @@ int get_random_block_verifier_node()
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
+    //string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[0],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
   }
  
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -5305,7 +5306,6 @@ int get_random_block_verifier_node()
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // parse the message
   current_block_verifiers_list_public_address = string.substr(string.find("\"block_verifiers_public_address_list\": \"")+40,(string.find("\"",string.find("\"block_verifiers_public_address_list\": \"")+40)) - (string.find("\"block_verifiers_public_address_list\": \"")+40));
@@ -5323,45 +5323,9 @@ int get_random_block_verifier_node()
     data_count1 = data_count2 + 1;
   } 
 
-  // check what block verifiers are synced
-
-  // send the data to all block verifiers
-  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
-  {
-    string = send_and_receive_data(current_block_verifiers_list.block_verifiers_IP_address[count],NODES_TO_BLOCK_VERIFIERS_RESERVE_BYTES_DATABASE_SYNC_CHECK_ALL_UPDATE);
-
-    // add the data hash to the string array only if it is a verified message
-    reserve_bytes_database_vote_count_data[count] = verify_data(string,1) == 1 ? string.substr(72,DATA_HASH_LENGTH) : "";
-  }
-
-  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
-  {
-    // count each vote count for the reserve bytes database
-    reserve_bytes_database_vote_count[count] = std::count(reserve_bytes_database_vote_count_data,reserve_bytes_database_vote_count_data+BLOCK_VERIFIERS_AMOUNT,reserve_bytes_database_vote_count_data[count]);
-  } 
-
-  // check if any of the results are valid
-  for (count = 0, settings = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
-  {
-    if (reserve_bytes_database_vote_count[count] >= (int)total_delegates_valid_amount)
-    {
-      settings = 1;
-      break;
-    }
-  } 
-
-  if (settings != 1)
-  {
-    color_print("Block verifiers are not in sync","red");
-    exit(0); 
-  }
-
   // select a random block verifier to sync the database from that was synced
   count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
-  while (reserve_bytes_database_vote_count[count] < (int)total_delegates_valid_amount || reserve_bytes_database_vote_count_data[count] == "")
-  {
-    count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
-  }
+  //count = 0;
   current_block_verifier_public_address = current_block_verifiers_list.block_verifiers_public_address[count];
   current_block_verifier_IP_address = current_block_verifiers_list.block_verifiers_IP_address[count];
 
@@ -5663,15 +5627,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    for (count = 0; string != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-    {
-      string = send_and_receive_data(current_block_verifier_IP_address,message);
-    }
-
-    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-    {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }
+    string = send_and_receive_data(current_block_verifier_IP_address,message);
 
     // verify the message
     if (verify_data(string,1) == 0)
@@ -5715,47 +5671,16 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
     // send the message to a random block verifier node
-    for (count = 0; string != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-    {
-      string = send_and_receive_data(current_block_verifier_IP_address,message);
-    }
-
-    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-    {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }
+    string = send_and_receive_data(current_block_verifier_IP_address,message);
 
     // verify the message
     if (verify_data(string,1) == 0)
     {    
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }  
-
-    // create the message
-    message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
-
-    // send the message to a random network data node
-    for (count = 0; string2 != "socket_timeout" || count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-    {
-      string2 = send_and_receive_data(current_block_verifier_IP_address,message);
-    }
-
-    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-    {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }
-
-    // verify the message
-    if (verify_data(string2,1) == 0)
-    {
-      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
-    }  
+    } 
 
     // get the network block string
-    string = string.substr(43,string.find("|",43)-43);
-
-    // get the previous_network block string
-    string2 = string2.substr(43,string2.find("|",43)-43);
+    string = string.substr(43,string.find("|",43)-43); 
 
     // check if the data hash matches the network block string
     memset(data,0,strlen(data));
@@ -5778,11 +5703,38 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
 
+    // check to see if we need to get the previous blocks reserve bytes
+    if (previous_block_reserve_bytes == "")
+    {
+      // create the message
+      message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
+
+      // send the message to a random network data node
+      previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message);
+
+      if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+      {
+        CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
+      }
+
+      // verify the message
+      if (verify_data(previous_block_reserve_bytes,1) == 0)
+      {
+        CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid current block verifier node message",1);
+      }      
+
+      // get the previous_network block string
+      previous_block_reserve_bytes = previous_block_reserve_bytes.substr(43,string2.find("|",43)-43);
+    }    
+
     // verify the network block string
-    if (verify_network_block_data(string.c_str(),string.substr(14,64).c_str(),string2.c_str()) == 0)
+    if (verify_network_block_data(string.c_str(),string.substr(14,64).c_str(),previous_block_reserve_bytes.c_str()) == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
     }
+
+    // save the previous blocks reserve bytes, if another block needs to be synced
+    previous_block_reserve_bytes = string;
   }
   return true;
 }
