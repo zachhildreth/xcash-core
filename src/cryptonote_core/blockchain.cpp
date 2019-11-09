@@ -3767,36 +3767,6 @@ bool Blockchain::update_next_cumulative_weight_limit()
 
 
 
-#define color_print(string,color) \
-  if (memcmp(color,"red",3) == 0) \
-  { \
-    fprintf(stderr,"\033[1;31m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"green",5) == 0) \
-  { \
-    fprintf(stderr,"\033[1;32m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"yellow",6) == 0) \
-  { \
-    fprintf(stderr,"\033[1;33m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"blue",4) == 0) \
-  { \
-    fprintf(stderr,"\033[1;34m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"purple",6) == 0) \
-  { \
-    fprintf(stderr,"\033[1;35m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"lightblue",9) == 0) \
-  { \
-    fprintf(stderr,"\033[1;36m%s\033[0m",string); \
-  } \
-  else \
-  { \
-    fprintf(stderr,"%s",string); \
-  }
-
 #define append_string(data1,data2,data1_length) \
 memcpy(data1+strlen(data1),data2,strnlen(data2,data1_length - strlen(data1) - 1));
 
@@ -4033,7 +4003,7 @@ size_t string_count(const char* DATA, const char* STRING)
   // check if the memory needed was allocated on the heap successfully
   if (datacopy1 == NULL)
   {
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }
 
@@ -4083,7 +4053,7 @@ int string_replace(char *data, const size_t DATA_TOTAL_LENGTH, const char* STR1,
       {
         pointer_reset(data2);
       }
-      color_print("Could not allocate the memory needed on the heap","red");
+      MGINFO_RED("Could not allocate the memory needed on the heap");
       exit(0);
     } 
 
@@ -4424,7 +4394,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   data2 = NULL;
 
   #define NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR(settings) \
-  color_print(settings,"red"); \
+  MGINFO_RED(settings); \
   pointer_reset_all; \
   return 0; 
 
@@ -4439,7 +4409,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
     {
       pointer_reset(data2);
     }
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }  
 
@@ -5007,7 +4977,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
   }
 
   #define VERIFY_NETWORK_BLOCK_DATA_ERROR(settings) \
-  color_print(settings,"red"); \
+  MGINFO_RED(settings); \
   pointer_reset_all; \
   return 0; 
 
@@ -5038,7 +5008,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
     {
       pointer_reset(previous_network_block_reserve_bytes_block_verifiers_public_addresses_data);
     }
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }   
 
@@ -5050,7 +5020,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
     // check if the memory needed was allocated on the heap successfully
     if (previous_network_block_reserve_bytes_block_verifiers_public_addresses[count] == NULL)
     {
-      color_print("Could not allocate the memory needed on the heap","red");
+      MGINFO_RED("Could not allocate the memory needed on the heap");
       exit(0);
     }
   }
@@ -5352,7 +5322,7 @@ int get_random_block_verifier_node()
  
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
   {
-    color_print("Block verifiers are not in sync","red");
+    MGINFO_RED("Block verifiers are not in sync");
     exit(0);
   }
 
@@ -5380,7 +5350,7 @@ int get_random_block_verifier_node()
   current_block_verifier_public_address = current_block_verifiers_list.block_verifiers_public_address[count];
   current_block_verifier_IP_address = current_block_verifiers_list.block_verifiers_IP_address[count];
 
-  MGINFO_GREEN("Connected to delegate: " << current_block_verifier_IP_address << " to synchronize the blocks reserve bytes data");
+  MGINFO_YELLOW("Connected to delegate: " << current_block_verifier_IP_address << " to synchronize the blocks reserve bytes data");
   
   return 1;
 }
@@ -5447,7 +5417,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   blockchain_data.blockchain_reserve_bytes.previous_block_hash_data = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char)); \
   if (blockchain_data.network_version_data == NULL || blockchain_data.timestamp_data == NULL || blockchain_data.previous_block_hash_data == NULL || blockchain_data.nonce_data == NULL || blockchain_data.block_reward_transaction_version_data == NULL || blockchain_data.unlock_block_data == NULL || blockchain_data.block_reward_input_data == NULL || blockchain_data.vin_type_data == NULL || blockchain_data.block_height_data == NULL || blockchain_data.block_reward_output_data == NULL || blockchain_data.block_reward_data == NULL || blockchain_data.stealth_address_output_tag_data == NULL || blockchain_data.stealth_address_output_data == NULL || blockchain_data.extra_bytes_size_data == NULL || blockchain_data.transaction_public_key_tag_data == NULL || blockchain_data.transaction_public_key_data == NULL || blockchain_data.extra_nonce_tag_data == NULL || blockchain_data.reserve_bytes_size_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data == NULL || blockchain_data.blockchain_reserve_bytes.previous_block_hash_data == NULL) \
   { \
-    color_print("Could not allocate the memory needed on the heap","red"); \
+    MGINFO_RED("Could not allocate the memory needed on the heap"); \
     exit(0); \
   } \
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++) \
@@ -5464,7 +5434,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     blockchain_data.blockchain_reserve_bytes.block_verifiers_random_data_text[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_DATA,sizeof(char)); \
     if (blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key[count] == NULL) \
     { \
-      color_print("Could not allocate the memory needed on the heap","red"); \
+      MGINFO_RED("Could not allocate the memory needed on the heap"); \
       exit(0); \
     } \
   } \
@@ -5475,7 +5445,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     blockchain_data.transactions[count] = (char*)calloc(BUFFER_SIZE_NETWORK_BLOCK_TRANSACTIONS_DATA,sizeof(char)); \
     if (blockchain_data.transactions[count] == NULL) \
     { \
-      color_print("Could not allocate the memory needed on the heap","red"); \
+      MGINFO_RED("Could not allocate the memory needed on the heap"); \
       exit(0); \
     } \
   }
@@ -5543,12 +5513,12 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   #define CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR(message,settings) \
   if (settings == 0) \
   { \
-    color_print(message,"red"); \
+    MGINFO_RED(message); \
     exit(0); \
   } \
   else if (settings == 1) \
   { \
-    color_print(message,"red"); \
+    MGINFO_RED(message); \
     get_random_block_verifier_node(); \
     return false; \
   }
@@ -5564,7 +5534,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     {
       pointer_reset(block_height);
     }
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }
 
@@ -5601,7 +5571,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
   // send the message to a random block verifier node
-  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(43,string.find("|",43)-43);
+  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // check if the data hash matches the network block string
   memset(data,0,strlen(data));
@@ -5625,13 +5595,13 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   }
 
   // check to see if we need to get the previous blocks reserve bytes
-  if (previous_block_reserve_bytes == "")
+  if (previous_block_reserve_bytes == "" && current_block_height != HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
   {
     // create the message
     message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
     // send the message to a random network data node
-    previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message).substr(43,string2.find("|",43)-43);
+    previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
   }    
 
   // verify the network block string

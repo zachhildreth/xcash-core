@@ -2035,36 +2035,6 @@ bool t_rpc_command_executor::sync_info()
 
 
 
-#define color_print(string,color) \
-  if (memcmp(color,"red",3) == 0) \
-  { \
-    fprintf(stderr,"\033[1;31m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"green",5) == 0) \
-  { \
-    fprintf(stderr,"\033[1;32m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"yellow",6) == 0) \
-  { \
-    fprintf(stderr,"\033[1;33m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"blue",4) == 0) \
-  { \
-    fprintf(stderr,"\033[1;34m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"purple",6) == 0) \
-  { \
-    fprintf(stderr,"\033[1;35m%s\033[0m",string); \
-  } \
-  else if (memcmp(color,"lightblue",9) == 0) \
-  { \
-    fprintf(stderr,"\033[1;36m%s\033[0m",string); \
-  } \
-  else \
-  { \
-    fprintf(stderr,"%s",string); \
-  }
-
 #define append_string(data1,data2,data1_length) \
 memcpy(data1+strlen(data1),data2,strnlen(data2,data1_length - strlen(data1) - 1));
 
@@ -2206,7 +2176,7 @@ size_t string_count(const char* DATA, const char* STRING)
   // check if the memory needed was allocated on the heap successfully
   if (datacopy1 == NULL)
   {
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }
 
@@ -2256,7 +2226,7 @@ int string_replace(char *data, const size_t DATA_TOTAL_LENGTH, const char* STR1,
       {
         pointer_reset(data2);
       }
-      color_print("Could not allocate the memory needed on the heap","red");
+      MGINFO_RED("Could not allocate the memory needed on the heap");
       exit(0);
     } 
 
@@ -2641,7 +2611,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
   data2 = NULL;
 
   #define NETWORK_BLOCK_STRING_TO_BLOCKCHAIN_DATA_ERROR(settings) \
-  color_print(settings,"red"); \
+  MGINFO_RED(settings); \
   pointer_reset_all; \
   return 0; 
 
@@ -2656,7 +2626,7 @@ int network_block_string_to_blockchain_data(const char* DATA, const char* BLOCK_
     {
       pointer_reset(data2);
     }
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }  
 
@@ -3226,7 +3196,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   #define RESERVE_BYTES_TOTAL_TEST 34
 
   #define VERIFY_ROUND_STATISTICS_ERROR \
-  color_print("Could not get the blocks data","red"); \
+  MGINFO_RED("Could not get the blocks data"); \
   pointer_reset_all; \
   return true;
 
@@ -3338,7 +3308,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
     {
       pointer_reset(block_height);
     }
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }
 
@@ -3386,7 +3356,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
   // check if the memory needed was allocated on the heap successfully
   if (blockchain_data.network_version_data == NULL || blockchain_data.timestamp_data == NULL || blockchain_data.previous_block_hash_data == NULL || blockchain_data.nonce_data == NULL || blockchain_data.block_reward_transaction_version_data == NULL || blockchain_data.unlock_block_data == NULL || blockchain_data.block_reward_input_data == NULL || blockchain_data.vin_type_data == NULL || blockchain_data.block_height_data == NULL || blockchain_data.block_reward_output_data == NULL || blockchain_data.block_reward_data == NULL || blockchain_data.stealth_address_output_tag_data == NULL || blockchain_data.stealth_address_output_data == NULL || blockchain_data.extra_bytes_size_data == NULL || blockchain_data.transaction_public_key_tag_data == NULL || blockchain_data.transaction_public_key_data == NULL || blockchain_data.extra_nonce_tag_data == NULL || blockchain_data.reserve_bytes_size_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_public_address == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data == NULL || blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_public_key_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_proof_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_beta_string_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4 == NULL || blockchain_data.blockchain_reserve_bytes.vrf_data == NULL || blockchain_data.blockchain_reserve_bytes.previous_block_hash_data == NULL)
   {
-    color_print("Could not allocate the memory needed on the heap","red");
+    MGINFO_RED("Could not allocate the memory needed on the heap");
     exit(0);
   }
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
@@ -3405,7 +3375,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
     // check if the memory needed was allocated on the heap successfully
     if (blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count] == NULL || blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key[count] == NULL)
     {
-      color_print("Could not allocate the memory needed on the heap","red");
+      MGINFO_RED("Could not allocate the memory needed on the heap");
       exit(0);
     }
   }
@@ -3418,7 +3388,7 @@ bool t_rpc_command_executor::verify_round_statistics(const std::string block_dat
     // check if the memory needed was allocated on the heap successfully
     if (blockchain_data.transactions[count] == NULL)
     {
-      color_print("Could not allocate the memory needed on the heap","red");
+      MGINFO_RED("Could not allocate the memory needed on the heap");
       exit(0);
     }
   }
@@ -3569,126 +3539,126 @@ try
   // print the block data, reserve bytes and transactions in a different color
   fprintf(stderr,"\nBlock blob\n\n");
   
-  color_print("Block data\n","green");
-  color_print("Reserve bytes\n","red");
-  color_print("Transactions data\n\n","blue");
+  MGINFO_GREEN("Block data\n");
+  MGINFO_RED("Reserve bytes\n");
+  MGINFO_YELLOW("Transactions data\n\n");
     
   count = string.find(BLOCKCHAIN_RESERVED_BYTES_START);
-  color_print(string.substr(0,count).c_str(),"green");
+  MGINFO_GREEN(string.substr(0,count).c_str());
   
   count = string.find(BLOCKCHAIN_RESERVED_BYTES_START);
   count2 = string.find(BLOCKCHAIN_RESERVED_BYTES_END) + (sizeof(BLOCKCHAIN_RESERVED_BYTES_END)-1);
-  color_print(string.substr(count,count2 - count).c_str(),"red");
+  MGINFO_RED(string.substr(count,count2 - count).c_str());
     
-  color_print(string.substr(count2).c_str(),"blue");
+  MGINFO_YELLOW(string.substr(count2).c_str());
     
   // print each section in the block data
     
   fprintf(stderr,"\n\nBlock data\n\n"); 
  
-  color_print(blockchain_data.network_version_data,"green");
-  color_print(blockchain_data.timestamp_data,"blue");
-  color_print(blockchain_data.previous_block_hash_data,"red");
-  color_print(blockchain_data.nonce_data,"green");
-  color_print(blockchain_data.block_reward_transaction_version_data,"blue");
-  color_print(blockchain_data.unlock_block_data,"red");
-  color_print(blockchain_data.block_reward_input_data,"green");
-  color_print(blockchain_data.vin_type_data,"blue");
-  color_print(blockchain_data.block_height_data,"red");
-  color_print(blockchain_data.block_reward_output_data,"green");
-  color_print(blockchain_data.block_reward_data,"blue");
-  color_print(blockchain_data.stealth_address_output_tag_data,"red");
-  color_print(blockchain_data.stealth_address_output_data,"green");
-  color_print(blockchain_data.extra_bytes_size_data,"blue");
-  color_print(blockchain_data.transaction_public_key_tag_data,"red");
-  color_print(blockchain_data.transaction_public_key_data,"green");
-  color_print(blockchain_data.extra_nonce_tag_data,"blue");
-  color_print(blockchain_data.reserve_bytes_size_data,"red");
-  color_print(blockchain_data.ringct_version_data,"green");
+  MGINFO_GREEN(blockchain_data.network_version_data);
+  MGINFO_YELLOW(blockchain_data.timestamp_data);
+  MGINFO_RED(blockchain_data.previous_block_hash_data);
+  MGINFO_GREEN(blockchain_data.nonce_data);
+  MGINFO_YELLOW(blockchain_data.block_reward_transaction_version_data);
+  MGINFO_RED(blockchain_data.unlock_block_data);
+  MGINFO_GREEN(blockchain_data.block_reward_input_data);
+  MGINFO_YELLOW(blockchain_data.vin_type_data);
+  MGINFO_RED(blockchain_data.block_height_data);
+  MGINFO_GREEN(blockchain_data.block_reward_output_data);
+  MGINFO_YELLOW(blockchain_data.block_reward_data);
+  MGINFO_RED(blockchain_data.stealth_address_output_tag_data);
+  MGINFO_GREEN(blockchain_data.stealth_address_output_data);
+  MGINFO_YELLOW(blockchain_data.extra_bytes_size_data);
+  MGINFO_RED(blockchain_data.transaction_public_key_tag_data);
+  MGINFO_GREEN(blockchain_data.transaction_public_key_data);
+  MGINFO_YELLOW(blockchain_data.extra_nonce_tag_data);
+  MGINFO_RED(blockchain_data.reserve_bytes_size_data);
+  MGINFO_GREEN(blockchain_data.ringct_version_data);
 
   // verify the block data
   fprintf(stderr,"\n\nVerifying block data\n\n");
     
   // write the start test message
-  color_print(TEST_OUTLINE,"blue");
+  MGINFO_YELLOW(TEST_OUTLINE);
   fprintf(stderr,"\n");
   fprintf(stderr,"\033[1;34mVerifying block data - Total test: %d\033[0m\n",BLOCK_DATA_TOTAL_TEST);
-  color_print(TEST_OUTLINE,"blue");
+  MGINFO_YELLOW(TEST_OUTLINE);
   fprintf(stderr,"\n\n");
 
   fprintf(stderr,"\033[1;32mPASSED! Network Version - Hard fork version 13\033[0m\n\033[1;34mPASSED! Timestamp - %zu\033[0m\n\033[1;31mPASSED! Previous Block Hash\n\033[0m",blockchain_data.timestamp);
  
   if (memcmp(blockchain_data.nonce_data,BLOCK_PRODUCER_NETWORK_BLOCK_NONCE,sizeof(BLOCK_PRODUCER_NETWORK_BLOCK_NONCE)-1) == 0)
   {
-    color_print("PASSED! Nonce Data - Created by the block producer\n","green");
+    MGINFO_GREEN("PASSED! Nonce Data - Created by the block producer\n");
   }
   else
   {
-    color_print("PASSED! Nonce Data - Created by the consnesus node\n","green");
+    MGINFO_GREEN("PASSED! Nonce Data - Created by the consnesus node\n");
   }
 
-  color_print("PASSED! Block Reward Transaction Version - Should always be 02\n","blue");
+  MGINFO_YELLOW("PASSED! Block Reward Transaction Version - Should always be 02\n");
 
   fprintf(stderr,"\033[1;31mPASSED! Unlock Block - Block %zu\033[0m\n\033[1;32mPASSED! Block Reward Input - Should always be 01\033[0m\n\033[1;34mPASSED! Vin Type - Should always be FF\033[0m\n\033[1;31mPASSED! Block Height - Block %zu\033[0m\n\033[1;32mPASSED! Block Reward Output - Should always be 01\033[0m\n\033[1;34mPASSED! Block Reward - %zu\033[0m\n\033[1;31mPASSED! Stealth Address Output Tag - Should always be 02\033[0m\n\033[1;32mPASSED! Stealth Address Output - %s\033[0m\n\033[1;34mPASSED! Extra Bytes Size - Should always be 163\033[0m\n\033[1;31mPASSED! Transaction Public Key Tag - Should always be 01\033[0m\n\033[1;32mPASSED! Extra Nonce Tag - Should always be 02\033[0m\n\033[1;34mPASSED! Reserve Bytes Size - Should always be 128\033[0m\n\033[1;31mPASSED! Transaction Public Key Tag - Should always be 01\033[0m\n\033[1;32mPASSED! Extra Nonce Tag - Should always be 02\033[0m\n",blockchain_data.unlock_block,blockchain_data.block_height,blockchain_data.block_reward,blockchain_data.stealth_address_output_data); 
 
   // write the end test message
   fprintf(stderr,"\n");
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\033[1;32mVerifying block data - Passed test: %d, Failed test: 0\033[0m\n",BLOCK_DATA_TOTAL_TEST);
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\n");
 
   // print each section in the Reserve Bytes
   fprintf(stderr,"Reserve Bytes\n\n"); 
   
   fprintf(stderr,BLOCKCHAIN_RESERVED_BYTES_START); 
-  color_print(blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data,"green");
+  MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data,"blue");
+  MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.block_producer_public_address_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data,"red");
+  MGINFO_RED(blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data,"green");
+  MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_secret_key_data_round_part_4,"blue");
+  MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.vrf_secret_key_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4,"red");
+  MGINFO_RED(blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4,"green");
+  MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4,"blue");
+  MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4,"red");
+  MGINFO_RED(blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4,"green");
+  MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
-  color_print(blockchain_data.blockchain_reserve_bytes.vrf_data,"blue");
+  MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.vrf_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    color_print(blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count],"red");    
+    MGINFO_RED(blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_secret_key_data[count]);    
     fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   }
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    color_print(blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count],"green");    
+    MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.block_verifiers_vrf_public_key_data[count]);    
     fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   }
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    color_print(blockchain_data.blockchain_reserve_bytes.block_verifiers_random_data[count],"blue");    
+    MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.block_verifiers_random_data[count]);    
     fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   }
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    color_print(blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count],"red");    
+    MGINFO_RED(blockchain_data.blockchain_reserve_bytes.next_block_verifiers_public_address_data[count]);    
     fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   }
-  color_print(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data,"green");
+  MGINFO_GREEN(blockchain_data.blockchain_reserve_bytes.previous_block_hash_data);
   fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
-    color_print(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count],"blue"); if (count+1 != BLOCK_VERIFIERS_AMOUNT)   
+    MGINFO_YELLOW(blockchain_data.blockchain_reserve_bytes.block_validation_node_signature_data[count]); if (count+1 != BLOCK_VERIFIERS_AMOUNT)   
     {
       fprintf(stderr,BLOCKCHAIN_DATA_SEGMENT_STRING);
     }
@@ -3702,10 +3672,10 @@ try
   fprintf(stderr,"\n\nVerifying reserve bytes\n\n");
 
   // write the start test message
-  color_print(TEST_OUTLINE,"blue");
+  MGINFO_YELLOW(TEST_OUTLINE);
   fprintf(stderr,"\n");
   fprintf(stderr,"\033[1;34mVerifying reserve bytes - Total test: %d\033[0m\n",RESERVE_BYTES_TOTAL_TEST);
-  color_print(TEST_OUTLINE,"blue");
+  MGINFO_YELLOW(TEST_OUTLINE);
   fprintf(stderr,"\n\n");
 
   fprintf(stderr,"\033[1;32mPASSED! Block Producer Delegate Name - %s\033[0m\n\033[1;34mPASSED! Block Producer Public Address - %s\033[0m\n\033[1;31mPASSED! Block Producer Node Backup Count - %s\033[0m\n\033[1;32mPASSED! Block Producer Backup Nodes Names - %s\033[0m\n\033[1;34mPASSED! VRF Secret Key - %s\033[0m\n\033[1;31mVRF Public Key - %s\033[0m\n\033[1;32mPASSED! VRF Alpha String - %s\033[0m\n\033[1;34mPASSED! VRF Proof - %s\033[0m\n\033[1;31mPASSED! VRF Beta String - %s\033[0m\n\033[1;32mPASSED! VRF Data Current Round - %s\033[0m\n\033[1;34mVRF Data - %s\033[0m",blockchain_data.blockchain_reserve_bytes.block_producer_delegates_name,blockchain_data.blockchain_reserve_bytes.block_producer_public_address,blockchain_data.blockchain_reserve_bytes.block_producer_node_backup_count,blockchain_data.blockchain_reserve_bytes.block_producer_backup_nodes_names,blockchain_data.blockchain_reserve_bytes.vrf_secret_key_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_public_key_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_alpha_string_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_proof_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_beta_string_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_data_round_part_4,blockchain_data.blockchain_reserve_bytes.vrf_data);
@@ -3744,9 +3714,9 @@ try
 
   // write the end test message
   fprintf(stderr,"\n");
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\033[1;32mVerifying reserve bytes - Passed test: %d, Failed test: 0\033[0m\n",RESERVE_BYTES_TOTAL_TEST);
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\n");  
 
   // print each section in the Transaction Data
@@ -3760,9 +3730,9 @@ try
 
   // write the end test message
   fprintf(stderr,"\n");
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\033[1;32mVerify Round Statistics - Passed test: %d, Failed test: 0\033[0m\n",BLOCK_DATA_TOTAL_TEST+RESERVE_BYTES_TOTAL_TEST);
-  color_print(TEST_OUTLINE,"green");
+  MGINFO_GREEN(TEST_OUTLINE);
   fprintf(stderr,"\n\n");
 }
 catch(...)
