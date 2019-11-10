@@ -3990,6 +3990,7 @@ struct current_block_verifiers_list current_block_verifiers_list; // The data fo
 struct blockchain_data blockchain_data; // The data for a new block to be added to the network.
 std::string current_block_verifier_IP_address = "";
 std::string previous_block_reserve_bytes = "";
+std::string reserve_bytes_data = "";
 
 size_t string_count(const char* DATA, const char* STRING)
 {  
@@ -5337,7 +5338,7 @@ std::string get_random_block_verifier_node()
   // select a random block verifier to sync the database from that was synced
   count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
 
-  MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes data");
+  MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes");
   
   return current_block_verifiers_list.block_verifiers_IP_address[count];
 }
@@ -5345,19 +5346,15 @@ std::string get_random_block_verifier_node()
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
 {
   // Variables
-  char* data = (char*)calloc(1000,sizeof(char));
-  char* data2 = (char*)calloc(1000,sizeof(char));
-  char* block_height = (char*)calloc(100,sizeof(char));
+  char data[1024];
+  char data2[1024];
+  char block_height[1024];
   std::string network_block_string;
-  std::string previous_data_hash;
   std::string data_hash;
-  std::string reserve_bytes_data;
   std::string string;
-  std::string string2;
   std::string message;
   std::size_t count = 0;
-  std::size_t count2 = 0;
-  std::size_t count3 = 0;  
+  std::size_t count2 = 0;  
 
   // define macros
   #define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
@@ -5505,37 +5502,24 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   } \
   else if (settings == 1) \
   { \
-    MGINFO_RED(message); \
+    MGINFO_RED(message << " for block height " << current_block_height); \
     current_block_verifier_IP_address = get_random_block_verifier_node(); \
     return false; \
   }
 
-  // check if the memory needed was allocated on the heap successfully
-  if (data == NULL || block_height == NULL)
-  {
-    if (data != NULL)
-    {
-      pointer_reset(data);
-    }
-    if (block_height != NULL)
-    {
-      pointer_reset(block_height);
-    }
-    MGINFO_RED("Could not allocate the memory needed on the heap");
-    exit(0);
-  }
+  memset(data,0,sizeof(data));
+  memset(data2,0,sizeof(data2));
+  memset(block_height,0,sizeof(block_height));
 
   if (previous_block_reserve_bytes == "")
   {
     INITIALIZE_BLOCKCHAIN_DATA;
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
   }
   else
   {
     RESET_BLOCKCHAIN_DATA;
   }
-
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
 
   // check if we have already verified that a block verifier is synced, otherwise find a block verifier to sync the database from
   if (current_block_verifier_IP_address == "")
@@ -5543,10 +5527,51 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     current_block_verifier_IP_address = get_random_block_verifier_node();
   }
 
-  MGINFO_GREEN("Synchronizing block " << current_block_height << " with delegate " << current_block_verifier_IP_address);
+  // check if we need to download the blocks reserve bytes data
+  if (reserve_bytes_data == "")
+  {
+    if (previous_block_reserve_bytes == "" && current_block_height != HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
+    {
+      // create the message
+      message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";
+
+      // send the message to a random block verifier node
+      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message);
+
+      if (reserve_bytes_data == "" || reserve_bytes_data == "Could not get the network blocks reserve bytes")
+      {
+        CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not get the blocks reserve bytes",1);
+      }
+
+      reserve_bytes_data = reserve_bytes_data.substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+ 
+      // get the previous blocks reserve bytes
+      previous_block_reserve_bytes = reserve_bytes_data.substr(0,reserve_bytes_data.find("|"));
+      reserve_bytes_data = reserve_bytes_data.substr(reserve_bytes_data.find("|")+1);
+    }
+    else
+    {
+      // create the message
+      message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+
+      // send the message to a random block verifier node
+      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message);
+
+      if (reserve_bytes_data == "" || reserve_bytes_data == "Could not get the network blocks reserve bytes")
+      {
+        CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not get the blocks reserve bytes",1);
+      }
+
+      reserve_bytes_data = reserve_bytes_data.substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+    }
+  }
+
+  // get the current blocks reserve bytes  
+  string = reserve_bytes_data.substr(0,reserve_bytes_data.find("|"));
+  reserve_bytes_data = reserve_bytes_data.substr(reserve_bytes_data.find("|")+1);
 
   // get the block height
-  sprintf(block_height,"%ld",current_block_height); 
+  sprintf(block_height,"%ld",current_block_height);
 
   // get the network block string 
   network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
@@ -5554,14 +5579,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   // get the data hash
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
-  // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
-
-  // send the message to a random block verifier node
-  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
-
   // check if the data hash matches the network block string
-  memset(data,0,strlen(data));
   crypto_hash_sha512((unsigned char*)data,(const unsigned char*)string.c_str(),strlen(string.c_str()));
 
   // convert the SHA512 data hash to a string
@@ -5579,17 +5597,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   if (network_block_string_to_blockchain_data(string.c_str(),(const char*)block_height) == 0)
   {
     CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
-  }
-
-  // check to see if we need to get the previous blocks reserve bytes
-  if (previous_block_reserve_bytes == "" && current_block_height != HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
-  {
-    // create the message
-    message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
-
-    // send the message to a random network data node
-    previous_block_reserve_bytes = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
-  }    
+  }   
 
   // verify the network block string
   if (current_block_height == HF_BLOCK_HEIGHT_PROOF_OF_STAKE)
