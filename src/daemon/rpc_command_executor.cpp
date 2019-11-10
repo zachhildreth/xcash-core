@@ -3469,10 +3469,22 @@ try
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
   // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";
 
   // send the message to a random block verifier node
-  string = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+  string = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS_SYNCING_BLOCKS_RESERVE_BYTES);
+  
+  if (string == "" || string == "Could not get the network blocks reserve bytes")
+  {
+    VERIFY_ROUND_STATISTICS_ERROR;
+  }
+
+  string = string.substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+
+  // get the previous blocks reserve bytes and the current blocks reserve bytes
+  string2 = string.substr(0,string.find("|"));
+  string = string.substr(string.find("|")+1);
+  string = string.substr(0,string.find("|"));
 
   // check if the data hash matches the network block string
   memset(data,0,strlen(data));
@@ -3494,12 +3506,6 @@ try
   {
     VERIFY_ROUND_STATISTICS_ERROR;
   }
-
-  // create the message
-  message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
-
-  // send the message to a random network data node
-  string2 = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // print the network block string
   // print the block data, reserve bytes and transactions in a different color
