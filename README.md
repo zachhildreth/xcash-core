@@ -3,6 +3,8 @@
 Copyright (c) 2018 X-CASH Project, Derived from 2014-2018, The Monero Project 
 Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
+### You can also visit the [Delegate Proof of Privacy Stake repository](https://github.com/X-CASH-official/XCASH_DPOPS)
+
 ## Development resources
 
 - Web: [x-network.io](https://x-network.io)

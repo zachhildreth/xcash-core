@@ -3486,13 +3486,13 @@ try
 
   if (memcmp(data2,data_hash.c_str(),DATA_HASH_LENGTH) != 0)
   {
-    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash",1);
+    VERIFY_ROUND_STATISTICS_ERROR;
   }
 
   // convert the network_block_string to a blockchain_data struct
   if (network_block_string_to_blockchain_data(string.c_str(),(const char*)block_height) == 0)
   {
-    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid block",1);
+    VERIFY_ROUND_STATISTICS_ERROR;
   }
 
   // create the message
