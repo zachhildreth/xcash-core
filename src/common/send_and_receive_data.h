@@ -28,4 +28,4 @@ using boost::asio::ip::tcp;
 
 #include "cryptonote_config.h"
 
-std::string send_and_receive_data(std::string IP_address,std::string data2);
+std::string send_and_receive_data(std::string IP_address,std::string data2, const int SOCKET_TIMEOUT_SETTINGS);

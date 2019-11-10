@@ -3472,7 +3472,7 @@ try
   message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
   // send the message to a random block verifier node
-  string = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+  string = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // check if the data hash matches the network block string
   memset(data,0,strlen(data));
@@ -3499,7 +3499,7 @@ try
   message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";  
 
   // send the message to a random network data node
-  string2 = send_and_receive_data(current_block_verifier_IP_address,message).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
+  string2 = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS).substr(sizeof("BLOCK_VERIFIERS_TO_NODE_SEND_RESERVE_BYTES|")-1);
 
   // print the network block string
   // print the block data, reserve bytes and transactions in a different color

@@ -2324,7 +2324,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2394,7 +2394,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "The vote was successfully added to the database")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "The vote was successfully added to the database")
     {
       count2++;
     }     
@@ -2479,7 +2479,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2531,7 +2531,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Registered the delegate")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Registered the delegate")
     {
       count2++;
     }     
@@ -2616,7 +2616,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2668,7 +2668,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Removed the delegate")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Removed the delegate")
     {
       count2++;
     }     
@@ -2800,7 +2800,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2852,7 +2852,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Updated the delegates information")
     {
       count2++;
     }     

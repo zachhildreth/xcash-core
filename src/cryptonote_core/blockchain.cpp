@@ -5313,7 +5313,7 @@ std::string get_random_block_verifier_node()
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   }
  
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -5536,7 +5536,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
       message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height - 1) + "\",\r\n}";
 
       // send the message to a random block verifier node
-      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message);
+      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS_SYNCING_BLOCKS_RESERVE_BYTES);
 
       if (reserve_bytes_data == "" || reserve_bytes_data == "Could not get the network blocks reserve bytes")
       {
@@ -5555,7 +5555,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
       message = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
 
       // send the message to a random block verifier node
-      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message);
+      reserve_bytes_data = send_and_receive_data(current_block_verifier_IP_address,message,SOCKET_CONNECTION_TIMEOUT_SETTINGS_SYNCING_BLOCKS_RESERVE_BYTES);
 
       if (reserve_bytes_data == "" || reserve_bytes_data == "Could not get the network blocks reserve bytes")
       {

@@ -1,11 +1,11 @@
 #include "common/send_and_receive_data.h"
 #include "common/blocking_tcp_client.h"
 
-std::string send_and_receive_data(std::string IP_address,std::string data2)
+std::string send_and_receive_data(std::string IP_address,std::string data2, const int SOCKET_TIMEOUT_SETTINGS)
 {
   // Variables
   std::string string;
-  auto timeout = boost::posix_time::milliseconds(SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+  auto timeout = boost::posix_time::milliseconds(SOCKET_TIMEOUT_SETTINGS);
 
   try
   {
@@ -18,11 +18,9 @@ std::string send_and_receive_data(std::string IP_address,std::string data2)
     // send the message and read the response
     c.write_line(data2, timeout);
     string = c.read_until('}', timeout);
-    //std::cout << string << std::endl << std::endl;
   }
   catch (std::exception &ex)
   {
-    //std::cout << ex.what() << std::endl;
     return "";
   }
   return string;
