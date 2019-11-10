@@ -3988,7 +3988,6 @@ struct blockchain_data {
 struct network_data_nodes_list network_data_nodes_list; // The network data nodes
 struct current_block_verifiers_list current_block_verifiers_list; // The data for a new block to be added to the network.
 struct blockchain_data blockchain_data; // The data for a new block to be added to the network.
-std::string current_block_verifier_public_address = "";
 std::string current_block_verifier_IP_address = "";
 std::string previous_block_reserve_bytes = "";
 
@@ -5297,27 +5296,23 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
   #undef VERIFY_NETWORK_BLOCK_DATA_ERROR
 }
 
-int get_random_block_verifier_node()
+std::string get_random_block_verifier_node()
 {
   // Variables
   std::string string;
   std::size_t count = 0;
   std::size_t count2 = 0;
   std::size_t count3 = 0;
-  std::size_t data_count1 = 0;
-  std::size_t data_count2 = 0;
   std::size_t total_delegates;
   std::string reserve_bytes_database_vote_count_data[BLOCK_VERIFIERS_AMOUNT];
   int reserve_bytes_database_vote_count[BLOCK_VERIFIERS_AMOUNT];
-  std::string current_block_verifiers_list_public_address;
   std::string current_block_verifiers_list_IP_address;
   int settings;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
-    //string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[0],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST);
   }
  
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -5329,30 +5324,22 @@ int get_random_block_verifier_node()
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
 
   // parse the message
-  current_block_verifiers_list_public_address = string.substr(string.find("\"block_verifiers_public_address_list\": \"")+40,(string.find("\"",string.find("\"block_verifiers_public_address_list\": \"")+40)) - (string.find("\"block_verifiers_public_address_list\": \"")+40));
   current_block_verifiers_list_IP_address = string.substr(string.find("\"block_verifiers_IP_address_list\": \"")+36,(string.find("\"",string.find("\"block_verifiers_IP_address_list\": \"")+36)) - (string.find("\"block_verifiers_IP_address_list\": \"")+36));
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = 0, count3 = 0, data_count1 = 0, data_count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    count3 = current_block_verifiers_list_public_address.find("|",count2);
-    current_block_verifiers_list.block_verifiers_public_address[count] = current_block_verifiers_list_public_address.substr(count2,count3 - count2);
+    count3 = current_block_verifiers_list_IP_address.find("|",count2);
+    current_block_verifiers_list.block_verifiers_IP_address[count] = current_block_verifiers_list_IP_address.substr(count2,count3 - count2);
     count2 = count3 + 1;
-
-    data_count2 = current_block_verifiers_list_IP_address.find("|",data_count1);
-    current_block_verifiers_list.block_verifiers_IP_address[count] = current_block_verifiers_list_IP_address.substr(data_count1,data_count2 - data_count1);
-    data_count1 = data_count2 + 1;
   } 
 
   // select a random block verifier to sync the database from that was synced
-  //count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
-  count = 0;
-  current_block_verifier_public_address = current_block_verifiers_list.block_verifiers_public_address[count];
-  current_block_verifier_IP_address = current_block_verifiers_list.block_verifiers_IP_address[count];
+  count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
 
-  MGINFO_YELLOW("Connected to delegate: " << current_block_verifier_IP_address << " to synchronize the blocks reserve bytes data");
+  MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes data");
   
-  return 1;
+  return current_block_verifiers_list.block_verifiers_IP_address[count];
 }
 
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
@@ -5519,7 +5506,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   else if (settings == 1) \
   { \
     MGINFO_RED(message); \
-    get_random_block_verifier_node(); \
+    current_block_verifier_IP_address = get_random_block_verifier_node(); \
     return false; \
   }
 
@@ -5551,9 +5538,9 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   INITIALIZE_NETWORK_DATA_NODES_LIST;
 
   // check if we have already verified that a block verifier is synced, otherwise find a block verifier to sync the database from
-  if (current_block_verifier_public_address == "")
+  if (current_block_verifier_IP_address == "")
   {
-    get_random_block_verifier_node();
+    current_block_verifier_IP_address = get_random_block_verifier_node();
   }
 
   MGINFO_GREEN("Synchronizing block " << current_block_height << " with delegate " << current_block_verifier_IP_address);
