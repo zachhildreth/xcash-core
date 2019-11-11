@@ -2210,7 +2210,7 @@ namespace cryptonote
     block blk;
     bool orphan;
     bool have_block;
-    bool fill_block_hash;
+    bool fill_block_hash = false;
     block_header_response block_header;
     bool response_filled;
  
