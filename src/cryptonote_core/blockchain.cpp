@@ -5311,15 +5311,12 @@ std::string get_random_block_verifier_node()
   int settings;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-  }
+  string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
  
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  if (string.find("|") == std::string::npos)
   {
     MGINFO_RED("Block verifiers are not in sync");
-    exit(0);
+    return "";
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
@@ -5503,7 +5500,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   else if (settings == 1) \
   { \
     MGINFO_RED(message << " for block height " << current_block_height); \
-    current_block_verifier_IP_address = get_random_block_verifier_node(); \
+    current_block_verifier_IP_address = ""; \
     return false; \
   }
 
@@ -5525,6 +5522,10 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   if (current_block_verifier_IP_address == "")
   {
     current_block_verifier_IP_address = get_random_block_verifier_node();
+    if (current_block_verifier_IP_address == "")
+    {
+      return false;
+    }
   }
 
   // check if we need to download the blocks reserve bytes data
