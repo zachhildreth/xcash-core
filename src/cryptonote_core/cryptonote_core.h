@@ -57,7 +57,6 @@ namespace cryptonote
      const std::pair<uint8_t, uint64_t> *hard_forks;
    };
 
-  extern const command_line::arg_descriptor<bool, false> arg_block_verifier;
   extern const command_line::arg_descriptor<std::string, false, true, 2> arg_data_dir;
   extern const command_line::arg_descriptor<bool, false> arg_testnet_on;
   extern const command_line::arg_descriptor<bool, false> arg_stagenet_on;
