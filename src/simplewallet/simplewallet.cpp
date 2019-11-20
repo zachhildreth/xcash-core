@@ -2450,7 +2450,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // error check
   if (args.size() != PARAMETER_AMOUNT)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid parameters");
     return true;
   }  
   if (m_wallet->key_on_device())
@@ -2587,7 +2587,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   // error check
   if (args.size() != PARAMETER_AMOUNT)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    fail_msg_writer() << tr("Failed to remove the delegate\nInvalid parameters");
     return true;
   }  
   if (m_wallet->key_on_device())
@@ -2724,7 +2724,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   // error check
   if (args.size() != PARAMETER_AMOUNT)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    fail_msg_writer() << tr("Failed to update the delegate\nInvalid parameters");
     return true;
   }  
   if (m_wallet->key_on_device())
