@@ -3,6 +3,8 @@
 Copyright (c) 2018 X-CASH Project, Derived from 2014-2018, The Monero Project 
 Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
+### You can also visit the [Delegate Proof of Privacy Stake repository](https://github.com/X-CASH-official/XCASH_DPOPS)
+
 ## Development resources
 
 - Web: [x-network.io](https://x-network.io)
@@ -70,6 +72,8 @@ the system, then the vendored source will be built and used. The vendored
 sources are also used for statically-linked builds because distribution
 packages often include only shared library binaries (`.so`) but not static
 library archives (`.a`).
+
+If you need to build statically linked linux binaries, please refer to [Build Statically Linked Linux Binaries guide](#build-statically-linked-linux-binaries) before you install any packages
 
 | Dep          | Min. version  | Vendored | Debian/Ubuntu pkg  | Arch pkg     | Fedora            | Optional | Purpose        |
 | ------------ | ------------- | -------- | ------------------ | ------------ | ----------------- | -------- | -------------- |
@@ -146,11 +150,88 @@ invokes cmake commands as needed.
 
          make release-static
 
-Dependencies need to be built with -fPIC. Static libraries usually aren't, so you may have to build them yourself with -fPIC. Refer to their documentation for how to build them.
+Dependencies need to be built with -fPIC. Static libraries usually aren't, so you may have to build them yourself with -fPIC. Refer to their documentation for how to build them, as well as refer to the [Build Statically Linked Linux Binaries guide](#build-statically-linked-linux-binaries)
 
 * **Optional**: build documentation in `doc/html` (omit `HAVE_DOT=YES` if `graphviz` is not installed):
 
         HAVE_DOT=YES doxygen Doxyfile
+
+#### Build Statically Linked Linux Binaries
+
+Note: this guide is only for Ubuntu
+
+Only install the following packages from the package manager if you want to build statically linked linux binaries:
+```
+sudo apt update
+sudo apt install -y build-essential cmake pkg-config libunbound-dev libsodium-dev libldns-dev libexpat1-dev doxygen graphviz
+sudo apt-get -y install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/
+```
+
+You will also need to install these additional packages
+```
+sudo apt install -y libsystemd-dev libudev-dev libtool-bin autoconf
+```
+
+Now download and extract the latest version of [Boost](https://www.boost.org/users/download/), [OpenSSL 1.1](https://www.openssl.org/source/), [PCSC-lite](https://pcsclite.apdu.fr/files/) and [libzmq](https://github.com/zeromq/libzmq/releases)
+
+Now create build directories for boost, openssl and pcsclite. The reason these are installed not in the system directory is so you can keep your systems install, and have these at the same time. You can create these folders wherever and name them whatever.
+
+```
+mkdir BOOST_BUILD_DIR
+mkdir OPENSSL_BUILD_DIR
+mkdir PCSC_LITE_BUILD_DIR
+```
+
+Now install them:
+
+boost
+```
+cd BOOST_DIRECTORY
+./bootstrap.sh --prefix=BOOST_BUILD_DIR
+sudo ./b2 cxxflags=-fPIC cflags=-fPIC -a install -j `nproc`
+```
+
+openssl
+```
+cd OPENSSL_DIRECTORY
+./config -fPIC --prefix=OPENSSL_BUILD_DIR --openssldir=OPENSSL_BUILD_DIR
+make depend
+make -j `nproc`
+sudo make install
+```
+
+pcsc-lite
+```
+cd PCSC-LITE_DIRECTORY
+./configure CPPFLAGS=-DPIC CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC --enable-static --prefix=PCSC_LITE_BUILD_DIR
+make -j `nproc`
+sudo make install
+```
+
+libzmq
+```
+cd LIBZMQ_DIRECTORY
+/autogen.sh
+./configure CPPFLAGS=-DPIC CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC
+make -j `nproc`
+sudo make install
+sudo ldconfig
+cd /usr/local/include/
+wget -q https://raw.githubusercontent.com/zeromq/cppzmq/master/zmq.hpp
+```
+
+Now you can build the binaries statically using the following commands
+```
+cd X-CASH
+rm -r build
+mkdir -p build/release
+cd build/release
+cmake -D STATIC=ON -D ARCH="x86-64" -D BUILD_64=ON -D BUILD_TESTS=ON -D BOOST_ROOT=BOOST_BUILD_DIR -D OPENSSL_ROOT_DIR=OPENSSL_BUILD_DIR -D USE_READLINE=OFF -D CMAKE_BUILD_TYPE=release ../..
+cd ../../
+make -IBOOST_BUILD_DIR/include -IOPENSSL_BUILD_DIR/include -IPCSC_LITE_BUILD_DIR/include LDFLAGS="-LBOOST_BUILD_DIR/lib -LOPENSSL_BUILD_DIR/lib -LPCSC_LITE_BUILD_DIR/lib" -j `nproc`
+```
+
+
 
 #### On Windows:
 
