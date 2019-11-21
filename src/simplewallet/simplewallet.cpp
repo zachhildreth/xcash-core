@@ -2702,6 +2702,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 };
 
   // Variables
+  std::string parameters = "";
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
@@ -2721,151 +2722,161 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
   try
   {
-  // error check
-  if (args.size() != PARAMETER_AMOUNT)
-  {
-    fail_msg_writer() << tr("Failed to update the delegate\nInvalid parameters");
-    return true;
-  }  
-  if (m_wallet->key_on_device())
-  {
-    fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
-    return true;
-  }
-  if (m_wallet->watch_only() || m_wallet->multisig())
-  {
-    fail_msg_writer() << tr("Failed to update the delegate\nThe reserve proof can be generated only by a full wallet");
-    return true;
-  }
-  if (!try_connect_to_daemon())
-  {
-    fail_msg_writer() << tr("Failed to update the delegate\nFailed to connect to the daemon");
-    return true;
-  }
-
-  // check if the item to update is a valid item
-  if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "pool_mode" && args[0] != "fee_structure" && args[0] != "server_settings")
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings");
-    return true;  
-  }
-  if (args[0] == "IP_address" && (args[1].length() > 255 || args[1].find(":") != std::string::npos))
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
-    return true;  
-  }
-  if (args[0] == "about" && args[1].length() > 1024)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid about. About length must be less than 1024");
-    return true;  
-  }
-  if (args[0] == "website" && args[1].length() > 255)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid website. Website length must be less than 255");
-    return true;  
-  }
-  if (args[0] == "team" && args[1].length() > 255)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid team. Team length must be less than 255");
-    return true;  
-  }
-  if (args[0] == "pool_mode" && args[1] != "true" && args[1] != "false")
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false");
-    return true;  
-  }
-  if (args[0] == "fee_structure" && args[1].length() > 10)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10");
-    return true;  
-  }
-  if (args[0] == "server_settings" && args[1].length() > 255)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255");
-    return true;  
-  }
-  if (args[0] == "public_key" && args[1].length() != DELEGATES_PUBLIC_KEY_LENGTH)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public key");
-    return true;  
-  }
-
-  // ask for the password
-  SCOPED_WALLET_UNLOCK();
-
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
-
-  // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-  }
-
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\n");
-    return true; 
-  }
-
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-  // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
-  }
-
-  // get the wallet transfers   
-  m_wallet->get_transfers(transfers);
-
-  // get the wallets public address
-  auto print_address_sub = [this, &transfers, &public_address]()
+    // check if the second paramter is multiple words and combine them
+    if (args.size() > PARAMETER_AMOUNT && (args.front() == "about" || args.front() == "team" || args.front() == "server_settings"))
     {
-      bool used = std::find_if(
-        transfers.begin(), transfers.end(),
-        [this](const tools::wallet2::transfer_details& td) {
-          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
-        }) != transfers.end();
-        public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
+      for (count = 1; count < args.size(); count++)
+      {
+        parameters = parameters + " " + args[count]; 
+      }
+      parameters = parameters.substr(1);
+    }
+    else if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nInvalid parameters");
+      return true;
+    } 
+    if (m_wallet->key_on_device())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nThe reserve proof can be generated only by a full wallet");
+      return true;
+    }
+    if (!try_connect_to_daemon())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nFailed to connect to the daemon");
+      return true;
+    }
+
+    // check if the item to update is a valid item
+    if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "pool_mode" && args[0] != "fee_structure" && args[0] != "server_settings")
+    { 
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings");
+      return true;  
+    }
+    if (args[0] == "IP_address" && (args[1].length() > 255 || args[1].find(":") != std::string::npos))
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
+      return true;  
+    }
+    if (args[0] == "about" && parameters.length() > 1024)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid about. About length must be less than 1024");
+      return true;  
+    }
+    if (args[0] == "website" && args[1].length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid website. Website length must be less than 255");
+      return true;  
+    }
+    if (args[0] == "team" && parameters.length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid team. Team length must be less than 255");
+      return true;  
+    }
+    if (args[0] == "pool_mode" && args[1] != "true" && args[1] != "false")
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false");
+      return true;  
+    }
+    if (args[0] == "fee_structure" && args[1].length() > 10)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10");
+      return true;  
+    }
+    if (args[0] == "server_settings" && parameters.length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255");
+      return true;  
+    }
+    if (args[0] == "public_key" && args[1].length() != DELEGATES_PUBLIC_KEY_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public key");
+      return true;  
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public address. Only XCA addresses are allowed.");
-    return true;  
-  }
- 
-  // create the data
-  data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
- 
-  // sign the data    
-  data3 = m_wallet->sign(data2);
-
-  data2 += data3 + "|";
-
-  // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
-  {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Updated the delegates information")
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
     {
-      count2++;
-    }     
-  }
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+ 
+    // create the data
+    data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
 
-  // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
-  {
-    message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
-  } 
-  else
-  {
-    fail_msg_writer() << tr("Failed to update the delegates information");   
-  }
+    data2 += data3 + "|";
+
+   std::cout << "DATA=" << data2;
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Updated the delegates information")
+      {
+        count2++;
+      }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information");   
+    }
   }
   catch (...)
   {
