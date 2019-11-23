@@ -5333,7 +5333,7 @@ std::string get_random_block_verifier_node()
   } 
 
   // select a random block verifier to sync the database from that was synced
-  count = (int)(rand() % BLOCK_VERIFIERS_AMOUNT);
+  count = (int)(rand() % total_delegates);
 
   MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes");
   
