@@ -204,7 +204,7 @@
 #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
 #define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix of a xcash_proof_of_stake_signature for the signed data
 #define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed data
-#define BUFFER_SIZE_RESERVE_PROOF 10000 // The maximum length of a reserve proof
+#define BUFFER_SIZE_RESERVE_PROOF 35000 // The maximum length of a reserve proof
 
 // Lengths
 #define BITS_IN_BYTE 8 // 8 bits in 1 byte
