@@ -222,7 +222,7 @@
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 
 // XCASH DPOPS
-#define BLOCK_VERIFIERS_AMOUNT 18 // The amount of block verifiers in a round
+#define BLOCK_VERIFIERS_AMOUNT 20 // The amount of block verifiers in a round
 #define BLOCK_VERIFIERS_VALID_AMOUNT 12 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.67 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
