@@ -5332,12 +5332,21 @@ std::string get_random_block_verifier_node()
     count2 = count3 + 1;
   } 
 
-  // select a random block verifier to sync the database from that was synced
+  /*// select a random block verifier to sync the database from that was synced
   count = (int)(rand() % total_delegates);
 
   MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes");
   
-  return current_block_verifiers_list.block_verifiers_IP_address[count];
+  return current_block_verifiers_list.block_verifiers_IP_address[count];*/
+
+  // select a random block verifier to sync the database from that was synced
+  count = (int)(rand() % NETWORK_DATA_NODES_AMOUNT);
+
+  MGINFO_YELLOW("Connected to delegate: " << network_data_nodes_list.network_data_nodes_IP_address[count] << " to synchronize the blocks reserve bytes");
+  
+  return network_data_nodes_list.network_data_nodes_IP_address[count];
+
+  
 }
 
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
