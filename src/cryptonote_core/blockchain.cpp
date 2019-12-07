@@ -5227,6 +5227,7 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
     }
     else
     {
+      MGINFO_RED("error\n" << NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 << "\n" << blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[0] << "\n");
       number = 0;
     }
   }
