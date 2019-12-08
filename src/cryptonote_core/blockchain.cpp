@@ -5227,7 +5227,6 @@ int verify_network_block_data(const char* NETWORK_BLOCK_RESERVE_BYTES, const cha
     }
     else
     {
-      MGINFO_RED("error\n" << NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 << "\n" << blockchain_data.blockchain_reserve_bytes.block_validation_node_signature[0] << "\n");
       number = 0;
     }
   }
@@ -5344,9 +5343,7 @@ std::string get_random_block_verifier_node()
 
   MGINFO_YELLOW("Connected to delegate: " << network_data_nodes_list.network_data_nodes_IP_address[count] << " to synchronize the blocks reserve bytes");
   
-  return network_data_nodes_list.network_data_nodes_IP_address[count];
-
-  
+  return network_data_nodes_list.network_data_nodes_IP_address[count];  
 }
 
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
