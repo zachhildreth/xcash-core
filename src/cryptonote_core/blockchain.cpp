@@ -5331,19 +5331,19 @@ std::string get_random_block_verifier_node()
     count2 = count3 + 1;
   } 
 
-  /*// select a random block verifier to sync the database from that was synced
+  // select a random block verifier to sync the database from that was synced
   count = (int)(rand() % total_delegates);
 
   MGINFO_YELLOW("Connected to delegate: " << current_block_verifiers_list.block_verifiers_IP_address[count] << " to synchronize the blocks reserve bytes");
   
-  return current_block_verifiers_list.block_verifiers_IP_address[count];*/
+  return current_block_verifiers_list.block_verifiers_IP_address[count];
 
-  // select a random block verifier to sync the database from that was synced
+  /*// select a random block verifier to sync the database from that was synced
   count = (int)(rand() % NETWORK_DATA_NODES_AMOUNT);
 
   MGINFO_YELLOW("Connected to delegate: " << network_data_nodes_list.network_data_nodes_IP_address[count] << " to synchronize the blocks reserve bytes");
   
-  return network_data_nodes_list.network_data_nodes_IP_address[count];  
+  return network_data_nodes_list.network_data_nodes_IP_address[count];*/  
 }
 
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height, std::string previous_network_block_string)
@@ -5513,6 +5513,35 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   memset(data,0,sizeof(data));
   memset(data2,0,sizeof(data2));
   memset(block_height,0,sizeof(block_height));
+
+
+
+  /* check if the reserve bytes data is empty. If it is empty it means that:
+  this is the first block they are syncing
+  they have synced 288 blocks and need to get the next 288 blocks
+  they are fully synced and in live syncing mode
+  they are a current block verifier, and they have fully synced the blockchain and are currently in live syncing mode 
+  Based on these results its okay in terms of performance to check if they are a block verifier since if not it will only check this every 288 blocks, and still keep syncing fast for the non block verifiers
+  */
+  if (reserve_bytes_data == "")
+  {
+    // check if they are a current block verifier and if so dont validate the block, just confirm the data hash of the current block and the data hash they have in the decentralized database, since they already verified the block
+    if (send_and_receive_data("127.0.0.1","{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
+    {
+      // get the data hash from the block verifiers decentralized database
+      string = send_and_receive_data("127.0.0.1","{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATA_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      
+      // get the network block string 
+      network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+
+      // get the data hash
+      data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+
+      return data_hash == string ? true : false;
+    }
+  }
+
+
 
   if (previous_block_reserve_bytes == "")
   {
