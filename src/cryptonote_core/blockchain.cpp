@@ -5516,7 +5516,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
 
 
 
-  /* check if the reserve bytes data is empty. If it is empty it means that:
+  /* check if the reserve bytes data is empty. If it is empty it means one of the following:
   this is the first block they are syncing
   they have synced 288 blocks and need to get the next 288 blocks
   they are fully synced and in live syncing mode
@@ -5530,14 +5530,17 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     {
       // get the data hash from the block verifiers decentralized database
       string = send_and_receive_data("127.0.0.1","{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATA_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-      
-      // get the network block string 
-      network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
 
-      // get the data hash
-      data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+      if (string.length() == DATA_HASH_LENGTH)
+      {      
+        // get the network block string 
+        network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
 
-      return data_hash == string ? true : false;
+        // get the data hash
+        data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+
+        return data_hash == string ? true : false;
+      }
     }
   }
 
