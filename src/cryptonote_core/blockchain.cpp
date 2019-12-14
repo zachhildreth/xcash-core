@@ -5537,7 +5537,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   they are a current block verifier, and they have fully synced the blockchain and are currently in live syncing mode 
   Based on these results its okay in terms of performance to check if they are a block verifier since if not it will only check this every 288 blocks, and still keep syncing fast for the non block verifiers
   */
-  if (reserve_bytes_data == "")
+  /*if (reserve_bytes_data == "")
   {
     // check if they are a current block verifier and if so dont validate the block, just confirm the data hash of the current block and the data hash they have in the decentralized database, since they already verified the block
     if (send_and_receive_data("127.0.0.1","{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
@@ -5556,7 +5556,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
         return data_hash == string ? true : false;
       }
     }
-  }
+  }*/
 
 
 
