@@ -3838,6 +3838,24 @@ bool verify_network_block_if_current_block_verifier(const block bl, std::size_t 
 
 
 
+bool check_if_synced(const std::vector<std::string> block_verifiers_database_hashes)
+{
+  // Variables
+  std::size_t count;
+
+  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  {
+    if (block_verifiers_database_hashes[count] != "")
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
+
 bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height)
 {
   // Variables
@@ -3852,7 +3870,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   return false;
 
   // check if you need to get the datbase hashes. This will be the first time running the program, or if you have synced 288 * 30 blocks and need the next 288 * 30 blocks database hashes
-  if (block_verifiers_database_hashes.front() == "")
+  if (check_if_synced(block_verifiers_database_hashes))
   {
     // check if you are a current block verifier and fully synced and if so just get the database data from your decentralized database
     if (verify_network_block_if_current_block_verifier(bl,current_block_height) == true)
