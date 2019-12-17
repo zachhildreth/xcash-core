@@ -3726,7 +3726,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   // get the data hash
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
-  // check if the database hash matches the blocks reserve bytes hash
+  // check if the blocks reserve bytes hash matches at least the valid amount of block verifiers database hash
   for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
   {
     if (block_verifiers_database_hashes[count].length() >= DATA_HASH_LENGTH)
@@ -3768,19 +3768,28 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   std::size_t count2 = 0;
   std::size_t count3 = 0;
 
+  MGINFO_YELLOW("Connecting to a random network data node to get a list of current block verifiers");
+
   // get the current block verifiers list  
   string = send_and_receive_data(network_data_nodes_list[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
  
-  if (string == NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_ERROR_MESSAGE || string == "")
+  if (string == NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_ERROR_MESSAGE || string == "" || string.find("|") == std::string::npos)
   {
     MGINFO_RED("Could not get the list of current block verifiers");
     return false;
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
 
   // parse the message
   current_block_verifiers_list_IP_address = string.substr(string.find("\"block_verifiers_IP_address_list\": \"")+36,(string.find("\"",string.find("\"block_verifiers_IP_address_list\": \"")+36)) - (string.find("\"block_verifiers_IP_address_list\": \"")+36));
+
+  MGINFO_YELLOW("Connecting to each current block verifier to get a list of reserve bytes database hashes, for a maximum of 8640 blocks (one month)");
+  MGINFO_YELLOW("This can take some time");
 
   // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
