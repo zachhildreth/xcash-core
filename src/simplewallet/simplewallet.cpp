@@ -2318,7 +2318,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -2473,7 +2473,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -2610,7 +2610,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -2793,17 +2793,12 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255");
       return true;  
     }
-    if (args[0] == "public_key" && args[1].length() != DELEGATES_PUBLIC_KEY_LENGTH)
-    {
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public key");
-      return true;  
-    }
 
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
     // initialize the network_data_nodes_list struct
-    INITIALIZE_NETWORK_DATA_NODES_LIST;
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
     // send the message to a random network data node
     for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)

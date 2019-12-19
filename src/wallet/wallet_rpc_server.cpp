@@ -3428,7 +3428,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -3582,7 +3582,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -3716,7 +3716,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
@@ -3898,15 +3898,9 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";
     return false;
   }
-  if (req.item == "public_key" && req.value.length() != DELEGATES_PUBLIC_KEY_LENGTH)
-  {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid public key";
-    return false;
-  }
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)

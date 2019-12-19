@@ -3757,7 +3757,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
 bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
 {
   // Constants
-  const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5};
+  INITIALIZE_NETWORK_DATA_NODES_LIST;
 
   // Variables
   std::string string = "";
