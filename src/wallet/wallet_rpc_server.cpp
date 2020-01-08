@@ -3395,7 +3395,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   tools::wallet2::transfer_container transfers;
   boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
@@ -3549,7 +3549,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
@@ -3683,7 +3683,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
@@ -3817,7 +3817,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_AMOUNT]; // The block verifiers IP address
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 

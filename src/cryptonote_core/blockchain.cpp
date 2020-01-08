@@ -3710,7 +3710,7 @@ bool Blockchain::update_next_cumulative_weight_limit()
 #define DATA_HASH_LENGTH 128 // The length of the SHA2-512 hash
 
 // global variables
-std::vector<std::string> block_verifiers_database_hashes(BLOCK_VERIFIERS_AMOUNT);
+std::vector<std::string> block_verifiers_database_hashes(BLOCK_VERIFIERS_TOTAL_AMOUNT);
 
 bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
 {
@@ -3727,7 +3727,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
   // check if the blocks reserve bytes hash matches at least the valid amount of block verifiers database hash
-  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
   {
     if (block_verifiers_database_hashes[count].length() >= DATA_HASH_LENGTH)
     {
@@ -3740,7 +3740,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
 
   if (number >= BLOCK_VERIFIERS_VALID_AMOUNT)
   {
-    for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+    for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
     {
       if (block_verifiers_database_hashes[count].length() >= DATA_HASH_LENGTH+1)
       {
@@ -3780,9 +3780,9 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT)
   {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
   }
 
   // parse the message
@@ -3852,7 +3852,7 @@ bool check_if_synced(const std::vector<std::string> block_verifiers_database_has
   // Variables
   std::size_t count;
 
-  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++)
+  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
   {
     if (block_verifiers_database_hashes[count] != "")
     {
@@ -3872,7 +3872,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   
   #define CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR(message) \
   MGINFO_RED(message); \
-  for (count = 0; count < BLOCK_VERIFIERS_AMOUNT; count++) \
+  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++) \
   { \
     block_verifiers_database_hashes[count] = ""; \
   } \
