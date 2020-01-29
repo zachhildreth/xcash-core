@@ -1,23 +1,27 @@
-# X-CASH
+# xcash-core
+
+[![Release](https://img.shields.io/github/v/release/X-CASH-official/X-CASH)](https://github.com/X-CASH-official/X-CASH/releases)
+<!-- [![Gitter](https://img.shields.io/gitter/room/plbgnt/core_change)](https://gitter.im/core_change/community?source=orgpage) -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](https://opensource.org/licenses/MIT)
 
 Copyright (c) 2018 X-CASH Project, Derived from 2014-2018, The Monero Project 
 Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
 ### You can also visit the [Delegate Proof of Privacy Stake repository](https://github.com/X-CASH-official/XCASH_DPOPS)
 
-## Development resources
+## Important Links
 
-- Web: [x-network.io](https://x-network.io)
+- Web: [xcash.io](https://x-network.io/xcash)
 - Explorer: [explorer.x-cash.org](https://explorer.x-cash.org)
 - Official Mining Pool: [minexcash.com](http://minexcash.com)
 - Bitcointalk: [Bitcointalk](https://bitcointalk.org/index.php?topic=4781246.0)
-- Reddit: [xcash](https://www.reddit.com/r/xcash/)
 - Twitter: [XCashCrypto](https://twitter.com/XCashCrypto/)
 - Telegram: [xcashglobal](https://t.me/xcashglobal)
 - Discord: [x-cash](https://discord.gg/4CAahnd)
 - Medium: [x-cash](https://medium.com/x-cash)
-- Mail: [accounts@x-cash.org](mailto:accounts@x-cash.org)
-- GitHub: [https://github.com/X-CASH-official/X-CASH](https://github.com/X-CASH-official/X-CASH)
+- Reddit: [xcash](https://www.reddit.com/r/xcash/)
+- Mail: [developers@xcash.foundation](mailto:developers@xcash.foundation)
+- GitHub: [https://github.com/X-CASH-official/X-CASH](https://github.com/X-CASH-official/)
 
 ## Introduction
 
@@ -48,7 +52,7 @@ See [LICENSE](LICENSE).
 
 ## Contributing
 
-If you want to help out, see [CONTRIBUTING](CONTRIBUTING.md) for a set of guidelines.
+If you want to help out, see [CONTRIBUTING.md](https://github.com/X-CASH-official/.github/blob/master/CONTRIBUTING.md) for a set of guidelines.
 
 ## Scheduled software upgrades
 
@@ -104,7 +108,7 @@ If you need to build statically linked linux binaries, please refer to [Build St
 [^] On Debian/Ubuntu `libgtest-dev` only includes sources and headers. You must
 build the library binary manually. This can be done with the following command ```sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/ ```
 
-####Note: If you want to build with unit test (make instead of make release) you need libgtest to be compiled with fPIC
+###Note: If you want to build with unit test (make instead of make release) you need libgtest to be compiled with fPIC
 To do this, install libgtest using your package manager
 then run the following command to rebuild using fPIC
 ```cd /usr/src/gtest && sudo sed -i 's/CMAKE_CXX_FLAGS:STRING=/CMAKE_CXX_FLAGS:STRING=-fPIC/g' CMakeCache.txt && sudo sed -i 's/CMAKE_C_FLAGS:STRING=/CMAKE_C_FLAGS:STRING=-fPIC/g' CMakeCache.txt && sudo cmake . && sudo make && sudo mv libg* /usr/lib/```
