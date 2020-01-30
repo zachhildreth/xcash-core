@@ -1,11 +1,11 @@
 # X-CASH Core
 
-⛓ First Cryptonote coin with public & private transactions, custom DPOS consensus
-
+> ⛓ First Cryptonote coin with public & private transactions, custom DPOS consensus
+> 
 [![banner](header.png)](https://x-network.io/xcash)
 
 [![Release](https://img.shields.io/github/v/release/X-CASH-official/X-CASH)](https://github.com/X-CASH-official/X-CASH/releases)
-<!-- [![Gitter](https://img.shields.io/gitter/room/plbgnt/core_change)](https://gitter.im/core_change/community?source=orgpage) -->
+[![Gitter](https://img.shields.io/gitter/room/plbgnt/core_change)](https://gitter.im/core_change/community?source=orgpage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](https://opensource.org/licenses/MIT)
 
 Copyright (c) 2018 X-CASH Project, Derived from 2014-2018, The Monero Project 
