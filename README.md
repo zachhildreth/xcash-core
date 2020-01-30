@@ -5,27 +5,11 @@
 [![banner](header.png)](https://x-network.io/xcash)
 
 [![Release](https://img.shields.io/github/v/release/X-CASH-official/X-CASH)](https://github.com/X-CASH-official/X-CASH/releases)
-[![Gitter](https://img.shields.io/gitter/room/plbgnt/core_change)](https://gitter.im/core_change/community?source=orgpage)
+[![Gitter](https://badges.gitter.im/xcash-foundation/xcash-core.svg)](https://gitter.im/xcash-foundation/xcash-core?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2018 X-CASH Project, Derived from 2014-2018, The Monero Project 
-Portions Copyright (c) 2012-2013 The Cryptonote developers.
+### ⚠ Our custom Delegated Proof of Private Stake is in alpha test! 👉Check our [xcash-dpops](https://github.com/X-CASH-official/xcash-dpops) 
 
-### You can also visit the [Delegate Proof of Privacy Stake repository](https://github.com/X-CASH-official/XCASH_DPOPS)
-
-## Important Links
-
-- Web: [xcash.io](https://x-network.io/xcash)
-- Explorer: [explorer.x-cash.org](https://explorer.x-cash.org)
-- Official Mining Pool: [minexcash.com](http://minexcash.com)
-- Bitcointalk: [Bitcointalk](https://bitcointalk.org/index.php?topic=4781246.0)
-- Twitter: [XCashCrypto](https://twitter.com/XCashCrypto/)
-- Telegram: [xcashglobal](https://t.me/xcashglobal)
-- Discord: [x-cash](https://discord.gg/4CAahnd)
-- Medium: [x-cash](https://medium.com/x-cash)
-- Reddit: [xcash](https://www.reddit.com/r/xcash/)
-- Mail: [developers@xcash.foundation](mailto:developers@xcash.foundation)
-- GitHub: [https://github.com/X-CASH-official/X-CASH](https://github.com/X-CASH-official/)
 
 ## Introduction
 
@@ -332,3 +316,17 @@ config](utils/conf/xcashd.conf).
 
 If you're on Mac, you may need to add the `--max-concurrency 1` option to
 xcash-wallet-cli, and possibly xcashd, if you get crashes refreshing.
+
+## Important Links
+
+- Website: [xcash.io](https://x-network.io/xcash)
+- Explorer: [explorer.x-cash.org](https://explorer.x-cash.org)
+- Official Mining Pool: [minexcash.com](http://minexcash.com)
+- Bitcointalk: [Bitcointalk](https://bitcointalk.org/index.php?topic=4781246.0)
+- Twitter: [XCashCrypto](https://twitter.com/XCashCrypto/)
+- Telegram: [xcashglobal](https://t.me/xcashglobal)
+- Discord: [x-cash](https://discord.gg/4CAahnd)
+- Medium: [x-cash](https://medium.com/x-cash)
+- Reddit: [xcash](https://www.reddit.com/r/xcash/)
+- Mail: [developers@xcash.foundation](mailto:developers@xcash.foundation)
+- GitHub: [https://github.com/X-CASH-official/X-CASH](https://github.com/X-CASH-official/)
