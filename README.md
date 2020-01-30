@@ -119,7 +119,7 @@ then run the following command to rebuild using fPIC
 
 ### Cloning the repository
 
-`$ git clone https://github.com/X-CASH-official/X-CASH`
+`$ git clone https://github.com/X-CASH-official/xcash-core`
 
 ### Build instructions
 
@@ -242,7 +242,6 @@ cmake -D STATIC=ON -D ARCH="x86-64" -D BUILD_64=ON -D BUILD_TESTS=ON -D BOOST_RO
 cd ../../
 make -IBOOST_BUILD_DIR/include -IOPENSSL_BUILD_DIR/include -IPCSC_LITE_BUILD_DIR/include LDFLAGS="-LBOOST_BUILD_DIR/lib -LOPENSSL_BUILD_DIR/lib -LPCSC_LITE_BUILD_DIR/lib" -j `nproc`
 ```
-
 
 
 #### On Windows:
