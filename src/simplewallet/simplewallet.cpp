@@ -34,6 +34,7 @@
  * \brief Source file that defines simple_wallet class.
  */
 #include <thread>
+#include <unistd.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -2324,6 +2325,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2479,6 +2481,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2616,6 +2619,7 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2804,6 +2808,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
     {
       string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      sleep(1);
     }
 
     if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)

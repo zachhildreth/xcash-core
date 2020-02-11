@@ -3434,6 +3434,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -3588,6 +3589,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -3722,6 +3724,7 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -3906,6 +3909,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    sleep(1);
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
