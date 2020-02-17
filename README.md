@@ -162,7 +162,7 @@ Dependencies need to be built with -fPIC. Static libraries usually aren't, so yo
 
 #### Build Statically Linked Linux Binaries
 
-Note: this guide is only for Ubuntu
+**Note: This guide is only for Ubuntu, see below for how to run this in a LXC container**
 
 Only install the following packages from the package manager if you want to build statically linked linux binaries:
 ```
@@ -234,6 +234,76 @@ cmake -D STATIC=ON -D ARCH="x86-64" -D BUILD_64=ON -D BUILD_TESTS=ON -D BOOST_RO
 cd ../../
 make -IBOOST_BUILD_DIR/include -IOPENSSL_BUILD_DIR/include -IPCSC_LITE_BUILD_DIR/include LDFLAGS="-LBOOST_BUILD_DIR/lib -LOPENSSL_BUILD_DIR/lib -LPCSC_LITE_BUILD_DIR/lib" -j `nproc`
 ```
+
+**Alternatively you can also setup an LXC container that can run ubuntu 18.04 on most linux OS**
+
+First check to see if you already have LXD installed  
+`lxd --version`
+if this does not output the LXD version, then you dont have it installed. If it does you need to remove the LXD that came with the system and install LXD using the snap package, as this will get updated more frequently.
+
+Make sure you have snapd installed and if not refer to your OS documentation on how to install it
+
+Once you have snapd installed install the lxd snap  
+`sudo snap install lxd`
+
+Then configure LXD and press enter to accept all of the default settings  
+`lxd init`
+
+At this point, you will be able to create an LXC container and setup the static build system
+
+Create an LXC container  
+`lxc init --profile default ubuntu:18.04 xcash-static-container -c security.privileged=true`
+
+It should start to download the ubuntu 18.04 image if you have not already downloaded that LXD image. Were creating a privileged container because we will want to share our local X-CASH folder to the container, this way you will have the binaries on your local system when the container is done building them.
+
+Now we need to add the X-CASH folder from the host to the container  
+`lxc config device add xcash-static-container X-CASH disk source=PATH_TO_XCASH_FOLDER_ON_HOST/X-CASH path=/home/ubuntu/X-CASH`
+
+Start the container  
+`lxc start xcash-static-container`
+
+Update the packages list and install the base packages  
+```
+lxc exec xcash-static-container -- apt update -y
+lxc exec xcash-static-container -- apt install -y build-essential cmake pkg-config libunbound-dev libsodium-dev libldns-dev libexpat1-dev doxygen graphviz libsystemd-dev libudev-dev libtool-bin autoconf
+lxc exec xcash-static-container -- bash -c "apt-get install -y libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/"
+```
+
+Get the links to the latest version of [Boost](https://www.boost.org/users/download/), [OpenSSL 1.1](https://www.openssl.org/source/), [PCSC-lite](https://pcsclite.apdu.fr/files/) and [libzmq](https://github.com/zeromq/libzmq/releases)
+
+Install Boost (replace `\"${BOOST_URL}\"` with the boost download link)
+```
+lxc exec xcash-static-container -- bash -c "cd /home/ubuntu && wget -q \"${BOOST_URL}\" && tar -xf boost*.tar.bz2 && rm boost*.tar.bz2 && cd boost* && mkdir /home/ubuntu/boost_build && sudo ./bootstrap.sh --prefix=/home/ubuntu/boost_build && sudo ./b2 cxxflags=-fPIC cflags=-fPIC -a install -j $(nproc)"
+```
+
+Install OpenSSL (replace `\"${OPENSSL_URL}\"` with the boost download link)
+```
+lxc exec xcash-static-container -- bash -c "cd /home/ubuntu && wget -q \"${OPENSSL_URL}\" && tar -xf openssl*.tar.gz && rm openssl*.tar.gz && cd openssl* && mkdir /home/ubuntu/openssl_build && ./config -fPIC --prefix=/home/ubuntu/openssl_build --openssldir=/home/ubuntu/openssl_build && sudo make depend && make -j $(nproc) && sudo make install"
+```
+
+Install PCSC-lite (replace `\"${PCSC_LITE_URL}\"` with the boost download link)
+```
+lxc exec xcash-static-container -- bash -c "cd /home/ubuntu && wget -q \"${PCSC_LITE_URL}\" && tar -xf pcsc*.tar.bz2 && rm pcsc*.tar.bz2 && cd pcsc* && mkdir /home/ubuntu/pcsc_lite_build && ./configure CPPFLAGS=-DPIC CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC --enable-static --prefix=/home/ubuntu/pcsc_lite_build && make -j $(nproc) && sudo make install"
+```
+
+Install ZeroMQ (replace `\"${ZEROMQ_URL}\"` with the boost download link)
+```
+lxc exec xcash-static-container -- bash -c "cd /home/ubuntu && wget -q \"${ZEROMQ_URL}\" && tar -xf zeromq*.tar.gz && rm zeromq*.tar.gz && cd zeromq* && ./autogen.sh && ./configure CPPFLAGS=-DPIC CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC && make -j $(nproc) && sudo make install && sudo ldconfig && cd /usr/local/include/ && wget -q https://raw.githubusercontent.com/zeromq/cppzmq/master/zmq.hpp"
+```
+
+At this point the container is setup and you can run this command to build statically
+```
+lxc exec xcash-static-container -- sudo --login --user ubuntu bash -c "cd /home/ubuntu/X-CASH && rm -r build ; mkdir -p build/release && cd build/release && cmake -D STATIC=ON -D ARCH=\"x86-64\" -D BUILD_64=ON -D BUILD_TESTS=OFF -D BOOST_ROOT=/home/ubuntu/boost_build/ -D OPENSSL_ROOT_DIR=/home/ubuntu/openssl_build/ -D USE_READLINE=OFF -D CMAKE_BUILD_TYPE=release ../.. && cd ../../ && make -I/home/ubuntu/boost_build/include -I/home/ubuntu/openssl_build/include -I/home/ubuntu/pcsc_lite_build/include LDFLAGS=\"-L/home/ubuntu/boost_build/lib -L/home/ubuntu/openssl_build/lib -L/home/ubuntu/pcsc_lite_build/lib\" -j $(nproc)"
+```
+
+You can also save a function to call this command and start the container inside of the bash profile, and then just run the function from any terminal to start the container and start a build. Just run this command in the terminal to do so
+
+```
+echo -ne "\nfunction build_xcash()\n{\nlxc start xcash-static-container\nlxc exec xcash-static-container -- sudo --login --user ubuntu bash -c \"cd /home/ubuntu/X-CASH && rm -r build ; mkdir -p build/release && cd build/release && cmake -D STATIC=ON -D ARCH=\\\"x86-64\\\" -D BUILD_64=ON -D BUILD_TESTS=OFF -D BOOST_ROOT=/home/ubuntu/boost_build/ -D OPENSSL_ROOT_DIR=/home/ubuntu/openssl_build/ -D USE_READLINE=OFF -D CMAKE_BUILD_TYPE=release ../.. && cd ../../ && make -I/home/ubuntu/boost_build/include -I/home/ubuntu/openssl_build/include -I/home/ubuntu/pcsc_lite_build/include LDFLAGS=\\\"-L/home/ubuntu/boost_build/lib -L/home/ubuntu/openssl_build/lib -L/home/ubuntu/pcsc_lite_build/lib\\\" -j $(nproc)\" \n}" >> ~/.bash_profile && source ~/.bash_profile
+```
+
+Then you can just run `build_xcash` in any terminal to start the container if not already started and build X-CASH
+
 
 
 
