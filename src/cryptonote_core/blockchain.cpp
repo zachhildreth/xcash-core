@@ -3756,9 +3756,6 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
 
 bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
 {
-  // Constants
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
-
   // Variables
   std::string string = "";
   std::string current_block_verifiers_list_IP_address;
@@ -3767,6 +3764,8 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   std::size_t count = 0;
   std::size_t count2 = 0;
   std::size_t count3 = 0;
+
+  INITIALIZE_NETWORK_DATA_NODES_LIST;
 
   MGINFO_YELLOW("Connecting to a random network data node to get a list of current block verifiers");
 
@@ -3900,6 +3899,8 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
     CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash for block " << current_block_height);
   }
   return true;
+
+  #undef CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR
 }
 
 
