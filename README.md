@@ -16,6 +16,15 @@
 
 ## Table of Content 
 
+- [Table of Content](#table-of-content)
+- [Features](#features)
+- [License](#license)
+- [Contributing](#contributing)
+- [Documentation](#documentation)
+- [Security](#security)
+- [Installation](#installation)
+- [Important Links](#important-links)
+
 ## Features
 
 Based and improved upon the renowned [CryptoNote](https://github.com/cryptonotefoundation/cryptonote) protocol, **X-Cash** aims at becoming the standard in digital payment and transaction settlement:
@@ -298,7 +307,7 @@ Portable binaries can be built using the following targets:
 * **```make release-static-win64```** builds binaries on 64-bit Windows portable across 64-bit Windows systems
 * **```make release-static-win32```** builds binaries on 64-bit or 32-bit Windows portable across 32-bit Windows systems
 
-## Running `xcashd` daemon
+### Running `xcashd` daemon
 
 The build places the binary in `bin/` sub-directory within the build directory
 from which `cmake` was invoked (*repository root by default*). To run in
