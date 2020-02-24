@@ -9,6 +9,8 @@
 
 </div>
 
+# X-Cash Core Blockchain
+
 ⛓ [**X-CASH**](https://x-network.io/xcash) is a ***community driven*** and ***open-source project*** developing the new standard of digital payment. Unique blockchain network with ***public and private transactions***, custom ***DPOS consensus***, and soon ***sidechains***.
 
 > ⚠ We are switching from CryptoNight PoW consensus algorithm to our own Delegated-Proof-of-Private-Stake (DPOPS) !</br>
@@ -16,14 +18,14 @@
 
 ## Table of Content 
 
-- [Table of Content](#table-of-content)
-- [Features](#features)
-- [License](#license)
-- [Contributing](#contributing)
-- [Documentation](#documentation)
-- [Security](#security)
-- [Installation](#installation)
-- [Important Links](#important-links)
+  - [Table of Content](#table-of-content)
+  - [Features](#features)
+  - [License](#license)
+  - [Contributing](#contributing)
+  - [Documentation](#documentation)
+  - [Security](#security)
+  - [Installation](#installation)
+  - [Important Links](#important-links)
 
 ## Features
 
@@ -51,7 +53,7 @@ We are operating under the [MIT License](LICENSE).
 ## Contributing
 
 **Thank you for thinking of contributing! 😃**   
-If you want to help out, check [CONTRIBUTING](https://github.com/X-CASH-official/.github/blob/master/CONTRIBUTING.md) for a set of guidelines and check our opened issues.
+If you want to help out, check [CONTRIBUTING](https://github.com/X-CASH-official/.github/blob/master/CONTRIBUTING.md) for a set of guidelines and check our [opened issues](https://github.com/X-CASH-official/xcash-core/issues).
 
 ## Documentation
 
@@ -343,7 +345,7 @@ config](utils/conf/xcashd.conf).
 
 ## Important Links
 
-### :link: MAIN LINKS
+### 🔗 MAIN LINKS
 - **X-Network**: [x-network.io](https://x-network.io/)
 - **X-Cash**: [x-network.io/xcash](https://x-network.io/xcash)
 - **Block explorer**: [explorer.x-cash.org](https://explorer.x-cash.org/Explorer)
@@ -351,17 +353,17 @@ config](utils/conf/xcashd.conf).
 - **Help Center**: [Help Portal](https://xcashteam.atlassian.net/servicedesk/)
 - **Mining**: [/xcash/mining/](https://x-network.io/xcash/mining/)
 
-### :purse: WALLET
+### 👛 WALLET
 - **Download**: [Official Download Page](https://x-network.io/xcash/downloads/)  
 - **Paper wallet**: [X-Cash Paper Wallet Generator](https://x-network.io/xcash/paper-wallet-generator/)  
 - **Online wallet**: [X-Bank](https://x-bank.io)
 
-### :currency_exchange: SUPPORTED EXCHANGES
+### 💱 SUPPORTED EXCHANGES
 - **STEX**: [STEX.com](https://www.stex.com/)  
 - **GRAVIEX**: [graviex.net](https://graviex.net/)  
 - **CITEX**: [citex.co.kr](https://www.citex.co.kr/)  
 
-### :earth_africa: COMMUNITY
+### 🌍 COMMUNITY
 - **Twitter**: [@xcashcrypto](https://twitter.com/XCashCrypto)  
 - **Discord**: [discord.gg/4CAahnd](https://discord.gg/4CAahnd)  
 - **BitcoinTalk**: [bitcointalk.org/index.php?topic=4781246](https://bitcointalk.org/index.php?topic=4781246)  
