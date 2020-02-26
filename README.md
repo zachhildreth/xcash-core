@@ -31,17 +31,17 @@
 
 Based and improved upon the renowned [CryptoNote](https://github.com/cryptonotefoundation/cryptonote) protocol, **X-Cash** aims at becoming the standard in digital payment and transaction settlement:
 
-### ◾ **FlexPrivacy** 
+### **FlexPrivacy** 
 **X-Cash** proposes the flexibility to send a transaction **privately or publicly**, directly from your wallet by toggling a simple switch, **without compromising your privacy.** 
 
 > *Have a look at our* 📜 *[Hybrid Transactions'](https://x-network.io/whitepaper/XCASH_Yellowpaper_Hybrid-tx.pdf) yellow paper to learn more about the technology behind it.*
 
-### ◾ **Delegated Proof of Private Stake (DPOPS)**  
+### **Delegated Proof of Private Stake (DPOPS)**  
 To tackle scalability and future upgrades while reducing the energy comsuption of the network, we are developing a customized and unique DPOS consensus that **can be implemented in any privacy coin**.  
 
 > *Interested ? Read more about our* 📜 *[Delegated Proof-of-Private-Stake](https://x-network.io/whitepaper/XCASH_Yellowpaper_DPoPS.pdf) yellow paper to learn more about the technical challenge of integrating this consensus on a Monero-based privacy coin.*
 
-### ◾ **Sidechains**  
+### **Sidechains**  
 Delegates will be able to host **sidechains** on the X-Cash network, providing an **easy, secured, economical and customizable blockchain** solution to match your project needs.
 
 
