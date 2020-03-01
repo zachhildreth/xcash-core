@@ -34,6 +34,8 @@
  * \brief Source file that defines simple_wallet class.
  */
 #include <thread>
+#include <chrono>
+#include <ctime>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -2263,6 +2265,28 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
   return true;
 }
 
+void sync_minutes_and_seconds(const int SETTINGS)
+{
+  // Variables
+  std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  struct std::tm* time_data = std::localtime(&current_time);
+
+  // set the time_data to the nearest valid data time
+  if (SETTINGS == 0)
+  {
+    time_data->tm_min = time_data->tm_min < 5 ? 2 : time_data->tm_min < 10 ? 7 : time_data->tm_min < 15 ? 12 : time_data->tm_min < 20 ? 17 : time_data->tm_min < 25 ? 22 : time_data->tm_min < 30 ? 27 : time_data->tm_min < 35 ? 32 : time_data->tm_min < 40 ? 37 : time_data->tm_min < 45 ? 42 : time_data->tm_min < 50 ? 47 : time_data->tm_min < 55 ? 52 : 57;
+  }
+  else
+  {
+    time_data->tm_min = 2;
+  }
+  time_data->tm_sec = 0;
+
+  // wait until the specified minute and second
+  message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes"; 
+  std::this_thread::sleep_until(std::chrono::system_clock::from_time_t(mktime(time_data)));
+}
+
 bool simple_wallet::vote(const std::vector<std::string>& args)
 {
   // structures
@@ -2391,6 +2415,9 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
@@ -2530,6 +2557,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   data2 += data3 + "|";
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
@@ -2667,6 +2698,9 @@ bool simple_wallet::delegate_remove(const std::vector<std::string>& args)
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
@@ -2857,7 +2891,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
     data2 += data3 + "|";
 
-   std::cout << "DATA=" << data2;
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
 
     // send the data to all block verifiers
     for (count = 0, count2 = 0; count < total_delegates; count++)

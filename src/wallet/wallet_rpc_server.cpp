@@ -28,6 +28,8 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 #include <thread>
+#include <chrono>
+#include <ctime>
 #include <boost/format.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/use_future.hpp>
@@ -3381,6 +3383,28 @@ namespace tools
   }
   //------------------------------------------------------------------------------------------------------------------------------
 
+void sync_minutes_and_seconds(const int SETTINGS)
+{
+  // Variables
+  std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  struct std::tm* time_data = std::localtime(&current_time);
+
+  // set the time_data to the nearest valid data time
+  if (SETTINGS == 0)
+  {
+    time_data->tm_min = time_data->tm_min < 5 ? 2 : time_data->tm_min < 10 ? 7 : time_data->tm_min < 15 ? 12 : time_data->tm_min < 20 ? 17 : time_data->tm_min < 25 ? 22 : time_data->tm_min < 30 ? 27 : time_data->tm_min < 35 ? 32 : time_data->tm_min < 40 ? 37 : time_data->tm_min < 45 ? 42 : time_data->tm_min < 50 ? 47 : time_data->tm_min < 55 ? 52 : 57;
+  }
+  else
+  {
+    time_data->tm_min = 2;
+  }
+  time_data->tm_sec = 0;
+
+  // wait until the specified minute and second
+  std::cout << "Waiting until the next valid data interval, this will be less than 5 minutes"; 
+  std::this_thread::sleep_until(std::chrono::system_clock::from_time_t(mktime(time_data)));
+}
+
 bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er)
 {
    // structures
@@ -3504,6 +3528,9 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
@@ -3640,6 +3667,9 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
 
   data2 += data3 + "|";
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
@@ -3774,6 +3804,9 @@ bool wallet_rpc_server::on_delegate_remove(const wallet_rpc::COMMAND_RPC_DELEGAT
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
@@ -3959,6 +3992,9 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
