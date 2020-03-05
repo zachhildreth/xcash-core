@@ -2127,24 +2127,6 @@ namespace wallet_rpc
     };
   };
 
-  struct COMMAND_RPC_DELEGATE_REMOVE
-  {
-    struct request
-    {
-      BEGIN_KV_SERIALIZE_MAP()
-      END_KV_SERIALIZE_MAP()
-    };
- 
-    struct response
-    {
-      std::string delegate_remove_status;
- 
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(delegate_remove_status)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
-
   struct COMMAND_RPC_DELEGATE_UPDATE
   {
     struct request
