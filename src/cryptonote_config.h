@@ -190,6 +190,23 @@
 
 
 
+// Seed Nodes
+#define SEED_NODE_1 "delegates.xcash.foundation:18280"
+#define SEED_NODE_2 "europe1.xcash.foundation:18280"
+#define SEED_NODE_3 "europe2.xcash.foundation:18280"
+#define SEED_NODE_4 "europe3.xcash.foundation:18280"
+#define SEED_NODE_5 "asia.xcash.foundation:18280"
+
+#define SEED_NODES_LIST_1 const std::vector<std::string> m_seed_nodes_list = {SEED_NODE_1,SEED_NODE_2,SEED_NODE_3,SEED_NODE_4,SEED_NODE_5};
+#define SEED_NODES_LIST_2 \
+full_addrs.insert(SEED_NODE_1); \
+full_addrs.insert(SEED_NODE_2); \
+full_addrs.insert(SEED_NODE_3); \
+full_addrs.insert(SEED_NODE_4); \
+full_addrs.insert(SEED_NODE_5);
+
+
+
 // XCASH DPOPS
 
 // Blockchain

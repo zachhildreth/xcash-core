@@ -126,7 +126,7 @@ namespace nodetool
     virtual bool unblock_host(const epee::net_utils::network_address &address);
     virtual std::map<std::string, time_t> get_blocked_hosts() { CRITICAL_REGION_LOCAL(m_blocked_hosts_lock); return m_blocked_hosts; }
   private:
-    const std::vector<std::string> m_seed_nodes_list = {"delegates.xcash.foundation:18280","europe1.xcash.foundation:18280","europe2.xcash.foundation:18280","europe3.xcash.foundation:18280","asia1.xcash.foundation:18280"};
+    SEED_NODES_LIST_1;
     bool islimitup=false;
     bool islimitdown=false;
 

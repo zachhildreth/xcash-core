@@ -402,11 +402,7 @@ namespace nodetool
     }
     else
     {
-      full_addrs.insert("delegates.xcash.foundation:18280");
-      full_addrs.insert("europe1.xcash.foundation:18280");
-      full_addrs.insert("europe2.xcash.foundation:18280");
-      full_addrs.insert("europe3.xcash.foundation:18280");
-      full_addrs.insert("asia1.xcash.foundation:18280");
+      SEED_NODES_LIST_2;
     }
     return full_addrs;
   }
