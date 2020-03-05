@@ -2276,10 +2276,10 @@ void sync_minutes_and_seconds(const int SETTINGS)
   time_t current_date_and_time;
   struct tm current_UTC_date_and_time;
 
-  message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes";
-
   if (SETTINGS == 0)
   {
+    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes";
+
     do
     {
       nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
@@ -2288,12 +2288,17 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
   else
   {
+    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be at the begining of the hour";
+
     do
     {
       nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
       get_current_UTC_time(current_date_and_time,current_UTC_date_and_time);
     } while (current_UTC_date_and_time.tm_min != 2); 
   }
+
+  // wait a few more seconds due to not all clocks being synced at the same second
+  sleep(3);
   return;
 }
 
