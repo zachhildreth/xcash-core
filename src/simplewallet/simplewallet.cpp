@@ -36,6 +36,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <time.h>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -2265,26 +2266,35 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
   return true;
 }
 
+#define get_current_UTC_time(current_date_and_time,current_UTC_date_and_time) \
+time(&current_date_and_time); \
+gmtime_r(&current_date_and_time,&current_UTC_date_and_time);
+
 void sync_minutes_and_seconds(const int SETTINGS)
 {
   // Variables
-  std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  struct std::tm* time_data = std::localtime(&current_time);
+  time_t current_date_and_time;
+  struct tm current_UTC_date_and_time;
 
-  // set the time_data to the nearest valid data time
+  message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes";
+
   if (SETTINGS == 0)
   {
-    time_data->tm_min = time_data->tm_min < 5 ? 2 : time_data->tm_min < 10 ? 7 : time_data->tm_min < 15 ? 12 : time_data->tm_min < 20 ? 17 : time_data->tm_min < 25 ? 22 : time_data->tm_min < 30 ? 27 : time_data->tm_min < 35 ? 32 : time_data->tm_min < 40 ? 37 : time_data->tm_min < 45 ? 42 : time_data->tm_min < 50 ? 47 : time_data->tm_min < 55 ? 52 : 57;
+    do
+    {
+      nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
+      get_current_UTC_time(current_date_and_time,current_UTC_date_and_time);
+    } while (current_UTC_date_and_time.tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time.tm_min % BLOCK_TIME != 3); 
   }
   else
   {
-    time_data->tm_min = 2;
+    do
+    {
+      nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
+      get_current_UTC_time(current_date_and_time,current_UTC_date_and_time);
+    } while (current_UTC_date_and_time.tm_min != 2); 
   }
-  time_data->tm_sec = 0;
-
-  // wait until the specified minute and second
-  message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes"; 
-  std::this_thread::sleep_until(std::chrono::system_clock::from_time_t(mktime(time_data)));
+  return;
 }
 
 bool simple_wallet::vote(const std::vector<std::string>& args)
