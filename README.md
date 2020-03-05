@@ -295,19 +295,36 @@ make release-static-win32
 
 * The resulting executables can be found in `build/release/bin`
 
-### Building portable statically linked binaries
+### Building portable binaries
 
 > By default, in either dynamically or statically linked builds, binaries target the specific host processor on which the build happens and are not portable to other processors.
  
-Portable binaries can be built using the following targets:
+<summary> Build commands: </summary>
 
-* **```make release-static-linux-x86_64```** builds binaries on Linux on x86_64 portable across POSIX systems on x86_64 processors
-* **```make release-static-linux-i686```** builds binaries on Linux on x86_64 or i686 portable across POSIX systems on i686 processors
-* **```make release-static-linux-armv8```** builds binaries on Linux portable across POSIX systems on armv8 processors
-* **```make release-static-linux-armv7```** builds binaries on Linux portable across POSIX systems on armv7 processors
-* **```make release-static-linux-armv6```** builds binaries on Linux portable across POSIX systems on armv6 processors
-* **```make release-static-win64```** builds binaries on 64-bit Windows portable across 64-bit Windows systems
-* **```make release-static-win32```** builds binaries on 64-bit or 32-bit Windows portable across 32-bit Windows systems
+```bash
+# Build binaries on Linux on x86_64 portable across POSIX systems on x86_64 processors
+make release-static-linux-x86_64
+
+# Builds binaries on Linux on x86_64 or i686 portable across POSIX systems on i686 processors
+make release-static-linux-i686
+
+# Builds binaries on Linux portable across POSIX systems on armv8 processors
+make release-static-linux-armv8
+
+# Builds binaries on Linux portable across POSIX systems on armv7 processors
+make release-static-linux-armv7
+
+# Builds binaries on Linux portable across POSIX systems on armv6 processors
+make release-static-linux-armv6
+
+# Builds binaries on 64-bit Windows portable across 64-bit Windows systems
+make release-static-win64
+
+# Builds binaries on 64-bit or 32-bit Windows portable across 32-bit Windows systems
+make release-static-win32
+```
+
+</details>
 
 ### Running `xcashd` daemon
 
