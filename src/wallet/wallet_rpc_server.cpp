@@ -3407,7 +3407,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
   else
   {
-    std::cout << "Waiting until the next valid data interval, this will be at the begining of the hour";
+    std::cout << "Waiting until the next valid data interval, this will be at the beginning of the hour";
 
     do
     {

@@ -2288,7 +2288,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
   else
   {
-    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be at the begining of the hour";
+    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be at the beginning of the hour";
 
     do
     {
