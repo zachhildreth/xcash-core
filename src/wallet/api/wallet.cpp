@@ -2393,9 +2393,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="Registered the delegate")
     {
       count2++;
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
     }else{
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
     }     
   }
 
@@ -2545,9 +2545,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="Updated the delegates information")
     {
       count2++;
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
     }else{
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
     }     
     }
 
@@ -2674,9 +2674,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="The vote was successfully added to the database")
     {
       count2++;
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
     }else{
-      errorInfo+= errorInfo+block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
     }         
   }
 
