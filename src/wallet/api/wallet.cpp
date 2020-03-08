@@ -394,7 +394,9 @@ WalletImpl::WalletImpl(NetworkType nettype, uint64_t kdf_rounds)
 
 
     m_refreshIntervalMillis = DEFAULT_REFRESH_INTERVAL_MILLIS;
-
+    
+    m_wallet->destory=false;//Init value
+    
     m_refreshThread = boost::thread([this] () {
         this->refreshThreadFunc();
     });
@@ -411,6 +413,7 @@ WalletImpl::~WalletImpl()
     // Close wallet - stores cache and stops ongoing refresh operation 
     close(false); // do not store wallet as part of the closing activities
     // Stop refresh thread
+    m_wallet->destory=true;
     stopRefresh();
     LOG_PRINT_L1(__FUNCTION__ << " finished");
 }
@@ -1317,9 +1320,13 @@ PendingTransaction* WalletImpl::restoreMultisigTransaction(const string& signDat
 //    - confirmed_transfer_details)
 
 PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
-                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
+                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices,  uint32_t  privacy_settings)
 
 {
+    std::string tx_privacy_settings="private";
+    if(privacy_settings==0){
+       tx_privacy_settings="public";
+    }
     clearStatus();
     // Pause refresh thread while creating transaction
     pauseRefresh();

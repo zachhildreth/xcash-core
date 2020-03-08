@@ -2542,6 +2542,9 @@ void wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
   size_t current_index = m_blockchain.size();
   while(m_run.load(std::memory_order_relaxed) && current_index < stop_height)
   {
+    if(destory){
+        break;
+    }
     pull_hashes(0, blocks_start_height, short_chain_history, hashes);
     if (hashes.size() <= 3)
       return;
@@ -2692,6 +2695,9 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   bool first = true;
   while(m_run.load(std::memory_order_relaxed))
   {
+    if(destory){
+        break;
+    }
     try
     {
       // pull the next set of blocks while we're processing the current one
@@ -3769,7 +3775,11 @@ crypto::secret_key wallet2::generate(const std::string& wallet_, const epee::wip
 
   // calculate a starting refresh height
   if(m_refresh_from_block_height == 0 && !recover){
-    m_refresh_from_block_height = estimate_blockchain_height();
+   try {
+        m_refresh_from_block_height = estimate_blockchain_height();
+    } catch (const std::exception &e) {
+        LOG_ERROR("Error estimate_blockchain_height: " << e.what());
+    }
   }
 
   create_keys_file(wallet_, false, password, m_nettype != MAINNET || create_address_file);
