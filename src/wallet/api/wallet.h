@@ -195,6 +195,9 @@ public:
     virtual bool lockKeysFile() override;
     virtual bool unlockKeysFile() override;
     virtual bool isKeysFileLocked() override;
+    virtual std::string delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) override;
+    virtual std::string delegate_update(const  std::string &item,const  std::string &value)  override;
+    virtual std::string vote(const  std::string &value) override;
 
 private:
     void clearStatus() const;

@@ -930,6 +930,12 @@ struct Wallet
      * \return Device they are on
      */
     virtual Device getDeviceType() const = 0;
+
+    virtual std::string delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key)  = 0;
+    
+    virtual std::string delegate_update(const  std::string &item,const  std::string &value)  = 0;
+
+    virtual std::string vote(const  std::string &value)  = 0;
 };
 
 /**
