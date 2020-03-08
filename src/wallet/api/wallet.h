@@ -148,7 +148,7 @@ public:
                                         optional<uint64_t> amount, uint32_t mixin_count,
                                         PendingTransaction::Priority priority = PendingTransaction::Priority_Low,
                                         uint32_t subaddr_account = 0,
-                                        std::set<uint32_t> subaddr_indices = {}) override;
+                                        std::set<uint32_t> subaddr_indices = {},uint32_t  privacy_settings=1) override;
     virtual PendingTransaction * createSweepUnmixableTransaction() override;
     bool submitTransaction(const std::string &fileName) override;
     virtual UnsignedTransaction * loadUnsignedTx(const std::string &unsigned_filename) override;
@@ -195,6 +195,9 @@ public:
     virtual bool lockKeysFile() override;
     virtual bool unlockKeysFile() override;
     virtual bool isKeysFileLocked() override;
+    virtual std::string delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) override;
+    virtual std::string delegate_update(const  std::string &item,const  std::string &value)  override;
+    virtual std::string vote(const  std::string &value) override;
 
 private:
     void clearStatus() const;
