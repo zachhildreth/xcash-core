@@ -2324,7 +2324,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::string errorInfo= "_errorInfo:";
+  std::string errorInfo= ":";
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2393,9 +2393,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="Registered the delegate")
     {
       count2++;
-      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
     }else{
-      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
   }
 
@@ -2436,7 +2436,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::string errorInfo= "_errorInfo:";
+  std::string errorInfo= ":";
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2545,9 +2545,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="Updated the delegates information")
     {
       count2++;
-      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
     }else{
-      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
     }
 
@@ -2588,7 +2588,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::string errorInfo= "_errorInfo:";
+  std::string errorInfo= ":";
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2674,9 +2674,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     if (result=="The vote was successfully added to the database")
     {
       count2++;
-      errorInfo+= block_verifiers_IP_address[count]+"-Success"+"|";
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
     }else{
-      errorInfo+= block_verifiers_IP_address[count]+"-"+result + "|";
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }         
   }
 
