@@ -44,6 +44,7 @@
 #include <boost/format.hpp>
 #include <sstream>
 #include <unordered_map>
+#include "common/send_and_receive_data.h"
 
 #ifdef WIN32
 #include <boost/locale.hpp>
@@ -394,7 +395,9 @@ WalletImpl::WalletImpl(NetworkType nettype, uint64_t kdf_rounds)
 
 
     m_refreshIntervalMillis = DEFAULT_REFRESH_INTERVAL_MILLIS;
-
+    
+    m_wallet->destory=false;//Init value
+    
     m_refreshThread = boost::thread([this] () {
         this->refreshThreadFunc();
     });
@@ -411,6 +414,7 @@ WalletImpl::~WalletImpl()
     // Close wallet - stores cache and stops ongoing refresh operation 
     close(false); // do not store wallet as part of the closing activities
     // Stop refresh thread
+    m_wallet->destory=true;
     stopRefresh();
     LOG_PRINT_L1(__FUNCTION__ << " finished");
 }
@@ -1317,9 +1321,13 @@ PendingTransaction* WalletImpl::restoreMultisigTransaction(const string& signDat
 //    - confirmed_transfer_details)
 
 PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
-                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
+                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, uint32_t  privacy_settings)
 
 {
+    std::string tx_privacy_settings="private";
+    if(privacy_settings==0){
+       tx_privacy_settings="public";
+    }
     clearStatus();
     // Pause refresh thread while creating transaction
     pauseRefresh();
@@ -2296,6 +2304,396 @@ bool WalletImpl::isKeysFileLocked()
 {
     return m_wallet->is_keys_file_locked();
 }
+
+std::string WalletImpl::delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) {
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+  // Variables
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  std::string errorInfo= ":";
+
+  // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 3
+
+  try
+  {
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    return "Failed to register the delegate with timeout"; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  //total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+  total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    return "Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed";  
+  }
+ 
+  // create the data  
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + delegate_name + "|" +delegate_IP_address + "|" + block_verifier_messages_public_key + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (result=="Registered the delegate")
+    {
+      count2++;
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+    }else{
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    return "Success";        
+  } 
+
+  }catch (const std::exception &e) {
+    LOG_ERROR("Failed to register the delegate: " << e.what());
+  }
+
+  return "Failed to register the delegate"+ errorInfo;  
+
+  #undef PARAMETER_AMOUNT
+  #undef MESSAGE
+}
+
+ std::string WalletImpl::delegate_update(const  std::string &item,const  std::string &value)  {
+ // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  std::string errorInfo= ":";
+
+  // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    // check if the second paramter is multiple words and combine them
+    if (item == "about" || item == "team" || item == "server_settings")
+    {
+      parameters = value; 
+    }
+    // check if the item to update is a valid item
+    if (item != "IP_address" && item != "about" && item != "website" && item != "team" && item != "pool_mode" && item != "fee_structure" && item != "server_settings")
+    { 
+      return "Failed to update the delegates information\nInvalid item. Valid items are: IP_address,about, website, team, pool_mode, fee_structure and server_settings";  
+    }
+    if (item== "IP_address" && (value.length() > 255 ||value.find(":") != std::string::npos))
+    {
+      return "Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255";  
+    }
+    if (item == "about" && parameters.length() > 1024)
+    {
+      return "Failed to update the delegates information\nInvalid about. About length must be less than 1024";  
+    }
+    if (item == "website" && value.length() > 255)
+    {
+      return "Failed to update the delegates information\nInvalid website. Website length must be less than 255";  
+    }
+    if (item == "team" && parameters.length() > 255)
+    {
+      return "Failed to update the delegates information\nInvalid team. Team length must be less than 255";  
+    }
+    if (item == "pool_mode" && value != "true" && value!= "false")
+    {
+      return "Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false";  
+    }
+    if (item == "fee_structure" && value.length() > 10)
+    {
+      return "Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10";  
+    }
+    if (item == "server_settings" && parameters.length() > 255)
+    {
+      return "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";  
+    }
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      return "Failed to update the delegates information with timeout"; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+   // total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+    total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+    return "Failed to update the delegate\nInvalid public address. Only XCA addresses are allowed";  
+    }
+ 
+    // create the data
+    data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + item + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" +item + "|" + value + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+   std::cout << "DATA=" << data2;
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (result=="Updated the delegates information")
+    {
+      count2++;
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+    }else{
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
+    }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+    return "Success";        
+    } 
+  }catch (const std::exception &e) {
+    LOG_ERROR("Failed to update the delegate: " << e.what());
+  }
+
+  return "Failed to update the delegate"+ errorInfo;  
+
+  #undef PARAMETER_AMOUNT
+  #undef MESSAGE
+ }
+
+ std::string WalletImpl::vote(const  std::string &value) {
+// structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  std::string errorInfo= ":";
+
+  // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define PARAMETER_AMOUNT 1
+
+  try
+  {
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  {
+    return "Failed to send the vote with timeout"; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+ // total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+  total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    return "Failed to send the vote\nInvalid public address. Only XCA addresses are allowed";  
+  }
+ 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    return "Failed to send the vote\nFailed to create the reserve proof";  
+  }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    return "Failed to send the vote\nInvalid public address. Only XCA addresses are allowed";  
+  }
+ 
+  // create the data
+  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" +value+ "|" + reserve_proof + "|" + public_address + "|";
+ 
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (result=="The vote was successfully added to the database")
+    {
+      count2++;
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+    }else{
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
+    }         
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+        return "Success";  
+  }
+  }catch (const std::exception &e) {
+    LOG_ERROR("Failed to send the vote: " << e.what());
+  }
+  return "Failed to send the vote"+ errorInfo;  
+
+  #undef PARAMETER_AMOUNT
+  #undef MESSAGE
+ }
+
 } // namespace
 
 namespace Bitxcash = XCash;
