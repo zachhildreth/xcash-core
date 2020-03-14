@@ -2320,6 +2320,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
+  std::string error_message;
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
@@ -2437,9 +2438,13 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "The vote was successfully added to the database")
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "The vote was successfully added to the database")
     {
       count2++;
+    } 
+    else
+    {
+      error_message = data3;
     }     
   }
 
@@ -2450,7 +2455,8 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   } 
   else
   {
-    fail_msg_writer() << tr("Failed to send the vote");   
+    fail_msg_writer() << tr("Failed to send the vote"); 
+    fail_msg_writer() << error_message;  
   }
   }
   catch (...)
@@ -2479,6 +2485,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
+  std::string error_message;
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
@@ -2579,10 +2586,14 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Registered the delegate")
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "Registered the delegate")
     {
       count2++;
-    }     
+    }
+    else
+    {
+      error_message = data3;
+    }   
   }
 
   // check the result of the data
@@ -2592,7 +2603,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   } 
   else
   {
-    fail_msg_writer() << tr("Failed to register the delegate");   
+    fail_msg_writer() << tr("Failed to register the delegate");
+    fail_msg_writer() << error_message; 
   }
   }
   catch (...)
@@ -2622,6 +2634,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
+  std::string error_message;
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
@@ -2771,9 +2784,13 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     // send the data to all block verifiers
     for (count = 0, count2 = 0; count < total_delegates; count++)
     {
-      if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Updated the delegates information")
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "Updated the delegates information")
       {
         count2++;
+      } 
+      else
+      {
+        error_message = data3;
       }     
     }
 
@@ -2784,7 +2801,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     } 
     else
     {
-      fail_msg_writer() << tr("Failed to update the delegates information");   
+      fail_msg_writer() << tr("Failed to update the delegates information");
+      fail_msg_writer() << error_message;  
     }
   }
   catch (...)
