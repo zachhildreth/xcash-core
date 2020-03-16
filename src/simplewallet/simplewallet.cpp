@@ -2400,7 +2400,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     };
     print_address_sub();
   
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != 5 || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
     return true;  
@@ -2413,14 +2413,14 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
   catch (...)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to create the reserve proof");
+    fail_msg_writer() << tr("Failed to create the reserve proof");
     return true;  
   }
 
   // check if the reserve proof is not over the maximum length
   if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    fail_msg_writer() << tr("Failed to send the vote\nReserve proof is over the maximum length");
     return true;  
   }
  
