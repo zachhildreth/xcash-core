@@ -2400,7 +2400,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     };
     print_address_sub();
   
-  if (public_address.length() != 5 || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
     return true;  
