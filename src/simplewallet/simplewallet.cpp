@@ -3188,7 +3188,7 @@ simple_wallet::simple_wallet()
                            tr("Registers a delegate, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("delegate_update",
                            boost::bind(&simple_wallet::delegate_update, this, _1),
-                           tr("delegate_update <item: about, website, team, pool_mode, fee_structure, server_settings and public key> <value>"),
+                           tr("delegate_update <item: about, website, team, pool_mode, fee_structure and server_settings> <value>"),
                            tr("Updates a registered delegates data, for the X-CASH Proof Of Stake"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
