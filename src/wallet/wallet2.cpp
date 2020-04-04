@@ -816,6 +816,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended):
   m_multisig_rescan_info(NULL),
   m_multisig_rescan_k(NULL),
   m_run(true),
+  destory(false),
   m_callback(0),
   m_trusted_daemon(false),
   m_nettype(nettype),
