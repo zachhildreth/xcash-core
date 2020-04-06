@@ -2436,11 +2436,15 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   sync_minutes_and_seconds(1);
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "The vote was successfully added to the database")
     {
       count2++;
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     } 
     else
     {
@@ -2449,7 +2453,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
   {
     message_writer(console_color_green, false) << "Vote has been sent successfully";             
   } 
@@ -2584,11 +2588,15 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "Registered the delegate")
     {
       count2++;
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }
     else
     {
@@ -2597,7 +2605,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
   {
     message_writer(console_color_green, false) << "The delegate has been registered successfully";             
   } 
@@ -2782,11 +2790,15 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     sync_minutes_and_seconds(0);
 
     // send the data to all block verifiers
-    for (count = 0, count2 = 0; count < total_delegates; count++)
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
     {
       if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS)) == "Updated the delegates information")
       {
         count2++;
+        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+        {
+          count3++;
+        }
       } 
       else
       {
@@ -2795,7 +2807,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount)
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
     {
       message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
     } 
