@@ -2387,20 +2387,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
     if (result=="Registered the delegate")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
   {
     return "Success";        
   } 
@@ -2539,20 +2543,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
    std::cout << "DATA=" << data2;
 
     // send the data to all block verifiers
-    for (count = 0, count2 = 0; count < total_delegates; count++)
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
     {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
     if (result=="Updated the delegates information")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount)
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
     {
     return "Success";        
     } 
@@ -2656,7 +2664,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   // check if the reserve proof is not over the maximum length
   if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
   {
-    return "Failed to send the vote\nInvalid public address. Only XCA addresses are allowed";  
+    return "Failed to send the vote\nReserve proof is over the maximum length";  
   }
  
   // create the data
@@ -2668,20 +2676,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
     if (result=="The vote was successfully added to the database")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }         
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
   {
         return "Success";  
   }
