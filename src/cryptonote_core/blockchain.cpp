@@ -3823,10 +3823,10 @@ bool verify_network_block_if_current_block_verifier(const block bl, std::size_t 
   std::string network_block_string;
   std::string data_hash;
 
-  if (send_and_receive_data("127.0.0.1",NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
+  if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
   {
     // get the data hash from the block verifiers decentralized database
-    string = send_and_receive_data("127.0.0.1","{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    string = send_and_receive_data(xcash_dpops_delegates_ip_address,"{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
 
     if (string != NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE && string != "")
     {    

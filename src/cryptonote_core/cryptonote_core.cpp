@@ -67,6 +67,12 @@ DISABLE_VS_WARNINGS(4355)
 
 namespace cryptonote
 {
+  std::string xcash_dpops_delegates_ip_address = "127.0.0.1";
+  const command_line::arg_descriptor<std::string> arg_xcash_dpops_delegates_ip_address = {
+    "xcash-dpops-delegates-ip-address"
+  , "The IP address the block verifier is running on. Default is 127.0.0.1, but needs to be changed if running the \"XCASH_DPOPS_delegates_IP_address\" parameter in XCASH_DPOPS"
+  , "127.0.0.1"
+  };
   const command_line::arg_descriptor<bool, false> arg_testnet_on  = {
     "testnet"
   , "Run on testnet. The wallet must be launched with --testnet flag."
@@ -266,6 +272,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_test_drop_download);
     command_line::add_arg(desc, arg_test_drop_download_height);
 
+    command_line::add_arg(desc, arg_xcash_dpops_delegates_ip_address);
     command_line::add_arg(desc, arg_testnet_on);
     command_line::add_arg(desc, arg_stagenet_on);
     command_line::add_arg(desc, arg_regtest_on);
@@ -296,6 +303,8 @@ namespace cryptonote
       const bool stagenet = command_line::get_arg(vm, arg_stagenet_on);
       m_nettype = testnet ? TESTNET : stagenet ? STAGENET : MAINNET;
     }
+
+    xcash_dpops_delegates_ip_address = command_line::get_arg(vm, arg_xcash_dpops_delegates_ip_address);
 
     m_config_folder = command_line::get_arg(vm, arg_data_dir);
 
