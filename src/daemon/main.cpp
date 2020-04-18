@@ -58,6 +58,9 @@ namespace bf = boost::filesystem;
 
 int main(int argc, char const * argv[])
 {
+  // iniltize the random number generator
+  srand(time(NULL));
+
   try {
 
     // TODO parse the debug options like set log level right here at start

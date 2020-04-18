@@ -3701,16 +3701,181 @@ bool Blockchain::update_next_cumulative_weight_limit()
   return true;
 }
 
+
+
 // define macros
+#define XCASH_WALLET_LENGTH 98 // The length of a XCA addres
 #define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 #define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_ERROR_MESSAGE "Could not get a list of the current block verifiers"
 #define NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER\",\r\n}"
 #define NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE "Could not get the network blocks reserve bytes database hash"
 #define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
+#define RANDOM_STRING_LENGTH 100 // The length of the random string
 #define DATA_HASH_LENGTH 128 // The length of the SHA2-512 hash
+#define BUFFER_SIZE 200000
+
+#define VRF_PUBLIC_KEY_LENGTH 64
+#define VRF_SECRET_KEY_LENGTH 128
+#define VRF_PROOF_LENGTH 160
+#define VRF_BETA_LENGTH 128
+
+#define pointer_reset(pointer) \
+free(pointer); \
+pointer = NULL;
 
 // global variables
 std::vector<std::string> block_verifiers_database_hashes(BLOCK_VERIFIERS_TOTAL_AMOUNT);
+
+
+
+int random_string(char *result, const size_t LENGTH)
+{  
+  // define macros
+  #define STRING "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" 
+  #define MINIMUM 0
+  #define MAXIMUM 61
+  
+  // Variables
+  char data[100];
+  size_t count;
+  
+  memset(data,0,sizeof(data));
+  memcpy(data,STRING,sizeof(STRING)-1);
+  for (count = 0; count < LENGTH; count++)
+  {
+    memcpy(result+count,&data[(rand() % (MAXIMUM - MINIMUM + 1)) + MINIMUM],1);
+  }
+  return 1;
+  
+  #undef STRING
+  #undef MINIMUM
+  #undef MAXIMUM  
+}
+
+int VRF_sign_data(char *beta_string, char *proof, const char* data)
+{
+  // Variables
+  unsigned char proof_data[crypto_vrf_PROOFBYTES+1];
+  unsigned char beta_string_data[crypto_vrf_OUTPUTBYTES+1];
+  unsigned char secret_key_data[crypto_vrf_SECRETKEYBYTES+1];
+  char data2[VRF_SECRET_KEY_LENGTH];
+  char data3[VRF_SECRET_KEY_LENGTH];
+  int count;
+  int count2;
+
+  memset(data2,0,sizeof(data2));
+  memset(data3,0,sizeof(data3));
+  memset(secret_key_data,0,sizeof(secret_key_data));
+  memset(beta_string,0,strlen(beta_string));
+  memset(proof,0,strlen(proof));
+  memset(proof_data,0,sizeof(proof_data));
+  memset(beta_string_data,0,sizeof(beta_string_data));
+
+  memcpy(data2,xcash_dpops_delegates_secret_key.c_str(),VRF_SECRET_KEY_LENGTH);
+
+  // convert the hexadecimal string to a string
+  for (count = 0, count2 = 0; count < VRF_SECRET_KEY_LENGTH; count2++, count += 2)
+  {
+    memset(data3,0,sizeof(data3));
+    memcpy(data3,&data2[count],2);
+    secret_key_data[count2] = (int)strtol(data3, NULL, 16);
+  }
+
+  // sign data
+  if (crypto_vrf_prove((unsigned char*)proof_data,(const unsigned char*)secret_key_data,(const unsigned char*)data,(unsigned long long)strlen((const char*)data)) != 0 || crypto_vrf_proof_to_hash((unsigned char*)beta_string_data,(const unsigned char*)proof_data) != 0)
+  {
+    return 0;
+  }
+
+  // convert the data to a string
+  for (count2 = 0, count = 0; count2 < (int)crypto_vrf_PROOFBYTES; count2++, count += 2)
+  {
+    snprintf(proof+count,VRF_PROOF_LENGTH,"%02x",proof_data[count2] & 0xFF);
+  }
+  for (count2 = 0, count = 0; count2 < (int)crypto_vrf_OUTPUTBYTES; count2++, count += 2)
+  {
+    snprintf(beta_string+count,VRF_BETA_LENGTH,"%02x",beta_string_data[count2] & 0xFF);
+  }
+  return 1;
+}
+
+int sign_data(char *message)
+{
+  // Constants
+  const size_t MAXIMUM_AMOUNT = strlen(message)+BUFFER_SIZE;
+
+  // Variables
+  char random_data[RANDOM_STRING_LENGTH+1];
+  char data[BUFFER_SIZE];
+  char proof[VRF_PROOF_LENGTH+1];
+  char beta_string[VRF_BETA_LENGTH+1];
+  char* result = (char*)calloc(MAXIMUM_AMOUNT,sizeof(char));
+  char* string = (char*)calloc(MAXIMUM_AMOUNT,sizeof(char));
+  time_t current_date_and_time;
+  struct tm current_UTC_date_and_time;
+
+  // define macros
+  #define pointer_reset_all \
+  free(result); \
+  result = NULL; \
+  free(string); \
+  string = NULL;
+
+  #define SIGN_DATA_ERROR \
+  pointer_reset_all; \
+  return 0;
+
+  // check if the memory needed was allocated on the heap successfully
+  if (result == NULL || string == NULL)
+  {    
+    if (result != NULL)
+    {
+      pointer_reset(result);
+    }
+    if (string != NULL)
+    {
+      pointer_reset(string);
+    }
+    exit(0);
+  }
+  
+  memset(proof,0,sizeof(proof));
+  memset(beta_string,0,sizeof(beta_string));
+  memset(random_data,0,sizeof(random_data));
+  memset(data,0,sizeof(data));
+  
+  // create the random data
+  if (random_string(random_data,RANDOM_STRING_LENGTH) == 0)
+  {
+    SIGN_DATA_ERROR;
+  }
+
+  // create the message
+  memcpy(result,message,strlen(message));
+  memcpy(result+strlen(result),random_data,RANDOM_STRING_LENGTH);
+  memcpy(result+strlen(result),"|",1);
+ 
+  // sign data
+  if (VRF_sign_data(beta_string,proof,result) == 0)
+  {
+    SIGN_DATA_ERROR;
+  }    
+
+  // create the message  
+  memcpy(message+strlen(message),random_data,RANDOM_STRING_LENGTH);
+  memcpy(message+strlen(message),"|",1);
+  memcpy(message+strlen(message),proof,VRF_PROOF_LENGTH);
+  memcpy(message+strlen(message),beta_string,VRF_BETA_LENGTH);
+  memcpy(message+strlen(message),"|",1);
+  
+  pointer_reset_all;
+  return 1;
+
+  #undef pointer_reset_all  
+  #undef SIGN_DATA_ERROR
+}
+
+
 
 bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
 {
@@ -3758,8 +3923,10 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
 {
   // Variables
   std::string string = "";
+  std::string message_string = "";
   std::string current_block_verifiers_list_IP_address;
   std::string current_block_verifier;
+  char message[2048];
   std::size_t total_delegates;
   std::size_t count = 0;
   std::size_t count2 = 0;
@@ -3790,6 +3957,26 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   MGINFO_YELLOW("Connecting to each current block verifier to get a list of reserve bytes database hashes, for a maximum of 8640 blocks (one month)");
   MGINFO_YELLOW("This can take some time");
 
+  // create the message
+  if (xcash_dpops_delegates_public_address != "" && xcash_dpops_delegates_secret_key != "")
+  {
+    std::string data = "NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH|" + std::to_string(current_block_height) + "|" + xcash_dpops_delegates_public_address + "|";
+    memset(message,0,sizeof(message));
+    memcpy(message,data.c_str(),data.length());
+
+    // sign the data
+    if (sign_data(message) == 0)
+    {
+      return false;
+    }
+
+    message_string += message;
+  }
+  else
+  {
+    message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+  }
+
   // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
@@ -3799,7 +3986,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     count2 = count3 + 1;
 
     // get the reserve bytes database hash from the current block verifier
-    string = send_and_receive_data(current_block_verifier,"{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    string = send_and_receive_data(current_block_verifier,message_string,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
   
     if (string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "")
     {
@@ -3822,11 +4009,33 @@ bool verify_network_block_if_current_block_verifier(const block bl, std::size_t 
   std::string string = "";
   std::string network_block_string;
   std::string data_hash;
+  std::string message_string = "";
+  char message[2048];
 
   if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
   {
+     // create the message
+     if (xcash_dpops_delegates_public_address != "" && xcash_dpops_delegates_secret_key != "")
+     {
+       std::string data = "NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH|" + std::to_string(current_block_height) + "|" + xcash_dpops_delegates_public_address + "|";
+       memset(message,0,sizeof(message));
+       memcpy(message,data.c_str(),data.length());
+
+       // sign the data
+       if (sign_data(message) == 0)
+       {
+         return false;
+       }
+
+       message_string += message;
+     }
+     else
+     {
+       message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+     }
+
     // get the data hash from the block verifiers decentralized database
-    string = send_and_receive_data(xcash_dpops_delegates_ip_address,"{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}",SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    string = send_and_receive_data(xcash_dpops_delegates_ip_address,message_string,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
 
     if (string != NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE && string != "")
     {    
