@@ -3978,7 +3978,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   }
 
   // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; )
   {
     // get the current block verifier
     count3 = current_block_verifiers_list_IP_address.find("|",count2);
