@@ -127,6 +127,11 @@ inline scoped_message_writer msg_writer(epee::console_colors color = epee::conso
   return scoped_message_writer(color, false, std::string(), el::Level::Info);
 }
 
+inline scoped_message_writer color_print(epee::console_colors color = epee::console_color_default)
+{
+  return scoped_message_writer(color, true, std::string(), el::Level::Info);
+}
+
 inline scoped_message_writer fail_msg_writer()
 {
   return scoped_message_writer(epee::console_color_red, true, "Error: ", el::Level::Error);
