@@ -130,6 +130,7 @@ namespace
 {
   const std::array<const char* const, 5> allowed_priority_strings = {{"default", "unimportant", "normal", "elevated", "priority"}};
   const auto arg_wallet_file = wallet_args::arg_wallet_file();
+  const command_line::arg_descriptor<bool> arg_advanced_wallet = {"advanced-wallet", sw::tr("Runs the wallet in advanced mode. By default this is false and none of the flags below will work in simple mode"), false};
   const command_line::arg_descriptor<std::string> arg_generate_new_wallet = {"generate-new-wallet", sw::tr("Generate new wallet and save it to <arg>"), ""};
   const command_line::arg_descriptor<std::string> arg_generate_from_device = {"generate-from-device", sw::tr("Generate new wallet from device and save it to <arg>"), ""};
   const command_line::arg_descriptor<std::string> arg_generate_from_view_key = {"generate-from-view-key", sw::tr("Generate incoming-only wallet from view key"), ""};
@@ -4115,6 +4116,7 @@ bool simple_wallet::deinit()
 bool simple_wallet::handle_command_line(const boost::program_options::variables_map& vm)
 {
   m_wallet_file                   = command_line::get_arg(vm, arg_wallet_file);
+  m_advanced_wallet               = command_line::get_arg(vm, arg_advanced_wallet);
   m_generate_new                  = command_line::get_arg(vm, arg_generate_new_wallet);
   m_generate_from_device          = command_line::get_arg(vm, arg_generate_from_device);
   m_generate_from_view_key        = command_line::get_arg(vm, arg_generate_from_view_key);
@@ -8234,6 +8236,8 @@ bool simple_wallet::get_description(const std::vector<std::string> &args)
     return true;
   }
 
+  m_advanced_wallet == true ? success_msg_writer() << tr("advanced mode") : success_msg_writer() << tr("simple mode");
+
   std::string description = m_wallet->get_description();
   if (description.empty())
     success_msg_writer() << tr("no description found");
@@ -8762,6 +8766,7 @@ int main(int argc, char* argv[])
   po::options_description desc_params(wallet_args::tr("Wallet options"));
   tools::wallet2::init_options(desc_params);
   command_line::add_arg(desc_params, arg_wallet_file);
+  command_line::add_arg(desc_params, arg_advanced_wallet);
   command_line::add_arg(desc_params, arg_generate_new_wallet);
   command_line::add_arg(desc_params, arg_generate_from_device);
   command_line::add_arg(desc_params, arg_generate_from_view_key);

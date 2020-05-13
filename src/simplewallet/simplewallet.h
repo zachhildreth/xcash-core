@@ -324,6 +324,7 @@ namespace cryptonote
 
   private:
     std::string m_wallet_file;
+    bool m_advanced_wallet;
     std::string m_generate_new;
     std::string m_generate_from_device;
     std::string m_generate_from_view_key;
