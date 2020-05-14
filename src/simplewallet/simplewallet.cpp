@@ -126,6 +126,52 @@ enum TransferType {
   TransferLocked,
 };
 
+void simple_wallet_display_tabs(const int settings)
+{
+  // define macros
+  #define TABLE_WIDTH 20
+  #define COLOR_PRINT_TABLE_INDENTATION 4
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  #define TAB_1 "1 - MAIN_MENU"
+  #define TAB_2 "2 - CORE"
+  #define TAB_3 "3 - ADVANCED"
+  #define TAB_4 "4 - MULTISIG"
+  #define TAB_5 "5 - NFT"
+  #define TAB_6 "6 - BACKUP"
+
+  // print the title and the table header
+  std::cout << std::endl << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING;
+  settings == 1 ? (std::cout << std::setw((sizeof(TAB_1)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_1) : std::cout << std::setw((sizeof(TAB_1)-1)+TABLE_INDENTATION) << TAB_1;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_1)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 2 ? (std::cout << std::setw((sizeof(TAB_2)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_2) : std::cout << std::setw((sizeof(TAB_2)-1)+TABLE_INDENTATION) << TAB_2;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_2)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 3 ? (std::cout << std::setw((sizeof(TAB_3)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_3) : std::cout << std::setw((sizeof(TAB_3)-1)+TABLE_INDENTATION) << TAB_3;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_3)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 4 ? (std::cout << std::setw((sizeof(TAB_4)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_4) : std::cout << std::setw((sizeof(TAB_4)-1)+TABLE_INDENTATION) << TAB_4;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_4)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 5 ? (std::cout << std::setw((sizeof(TAB_5)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_5) : std::cout << std::setw((sizeof(TAB_5)-1)+TABLE_INDENTATION) << TAB_5;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_5)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 6 ? (std::cout << std::setw((sizeof(TAB_6)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_6) : std::cout << std::setw((sizeof(TAB_6)-1)+TABLE_INDENTATION) << TAB_6;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_6)-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+  #undef TAB_1
+  #undef TAB_2
+  #undef TAB_3
+  #undef TAB_4
+  #undef TAB_5
+  #undef TAB_6
+}
+
 namespace
 {
   const std::array<const char* const, 5> allowed_priority_strings = {{"default", "unimportant", "normal", "elevated", "priority"}};
@@ -2630,67 +2676,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
-
-bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
-{
-  // Variables
-  std::string string = "";
-  std::string data;
-  size_t count = 0;
-  int count2 = 0;
-  
-  // define macros
-  #define TABLE_WIDTH 20
-  #define TABLE_INDENTATION 1
-  #define TABLE_COLUMN_STRING "|"
-  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
-  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
-  #define GET_NFT_FEE_ERROR \
-  tools::color_print(epee::console_color_red) << "Could not get the NFT fees"; \
-  return true;
-
-  try
-  {
-    // send the message to a token transfer program
-    /*string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-    if (string.find("|") == std::string::npos)
-    {
-      GET_NFT_FEE_ERROR;
-    }*/
-    string = "TOKEN_TRANSFER_TO_NODES_SEND_FEE|1000|token_fee|tx_fee|1000|10000|";
-
-    // print the title and the table header
-    tools::color_print(epee::console_color_yellow) << "\nNFT FEES\n";  
-    std::cout << TABLE_DATA << std::endl;
-    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("REGISTRATION")-1)+TABLE_INDENTATION) << "REGISTRATION" << std::setw(TABLE_WIDTH-((sizeof("REGISTRATION")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("CREATE")-1)+TABLE_INDENTATION) << "CREATE" << std::setw(TABLE_WIDTH-((sizeof("CREATE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("TX")-1)+TABLE_INDENTATION) << "TX" << std::setw(TABLE_WIDTH-((sizeof("TX")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
-    std::cout << TABLE_DATA << std::endl;
-    std::cout << TABLE_COLUMN_STRING;
-    
-    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
-    {
-      data = string.substr(0, count);
-      if (count2 == 1 || count2 == 4 || count2 == 5)
-      {
-        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
-      }
-      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
-      count2++;
-    }
-    std::cout << std::endl << TABLE_DATA << std::endl;
-  }
-  catch (...)
-  {
-    GET_NFT_FEE_ERROR;
-  }
-  return true;
-
-  #undef TABLE_WIDTH
-  #undef TABLE_INDENTATION
-  #undef TABLE_COLUMN_STRING
-  #undef TABLE_DATA
-  #undef MESSAGE
-}
-
 bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 {
   // structures
@@ -2891,6 +2876,75 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
   #undef PARAMETER_AMOUNT
   #undef MESSAGE
+}
+
+bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+  
+  // define macros
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
+  #define GET_NFT_FEE_ERROR \
+  tools::color_print(epee::console_color_red) << "Could not get the NFT fees"; \
+  return true;
+
+  try
+  {
+    // send the message to a token transfer program
+    /*string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (string.find("|") == std::string::npos)
+    {
+      GET_NFT_FEE_ERROR;
+    }*/
+    string = "TOKEN_TRANSFER_TO_NODES_SEND_FEE|1000|token_fee|tx_fee|1000|10000|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT FEES\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("REGISTRATION")-1)+TABLE_INDENTATION) << "REGISTRATION" << std::setw(TABLE_WIDTH-((sizeof("REGISTRATION")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("CREATE")-1)+TABLE_INDENTATION) << "CREATE" << std::setw(TABLE_WIDTH-((sizeof("CREATE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("TX")-1)+TABLE_INDENTATION) << "TX" << std::setw(TABLE_WIDTH-((sizeof("TX")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING;
+    
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 == 1 || count2 == 4 || count2 == 5)
+      {
+        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+    std::cout << std::endl << TABLE_DATA << std::endl;
+  }
+  catch (...)
+  {
+    GET_NFT_FEE_ERROR;
+  }
+  return true;
+
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+  #undef MESSAGE
+}
+
+bool simple_wallet::set_tab(const std::vector<std::string>& args)
+{
+  if (!m_advanced_wallet)
+  {
+    simple_wallet_display_tabs(std::stoi(args.front()));
+  }
+  return true;
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
@@ -3268,6 +3322,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::get_nft_fee, this, _1),
                            tr("get_nft_fee"),
                            tr("Gets the current non fungible token fees"));
+  m_cmd_binder.set_handler("set_tab",
+                           boost::bind(&simple_wallet::set_tab, this, _1),
+                           tr("set_tab"),
+                           tr("Sets the tab in simplewallet mode"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
@@ -4910,51 +4968,7 @@ boost::optional<epee::wipeable_string> simple_wallet::on_get_password(const char
 
 
 
-void simple_wallet_display_tabs(const int settings)
-{
-  // define macros
-  #define TABLE_WIDTH 20
-  #define COLOR_PRINT_TABLE_INDENTATION 4
-  #define TABLE_INDENTATION 1
-  #define TABLE_COLUMN_STRING "|"
-  #define TABLE_DATA "-------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
 
-  #define TAB_1 "1 - MAIN_MENU"
-  #define TAB_2 "2 - CORE"
-  #define TAB_3 "3 - ADVANCED"
-  #define TAB_4 "4 - MULTISIG"
-  #define TAB_5 "5 - NFT"
-  #define TAB_6 "6 - BACKUP"
-
-  // print the title and the table header
-  std::cout << TABLE_DATA << std::endl;
-  std::cout << TABLE_COLUMN_STRING;
-  settings == 1 ? (std::cout << std::setw((sizeof(TAB_1)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_1) : std::cout << std::setw((sizeof(TAB_1)-1)+TABLE_INDENTATION) << TAB_1;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_1)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 2 ? (std::cout << std::setw((sizeof(TAB_2)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_2) : std::cout << std::setw((sizeof(TAB_2)-1)+TABLE_INDENTATION) << TAB_2;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_2)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 3 ? (std::cout << std::setw((sizeof(TAB_3)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_3) : std::cout << std::setw((sizeof(TAB_3)-1)+TABLE_INDENTATION) << TAB_3;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_3)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 4 ? (std::cout << std::setw((sizeof(TAB_4)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_4) : std::cout << std::setw((sizeof(TAB_4)-1)+TABLE_INDENTATION) << TAB_4;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_4)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 5 ? (std::cout << std::setw((sizeof(TAB_5)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_5) : std::cout << std::setw((sizeof(TAB_5)-1)+TABLE_INDENTATION) << TAB_5;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_5)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 6 ? (std::cout << std::setw((sizeof(TAB_6)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_6) : std::cout << std::setw((sizeof(TAB_6)-1)+TABLE_INDENTATION) << TAB_6;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_6)-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
-  std::cout << TABLE_DATA << std::endl << std::endl;
-  return;
-
-  #undef TABLE_WIDTH
-  #undef TABLE_INDENTATION
-  #undef TABLE_COLUMN_STRING
-  #undef TABLE_DATA
-  #undef TAB_1
-  #undef TAB_2
-  #undef TAB_3
-  #undef TAB_4
-  #undef TAB_5
-  #undef TAB_6
-}
 
 
 std::vector<std::string> simple_wallet_get_daemon_connection()
@@ -5048,7 +5062,7 @@ void simple_wallet_main_menu()
   }
 
   end:
-  tools::color_print(epee::console_color_white) << "\nNavigate to the different tabs by using the command \"change_tab <TAB INDEX>\"\nSelect a command from the table to run a command\n\n";
+  tools::color_print(epee::console_color_white) << "\nNavigate to the different tabs by using the command \"set_tab <TAB INDEX>\"\nSelect a command from the table to run a command\n\n";
 
   
 }
