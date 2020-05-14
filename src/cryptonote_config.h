@@ -192,10 +192,10 @@
 
 // Seed Nodes
 #define SEED_NODE_1 "delegates.xcash.foundation:18280"
-#define SEED_NODE_2 "europe1.xcash.foundation:18280"
-#define SEED_NODE_3 "europe2.xcash.foundation:18280"
-#define SEED_NODE_4 "europe3.xcash.foundation:18280"
-#define SEED_NODE_5 "asia.xcash.foundation:18280"
+#define SEED_NODE_2 "us2.xcash.foundation:18280"
+#define SEED_NODE_3 "europe1.xcash.foundation:18280"
+#define SEED_NODE_4 "europe2.xcash.foundation:18280"
+#define SEED_NODE_5 "europe3.xcash.foundation:18280"
 
 #define SEED_NODES_LIST_1 const std::vector<std::string> m_seed_nodes_list = {SEED_NODE_1,SEED_NODE_2,SEED_NODE_3,SEED_NODE_4,SEED_NODE_5};
 #define SEED_NODES_LIST_2 \
@@ -288,7 +288,10 @@ network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_
 
 
 // Non Fungible Tokens
+#define CURRENT_VERSION "1.5.0"
 #define NFT_TRANSFER_IP_ADDRESS ""
+#define WELCOME_MESSAGE_SERVER "94.130.59.172"
+#define WELCOME_MESSAGE_FILE "simple_wallet.txt"
 
 
 

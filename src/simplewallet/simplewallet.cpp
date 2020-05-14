@@ -130,7 +130,7 @@ namespace
 {
   const std::array<const char* const, 5> allowed_priority_strings = {{"default", "unimportant", "normal", "elevated", "priority"}};
   const auto arg_wallet_file = wallet_args::arg_wallet_file();
-  const command_line::arg_descriptor<bool> arg_advanced_wallet = {"advanced-wallet", sw::tr("Runs the wallet in advanced mode. By default this is false and none of the flags below will work in simple mode"), false};
+  const command_line::arg_descriptor<bool> arg_advanced_wallet = {"advanced-wallet", sw::tr("Runs the wallet in advanced mode. This is the standard CLI wallet. Simple mode is a guided CLI wallet. Default is simple mode."), false};
   const command_line::arg_descriptor<std::string> arg_generate_new_wallet = {"generate-new-wallet", sw::tr("Generate new wallet and save it to <arg>"), ""};
   const command_line::arg_descriptor<std::string> arg_generate_from_device = {"generate-from-device", sw::tr("Generate new wallet from device and save it to <arg>"), ""};
   const command_line::arg_descriptor<std::string> arg_generate_from_view_key = {"generate-from-view-key", sw::tr("Generate incoming-only wallet from view key"), ""};
@@ -2684,6 +2684,10 @@ bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
   }
   return true;
 
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
   #undef MESSAGE
 }
 
@@ -2891,13 +2895,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
-  if(args.empty())
+  if (m_advanced_wallet)
   {
-    success_msg_writer() << get_commands_str();
-  }
-  else
-  {
-    success_msg_writer() << get_command_usage(args);
+    args.empty() ? success_msg_writer() << get_commands_str() : success_msg_writer() << get_command_usage(args);
   }
   return true;
 }
@@ -4094,7 +4094,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     return false;
   }
 
-  if (!m_wallet->is_trusted_daemon())
+  if (!m_wallet->is_trusted_daemon() && m_advanced_wallet)
     message_writer() << (boost::format(tr("Warning: using an untrusted daemon at %s, privacy will be lessened")) % m_wallet->get_daemon_address()).str();
 
   if (m_wallet->get_ring_database().empty())
@@ -4143,6 +4143,8 @@ bool simple_wallet::handle_command_line(const boost::program_options::variables_
                                     m_restore_deterministic_wallet ||
                                     m_restore_multisig_wallet;
 
+  //
+
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -4153,7 +4155,7 @@ bool simple_wallet::try_connect_to_daemon(bool silent, uint32_t* version)
     version = &version_;
   if (!m_wallet->check_connection(version))
   {
-    if (!silent)
+    if (!silent && m_advanced_wallet)
       fail_msg_writer() << tr("wallet failed to connect to daemon: ") << m_wallet->get_daemon_address() << ". " <<
         tr("Daemon either is not started or wrong port was passed. "
         "Please make sure daemon is running or change the daemon address using the 'set_daemon' command.");
@@ -4496,9 +4498,12 @@ bool simple_wallet::open_wallet(const boost::program_options::variables_map& vm)
     else if (m_wallet->multisig(&ready, &threshold, &total))
       prefix = (boost::format(tr("Opened %u/%u multisig wallet%s")) % threshold % total % (ready ? "" : " (not yet finalized)")).str();
     else
-      prefix = tr("Opened wallet");
-    message_writer(console_color_white, true) <<
-      prefix << ": " << m_wallet->get_account().get_public_address_str(m_wallet->nettype());
+      if (m_advanced_wallet)
+      {
+        prefix = tr("Opened wallet");
+        message_writer(console_color_white, true) <<
+        prefix << ": " << m_wallet->get_account().get_public_address_str(m_wallet->nettype());
+      }
     if (m_wallet->get_account().get_device()) {
        message_writer(console_color_white, true) << "Wallet is on device: " << m_wallet->get_account().get_device().get_name();
     }
@@ -4552,11 +4557,14 @@ bool simple_wallet::open_wallet(const boost::program_options::variables_map& vm)
     }
     return false;
   }
+  if (m_advanced_wallet)
+  {
   success_msg_writer() <<
     "**********************************************************************\n" <<
     tr("Use the \"help\" command to see the list of available commands.\n") <<
     tr("Use \"help <command>\" to see a command's documentation.\n") <<
     "**********************************************************************";
+  }
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -4777,7 +4785,10 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
       }
       catch (const std::exception &e) { }
     }
-    success_msg_writer() << boost::format("Daemon set to %s, %s") % daemon_url % (m_wallet->is_trusted_daemon() ? tr("trusted") : tr("untrusted"));
+    if (m_advanced_wallet)
+    {
+      success_msg_writer() << boost::format("Daemon set to %s, %s") % daemon_url % (m_wallet->is_trusted_daemon() ? tr("trusted") : tr("untrusted"));
+    }
   } else {
     fail_msg_writer() << tr("This does not seem to be a valid daemon URL.");
   }
@@ -4890,11 +4901,187 @@ boost::optional<epee::wipeable_string> simple_wallet::on_get_password(const char
 
   return pwd_container->password();
 }
+
+
+
+
+
+
+
+
+
+void simple_wallet_display_tabs(const int settings)
+{
+  // define macros
+  #define TABLE_WIDTH 20
+  #define COLOR_PRINT_TABLE_INDENTATION 4
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  #define TAB_1 "1 - MAIN_MENU"
+  #define TAB_2 "2 - CORE"
+  #define TAB_3 "3 - ADVANCED"
+  #define TAB_4 "4 - MULTISIG"
+  #define TAB_5 "5 - NFT"
+  #define TAB_6 "6 - BACKUP"
+
+  // print the title and the table header
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING;
+  settings == 1 ? (std::cout << std::setw((sizeof(TAB_1)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_1) : std::cout << std::setw((sizeof(TAB_1)-1)+TABLE_INDENTATION) << TAB_1;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_1)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 2 ? (std::cout << std::setw((sizeof(TAB_2)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_2) : std::cout << std::setw((sizeof(TAB_2)-1)+TABLE_INDENTATION) << TAB_2;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_2)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 3 ? (std::cout << std::setw((sizeof(TAB_3)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_3) : std::cout << std::setw((sizeof(TAB_3)-1)+TABLE_INDENTATION) << TAB_3;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_3)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 4 ? (std::cout << std::setw((sizeof(TAB_4)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_4) : std::cout << std::setw((sizeof(TAB_4)-1)+TABLE_INDENTATION) << TAB_4;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_4)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 5 ? (std::cout << std::setw((sizeof(TAB_5)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_5) : std::cout << std::setw((sizeof(TAB_5)-1)+TABLE_INDENTATION) << TAB_5;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_5)-1)+2)) << TABLE_COLUMN_STRING;
+  settings == 6 ? (std::cout << std::setw((sizeof(TAB_6)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_6) : std::cout << std::setw((sizeof(TAB_6)-1)+TABLE_INDENTATION) << TAB_6;
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_6)-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+  #undef TAB_1
+  #undef TAB_2
+  #undef TAB_3
+  #undef TAB_4
+  #undef TAB_5
+  #undef TAB_6
+}
+
+
+std::vector<std::string> simple_wallet_get_daemon_connection()
+{
+  // Variables
+  std::vector<std::string>seed_node = {"usseed1.x-cash.org","trusted"};
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "--------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header
+  tools::color_print(epee::console_color_yellow) << "\n\nOFFICIAL SEED NODES\n";  
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("URL")-1)+TABLE_INDENTATION) << "URL" << std::setw(35-((sizeof("URL")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("LOCATION")-1)+TABLE_INDENTATION) << "LOCATION" << std::setw(25-((sizeof("LOCATION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < 5; count++)
+  {
+    data = count == 0 ? SEED_NODE_1 : count == 1 ? SEED_NODE_2 : count == 2 ? SEED_NODE_3 : count == 3 ? SEED_NODE_4 : SEED_NODE_5;
+    data2 = count == 0 ? "US - West Coast" : count == 1 ? "US - East Coast" : count == 2 ? "EU - France" : count == 3 ? "EU - Germany" : "EU - Germany";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(35-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(25-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+
+  // get the remote node selection
+  do
+  {
+    tools::color_print(epee::console_color_yellow) << "Enter Index of seed node to connect: ";
+    cin >> count;
+  } while (count < 0 || count > 4);
+
+  seed_node[0] = count == 0 ? SEED_NODE_1 : count == 1 ? SEED_NODE_2 : count == 2 ? SEED_NODE_3 : count == 3 ? SEED_NODE_4 : SEED_NODE_5;
+  seed_node[0] = seed_node[0].substr(0,seed_node[0].length()-6);
+  seed_node[0] = "usseed1.x-cash.org";
+  return seed_node;
+
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+void simple_wallet_main_menu()
+{
+  try
+  {
+  // Variables
+  boost::asio::io_service io_service;
+  tcp::resolver resolver(io_service);
+  tcp::resolver::query query(WELCOME_MESSAGE_SERVER, "http");
+  tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+  tcp::socket socket(io_service);
+  boost::asio::connect(socket, endpoint_iterator);
+  int count = 0;
+
+  // display the title and tabs
+  tools::color_print(epee::console_color_yellow) << "\nWelcome to XCASH " << CURRENT_VERSION << "\n\n"; 
+  simple_wallet_display_tabs(1);
+
+  // get the main menu display message
+  boost::asio::streambuf request;
+  std::ostream request_stream(&request);
+  request_stream << "GET /" << WELCOME_MESSAGE_FILE << " HTTP/1.0\r\n";
+  request_stream << "Host: " << WELCOME_MESSAGE_SERVER << "\r\n";
+  request_stream << "Accept: */*\r\n";
+  request_stream << "Connection: close\r\n\r\n";
+  boost::asio::write(socket, request);
+  boost::asio::streambuf response;
+  boost::asio::read_until(socket, response, "\r\n");
+  std::istream response_stream(&response);
+  std::string line;
+  while (std::getline(response_stream, line))
+  {
+    if (count == 1)
+    {
+      std::cout << line << std::endl;
+    }
+    if (line == "|START|")
+    {
+      count = 1;
+    }
+  }      
+  }
+  catch (std::exception& e)
+  {
+    goto end;
+  }
+
+  end:
+  tools::color_print(epee::console_color_white) << "\nNavigate to the different tabs by using the command \"change_tab <TAB INDEX>\"\nSelect a command from the table to run a command\n\n";
+
+  
+}
+
+
+
+
+
+
+
+
+
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::refresh_main(uint64_t start_height, bool reset, bool is_init)
 {
   if (!try_connect_to_daemon(is_init))
-    return true;
+  {
+    if (m_advanced_wallet)
+    {
+      return true;
+    }
+    else
+    {
+      start:
+      set_daemon(simple_wallet_get_daemon_connection());
+      if (!try_connect_to_daemon(is_init))
+      {
+        tools::color_print(epee::console_color_red) << "Could not connect to daemon" << std::endl;
+        goto start;
+      }
+      tools::color_print(epee::console_color_green) << "Connected to Daemon" << std::endl << "Syncing Wallet" << std::endl;
+    }
+  }
 
   LOCK_IDLE_SCOPE();
 
@@ -4905,7 +5092,10 @@ bool simple_wallet::refresh_main(uint64_t start_height, bool reset, bool is_init
   rdln::suspend_readline pause_readline;
 #endif
 
-  message_writer() << tr("Starting refresh...");
+  if (m_advanced_wallet)
+  {
+    message_writer() << tr("Starting refresh...");
+  }
 
   uint64_t fetched_blocks = 0;
   bool ok = false;
@@ -4918,10 +5108,22 @@ bool simple_wallet::refresh_main(uint64_t start_height, bool reset, bool is_init
     ok = true;
     // Clear line "Height xxx of xxx"
     std::cout << "\r                                                                \r";
-    success_msg_writer(true) << tr("Refresh done, blocks received: ") << fetched_blocks;
+    if (m_advanced_wallet)
+    {
+      success_msg_writer(true) << tr("Refresh done, blocks received: ") << fetched_blocks;
+    }
     if (is_init)
-      print_accounts();
-    show_balance_unlocked();
+    {
+      if (m_advanced_wallet)
+      {
+        print_accounts();
+        show_balance_unlocked();
+      }
+      else
+      {
+        simple_wallet_main_menu();
+      }
+    }
   }
   catch (const tools::error::daemon_busy&)
   {
@@ -7688,9 +7890,9 @@ std::string simple_wallet::get_prompt() const
 {
   std::string addr_start = m_wallet->get_subaddress_as_str({m_current_subaddress_account, 0}).substr(0, 6);
   std::string prompt = std::string("[") + tr("wallet") + " " + addr_start;
-  if (!m_wallet->check_connection(NULL))
+  if (!m_wallet->check_connection(NULL) && m_advanced_wallet)
     prompt += tr(" (no daemon)");
-  else if (!m_wallet->is_synced())
+  else if (!m_wallet->is_synced() && m_advanced_wallet)
     prompt += tr(" (out of sync)");
   prompt += "]: ";
   return prompt;
@@ -7706,7 +7908,10 @@ bool simple_wallet::run()
   m_auto_refresh_enabled = m_wallet->auto_refresh();
   m_idle_thread = boost::thread([&]{wallet_idle_thread();});
 
-  message_writer(console_color_green, false) << "Background refresh thread started";
+  if (m_advanced_wallet)
+  {
+    message_writer(console_color_green, false) << "Background refresh thread started";
+  }
   return m_cmd_binder.run_handling([this](){return get_prompt();}, "");
 }
 //----------------------------------------------------------------------------------------------------
@@ -8235,8 +8440,6 @@ bool simple_wallet::get_description(const std::vector<std::string> &args)
     fail_msg_writer() << tr("usage: get_description");
     return true;
   }
-
-  m_advanced_wallet == true ? success_msg_writer() << tr("advanced mode") : success_msg_writer() << tr("simple mode");
 
   std::string description = m_wallet->get_description();
   if (description.empty())
@@ -8796,7 +8999,7 @@ int main(int argc, char* argv[])
   std::tie(vm, should_terminate) = wallet_args::main(
    argc, argv,
    "xcash-wallet-cli [--wallet-file=<file>|--generate-new-wallet=<file>] [<COMMAND>]",
-    sw::tr("This is the command line xcash wallet. It needs to connect to a xcash\ndaemon to work correctly.\nWARNING: Do not reuse your X-CASH keys on another fork, UNLESS this fork has key reuse mitigations built in. Doing so will harm your privacy."),
+    sw::tr(""),
     desc_params,
     positional_options,
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },

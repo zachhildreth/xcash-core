@@ -112,7 +112,10 @@ public:
         std::cout << m_oss.str();
         epee::reset_console_color();
       }
-      std::cout << std::endl;
+      if (!m_bright)
+      {
+        std::cout << std::endl;
+      }
     }
   }
 };
