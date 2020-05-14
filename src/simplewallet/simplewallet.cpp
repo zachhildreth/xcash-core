@@ -126,6 +126,181 @@ enum TransferType {
   TransferLocked,
 };
 
+void simple_wallet_display_core_tab()
+{
+  // Variables
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define MENU_OPTIONS 5
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-----------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header 
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NAME")-1)+TABLE_INDENTATION) << "NAME" << std::setw(25-((sizeof("NAME")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("DESCRIPTION")-1)+TABLE_INDENTATION) << "DESCRIPTION" << std::setw(50-((sizeof("DESCRIPTION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < MENU_OPTIONS; count++)
+  {
+    data = count == 0 ? "ADDRESS" : count == 1 ? "BALANCE" : count == 2 ? "SEND" : count == 3 ? "SEND ALL" : "DISPLAY TRANSFERS";
+    data2 = count == 0 ? "Display your address" : count == 1 ? "Display your balance" : count == 2 ? "Send a transaction" : count == 3 ? "Send a transaction using your entire balance" : "Display all transfers";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(25-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(50-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef MENU_OPTIONS
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+void simple_wallet_display_advanced_tab()
+{
+  // Variables
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define MENU_OPTIONS 2
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-----------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header 
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NAME")-1)+TABLE_INDENTATION) << "NAME" << std::setw(25-((sizeof("NAME")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("DESCRIPTION")-1)+TABLE_INDENTATION) << "DESCRIPTION" << std::setw(50-((sizeof("DESCRIPTION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < MENU_OPTIONS; count++)
+  {
+    data = count == 0 ? "GET TX KEY" : "GET RESERVE PROOF";
+    data2 = count == 0 ? "Get tx key from tx hash" : "Create a reserve proof";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(25-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(50-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef MENU_OPTIONS
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+void simple_wallet_display_dpops_tab()
+{
+  // Variables
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define MENU_OPTIONS 3
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-----------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header 
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NAME")-1)+TABLE_INDENTATION) << "NAME" << std::setw(25-((sizeof("NAME")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("DESCRIPTION")-1)+TABLE_INDENTATION) << "DESCRIPTION" << std::setw(50-((sizeof("DESCRIPTION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < MENU_OPTIONS; count++)
+  {
+    data = count == 0 ? "VOTE" : count == 1 ? "REGISTER" : "UPDATE";
+    data2 = count == 0 ? "Stake towards a delegate" : count == 1 ? "Register as a delegate" : "Update your delegate data";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(25-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(50-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef MENU_OPTIONS
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+void simple_wallet_display_nft_tab()
+{
+  // Variables
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define MENU_OPTIONS 5
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-----------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header 
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NAME")-1)+TABLE_INDENTATION) << "NAME" << std::setw(25-((sizeof("NAME")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("DESCRIPTION")-1)+TABLE_INDENTATION) << "DESCRIPTION" << std::setw(50-((sizeof("DESCRIPTION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < MENU_OPTIONS; count++)
+  {
+    data = count == 0 ? "GET FEES" : count == 1 ? "BALANCE" : count == 2 ? "SEND" : count == 3 ? "SEND ALL" : "DISPLAY TRANSFERS";
+    data2 = count == 0 ? "Get current NFT fees" : count == 1 ? "Display your balance" : count == 2 ? "Send a transaction" : count == 3 ? "Send a transaction using your entire balance" : "Display all transfers";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(25-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(50-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef MENU_OPTIONS
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+void simple_wallet_display_backup_tab()
+{
+  // Variables
+  std::string data;
+  std::string data2;
+  int count;
+
+  // define macros
+  #define MENU_OPTIONS 3
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "-----------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  // print the title and the table header 
+  std::cout << TABLE_DATA << std::endl;
+  std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NAME")-1)+TABLE_INDENTATION) << "NAME" << std::setw(25-((sizeof("NAME")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("DESCRIPTION")-1)+TABLE_INDENTATION) << "DESCRIPTION" << std::setw(50-((sizeof("DESCRIPTION")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << TABLE_DATA << std::endl;
+    
+  for (count = 0; count < MENU_OPTIONS; count++)
+  {
+    data = count == 0 ? "DISPLAY KEYS" : count == 1 ? "RESCAN" : "UPDATE PASSWORD";
+    data2 = count == 0 ? "Display public and private keys" : count == 1 ? "Rescan the blockchain" : "Update your password";
+    std::cout << TABLE_COLUMN_STRING << std::setw(1+TABLE_INDENTATION) << count+1 << std::setw(10-(1+2)) << TABLE_COLUMN_STRING << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(25-(data.length()+2)) << TABLE_COLUMN_STRING << std::setw(data2.length()+TABLE_INDENTATION) << data2 << std::setw(50-(data2.length()+2)) << TABLE_COLUMN_STRING << std::endl; 
+  }
+  std::cout << TABLE_DATA << std::endl << std::endl;
+  return;
+
+  #undef MENU_OPTIONS
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
 void simple_wallet_display_tabs(const int settings)
 {
   // define macros
@@ -133,16 +308,15 @@ void simple_wallet_display_tabs(const int settings)
   #define COLOR_PRINT_TABLE_INDENTATION 4
   #define TABLE_INDENTATION 1
   #define TABLE_COLUMN_STRING "|"
-  #define TABLE_DATA "-------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define TABLE_DATA "-----------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
 
-  #define TAB_1 "1 - MAIN_MENU"
-  #define TAB_2 "2 - CORE"
-  #define TAB_3 "3 - ADVANCED"
-  #define TAB_4 "4 - MULTISIG"
-  #define TAB_5 "5 - NFT"
-  #define TAB_6 "6 - BACKUP"
+  #define TAB_1 "1 - CORE"
+  #define TAB_2 "2 - ADVANCED"
+  #define TAB_3 "3 - DPOPS"
+  #define TAB_4 "4 - NFT"
+  #define TAB_5 "5 - BACKUP"
 
-  // print the title and the table header
+  // print the tabs header
   std::cout << std::endl << TABLE_DATA << std::endl;
   std::cout << TABLE_COLUMN_STRING;
   settings == 1 ? (std::cout << std::setw((sizeof(TAB_1)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_1) : std::cout << std::setw((sizeof(TAB_1)-1)+TABLE_INDENTATION) << TAB_1;
@@ -154,10 +328,11 @@ void simple_wallet_display_tabs(const int settings)
   settings == 4 ? (std::cout << std::setw((sizeof(TAB_4)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_4) : std::cout << std::setw((sizeof(TAB_4)-1)+TABLE_INDENTATION) << TAB_4;
   std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_4)-1)+2)) << TABLE_COLUMN_STRING;
   settings == 5 ? (std::cout << std::setw((sizeof(TAB_5)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_5) : std::cout << std::setw((sizeof(TAB_5)-1)+TABLE_INDENTATION) << TAB_5;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_5)-1)+2)) << TABLE_COLUMN_STRING;
-  settings == 6 ? (std::cout << std::setw((sizeof(TAB_6)-1)-COLOR_PRINT_TABLE_INDENTATION), tools::color_print(epee::console_color_white) << TAB_6) : std::cout << std::setw((sizeof(TAB_6)-1)+TABLE_INDENTATION) << TAB_6;
-  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_6)-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+  std::cout << std::setw(TABLE_WIDTH-((sizeof(TAB_5)-1)+2)) << TABLE_COLUMN_STRING << std::endl;
   std::cout << TABLE_DATA << std::endl << std::endl;
+
+  // print the menu options for the selected tab
+  settings == 1 ? simple_wallet_display_core_tab() : settings == 2 ? simple_wallet_display_advanced_tab() : settings == 3 ? simple_wallet_display_dpops_tab() : settings == 4 ? simple_wallet_display_nft_tab() : simple_wallet_display_backup_tab();
   return;
 
   #undef TABLE_WIDTH
@@ -169,7 +344,6 @@ void simple_wallet_display_tabs(const int settings)
   #undef TAB_3
   #undef TAB_4
   #undef TAB_5
-  #undef TAB_6
 }
 
 namespace
@@ -2938,15 +3112,6 @@ bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
-bool simple_wallet::set_tab(const std::vector<std::string>& args)
-{
-  if (!m_advanced_wallet)
-  {
-    simple_wallet_display_tabs(std::stoi(args.front()));
-  }
-  return true;
-}
-
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if (m_advanced_wallet)
@@ -3322,10 +3487,6 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::get_nft_fee, this, _1),
                            tr("get_nft_fee"),
                            tr("Gets the current non fungible token fees"));
-  m_cmd_binder.set_handler("set_tab",
-                           boost::bind(&simple_wallet::set_tab, this, _1),
-                           tr("set_tab"),
-                           tr("Sets the tab in simplewallet mode"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
@@ -5015,10 +5176,114 @@ std::vector<std::string> simple_wallet_get_daemon_connection()
   #undef TABLE_DATA
 }
 
+void get_selection_core(const std::string data)
+{
+  if (data == "1")
+  {
+    std::cout << "ADDRESS\n";
+  }
+  else if (data == "2")
+  {
+    std::cout << "BALANCE\n";
+  }
+  else if (data == "3")
+  {
+    std::cout << "SEND\n";
+  }
+  else if (data == "4")
+  {
+    std::cout << "SEND ALL\n";
+  }
+  else if (data == "5")
+  {
+    std::cout << "DISPLAY TRANSFERS\n";
+  }
+  return;
+}
+
+void get_selection_advanced(const std::string data)
+{
+  if (data == "1")
+  {
+    std::cout << "GET TX KEY\n";
+  }
+  else if (data == "2")
+  {
+    std::cout << "GET RESERVE PROOF\n";
+  }
+  return;
+}
+
+void get_selection_dpops(const std::string data)
+{
+  if (data == "1")
+  {
+    std::cout << "VOTE\n";
+  }
+  else if (data == "2")
+  {
+    std::cout << "REGISTER\n";
+  }
+  else if (data == "3")
+  {
+    std::cout << "UPDATE\n";
+  }
+  return;
+}
+
+void get_selection_nft(const std::string data)
+{
+  if (data == "1")
+  {
+    std::cout << "GET FEES\n";
+  }
+  return;
+}
+
+void get_selection_backup(const std::string data)
+{
+  if (data == "1")
+  {
+    std::cout << "DISPLAY KEYS\n";
+  }
+  else if (data == "2")
+  {
+    std::cout << "RESCAN\n";
+  }
+  else if (data == "3")
+  {
+    std::cout << "CHANGE PASSWORD\n";
+  }
+  return;
+}
+
+void get_selection(int &count, const std::string data)
+{
+  if (data == "n")
+  {
+    count++;
+    if (count > SIMPLE_WALLET_TAB_AMOUNT)
+    {
+      count = SIMPLE_WALLET_TAB_AMOUNT;
+    }
+  }
+  else if (data == "p")
+  {
+    count--;
+    if (count < 1)
+    {
+      count = 1;
+    }
+  }
+  else
+  {
+    count == 1 ? get_selection_core(data) : count == 2 ? get_selection_advanced(data) : count == 3 ? get_selection_dpops(data) : count == 4 ? get_selection_nft(data) : get_selection_backup(data);
+  }
+  return;
+}
+
 void simple_wallet_main_menu()
 {
-  try
-  {
   // Variables
   boost::asio::io_service io_service;
   tcp::resolver resolver(io_service);
@@ -5026,12 +5291,14 @@ void simple_wallet_main_menu()
   tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
   tcp::socket socket(io_service);
   boost::asio::connect(socket, endpoint_iterator);
+  std::string line;
   int count = 0;
 
   // display the title and tabs
   tools::color_print(epee::console_color_yellow) << "\nWelcome to XCASH " << CURRENT_VERSION << "\n\n"; 
-  simple_wallet_display_tabs(1);
 
+  try
+  {
   // get the main menu display message
   boost::asio::streambuf request;
   std::ostream request_stream(&request);
@@ -5043,7 +5310,6 @@ void simple_wallet_main_menu()
   boost::asio::streambuf response;
   boost::asio::read_until(socket, response, "\r\n");
   std::istream response_stream(&response);
-  std::string line;
   while (std::getline(response_stream, line))
   {
     if (count == 1)
@@ -5062,7 +5328,24 @@ void simple_wallet_main_menu()
   }
 
   end:
-  tools::color_print(epee::console_color_white) << "\nNavigate to the different tabs by using the command \"set_tab <TAB INDEX>\"\nSelect a command from the table to run a command\n\n";
+  
+  // run the selection in an infinite loop  
+  // set what tab they are on
+  count = 1;
+  line = "";
+  cin.ignore(INT_MAX, '\n');
+  for (;;)
+  {
+    simple_wallet_display_tabs(count);
+    tools::color_print(epee::console_color_yellow) << "Selection: ";
+    std::getline(std::cin,line);
+    if (line.empty())
+    {
+      break;
+    }
+    get_selection(count,line);
+  }
+   
 
   
 }

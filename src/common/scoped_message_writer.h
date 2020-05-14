@@ -53,12 +53,14 @@ private:
   epee::console_colors m_color;
   bool m_bright;
   el::Level m_log_level;
+  bool advanced_wallet;
 public:
   scoped_message_writer(
       epee::console_colors color = epee::console_color_default
     , bool bright = false
     , std::string&& prefix = std::string()
     , el::Level log_level = el::Level::Info
+    , bool advanced_wallet = false
     )
     : m_flush(true)
     , m_color(color)
@@ -112,7 +114,7 @@ public:
         std::cout << m_oss.str();
         epee::reset_console_color();
       }
-      if (!m_bright)
+      if (!advanced_wallet)
       {
         std::cout << std::endl;
       }
@@ -122,17 +124,17 @@ public:
 
 inline scoped_message_writer success_msg_writer(bool color = true)
 {
-  return scoped_message_writer(color ? epee::console_color_green : epee::console_color_default, false, std::string(), el::Level::Info);
+  return scoped_message_writer(color ? epee::console_color_green : epee::console_color_default, false, std::string(), el::Level::Info, false);
 }
 
 inline scoped_message_writer msg_writer(epee::console_colors color = epee::console_color_default)
 {
-  return scoped_message_writer(color, false, std::string(), el::Level::Info);
+  return scoped_message_writer(color, false, std::string(), el::Level::Info, false);
 }
 
 inline scoped_message_writer color_print(epee::console_colors color = epee::console_color_default)
 {
-  return scoped_message_writer(color, true, std::string(), el::Level::Info);
+  return scoped_message_writer(color, true, std::string(), el::Level::Info, true);
 }
 
 inline scoped_message_writer fail_msg_writer()

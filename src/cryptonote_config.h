@@ -292,6 +292,7 @@ network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_
 #define NFT_TRANSFER_IP_ADDRESS ""
 #define WELCOME_MESSAGE_SERVER "94.130.59.172"
 #define WELCOME_MESSAGE_FILE "simple_wallet.txt"
+#define SIMPLE_WALLET_TAB_AMOUNT 6
 
 
 
