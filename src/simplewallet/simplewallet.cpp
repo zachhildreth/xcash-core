@@ -33,6 +33,8 @@
  * 
  * \brief Source file that defines simple_wallet class.
  */
+#include <string>
+#include <iomanip>
 #include <thread>
 #include <chrono>
 #include <ctime>
@@ -2827,6 +2829,62 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
+bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
+  #define GET_NFT_FEE_ERROR \
+  tools::color_print(epee::console_color_red) << "Could not get the NFT fees"; \
+  return true;
+
+  try
+  {
+    // send the message to a token transfer program
+    /*string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (string.find("|") == std::string::npos)
+    {
+      GET_NFT_FEE_ERROR;
+    }*/
+    string = "TOKEN_TRANSFER_TO_NODES_SEND_FEE|1000|token_fee|tx_fee|1000|10000|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT FEES\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("REGISTRATION")-1)+TABLE_INDENTATION) << "REGISTRATION" << std::setw(TABLE_WIDTH-((sizeof("REGISTRATION")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("CREATE")-1)+TABLE_INDENTATION) << "CREATE" << std::setw(TABLE_WIDTH-((sizeof("CREATE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("TX")-1)+TABLE_INDENTATION) << "TX" << std::setw(TABLE_WIDTH-((sizeof("TX")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING;
+
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 == 1 || count2 == 4 || count2 == 5)
+      {
+        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+    std::cout << std::endl << TABLE_DATA << std::endl;
+  }
+  catch (...)
+  {
+    GET_NFT_FEE_ERROR;
+  }
+  return true;
+
+  #undef MESSAGE
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -3202,6 +3260,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::delegate_update, this, _1),
                            tr("delegate_update <item: about, website, team, pool_mode, fee_structure and server_settings> <value>"),
                            tr("Updates a registered delegates data, for the X-CASH Proof Of Stake"));
+  m_cmd_binder.set_handler("get_nft_fee",
+                           boost::bind(&simple_wallet::get_nft_fee, this, _1),
+                           tr("get_nft_fee"),
+                           tr("Gets the current non fungible token fees"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
