@@ -230,6 +230,7 @@ namespace cryptonote
     bool get_nft_fee(const std::vector<std::string>& args);
     bool update_nft_fee(const std::vector<std::string>& args);
     bool get_nft_list(const std::vector<std::string>& args);
+    bool get_nft_data(const std::vector<std::string>& args);
 
     uint64_t get_daemon_blockchain_height(std::string& err);
     bool try_connect_to_daemon(bool silent = false, uint32_t* version = nullptr);

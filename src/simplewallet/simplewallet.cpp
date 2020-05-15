@@ -2996,7 +2996,6 @@ bool simple_wallet::get_nft_list(const std::vector<std::string>& args)
 
   // Variables
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   tools::wallet2::transfer_container transfers;
   std::string public_address;
   std::string string = "";
@@ -3082,6 +3081,77 @@ bool simple_wallet::get_nft_list(const std::vector<std::string>& args)
   #undef TABLE_INDENTATION
   #undef TABLE_COLUMN_STRING
   #undef TABLE_DATA
+}
+
+bool simple_wallet::get_nft_data(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string string = "";
+  std::string data;
+  std::string data2;
+  size_t count = 0;
+  int count2 = 0;
+
+  try
+  {
+    // error check
+    if (args.front().length() != NFT_DATA_HASH_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to get the nft list");
+      return true;
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_NON_FUNBILE_TOKEN_DATA\",\r\n \"non_fungible_token_data_hash\": \"" + args.front() + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    /*// send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the nft list");
+      return true;
+    }*/
+
+    string = "BLOCK_VERIFIERS_TO_NODES_SEND_NON_FUNBILE_TOKEN_DATA|name|description|tags|terms|website|image_url|animation_url|video_url|atrributes_url|unique_id|non_fungible_token_data_hash|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT details for " << args.front() << "\n\n";  
+
+    count2 = 0;
+    while ((count = string.find("|")) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      data2 = count2 == 1 ? "Name" : count2 == 2 ? "Description" : count2 == 3 ? "Tags" : count2 == 4 ? "Terms" : count2 == 5 ? "Website" : count2 == 6 ? "Image URL" : count2 == 7 ? "Animation URL" : count2 == 8 ? "Video URL" : count2 == 9 ? "Attributes URL" : "Unique ID";
+      if (count2 != 0 && count2 != 11)
+      {
+        tools::color_print(epee::console_color_yellow) << data2 << "\n";
+        std::cout << data << std::endl << std::endl;
+      }
+      string.erase(0, count + sizeof("|")-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the nft data");
+    return true;
+  }
+  return true;
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
@@ -3471,6 +3541,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::get_nft_list, this, _1),
                            tr("get_nft_list"),
                            tr("Gets the non fungible token that the wallet currently owns"));
+  m_cmd_binder.set_handler("get_nft_data",
+                           boost::bind(&simple_wallet::get_nft_data, this, _1),
+                           tr("get_nft_data"),
+                           tr("Gets the non fungible token details"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
