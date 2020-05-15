@@ -2882,7 +2882,12 @@ bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
   }
   return true;
 
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
   #undef MESSAGE
+  #undef GET_NFT_FEE_ERROR
 }
 
 bool simple_wallet::update_nft_fee(const std::vector<std::string>& args)
@@ -2900,9 +2905,6 @@ bool simple_wallet::update_nft_fee(const std::vector<std::string>& args)
   // define macros
   #define PARAMETER_AMOUNT 2
   #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
-  #define UPDATE_NFT_FEE_ERROR \
-  tools::color_print(epee::console_color_red) << "Could not get the NFT fees"; \
-  return true;
 
   try
   {
@@ -2959,7 +2961,8 @@ bool simple_wallet::update_nft_fee(const std::vector<std::string>& args)
     string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
     if (string.find("|") == std::string::npos)
     {
-      UPDATE_NFT_FEE_ERROR;
+      fail_msg_writer() << tr("Could not update the NFT fees");
+      return true;
     }
 
     // check the result of the data
@@ -2979,7 +2982,106 @@ bool simple_wallet::update_nft_fee(const std::vector<std::string>& args)
   }
   return true;
 
+  #undef PARAMETER_AMOUNT
   #undef MESSAGE
+}
+
+bool simple_wallet::get_nft_list(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  try
+  {
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to get the nft list");
+      return true;
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_NON_FUNBILE_TOKEN_LIST_FOR_SPECIFIC_PUBLIC_ADDRESS\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    /*// send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the nft list");
+      return true;
+    }*/
+
+    string = "BLOCK_VERIFIERS_TO_NODES_SEND_NON_FUNBILE_TOKEN_LIST_FOR_SPECIFIC_PUBLIC_ADDRESS|00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000*non_fungible_token_name_1|00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000*non_fungible_token_name_2|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NFT_DATA_HASH")-1)+TABLE_INDENTATION) << "NFT_DATA_HASH" << std::setw(135-((sizeof("NFT_DATA_HASH")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NFT_NAME")-1)+TABLE_INDENTATION) << "NFT_NAME" << std::setw(40-((sizeof("NFT_NAME")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+
+    count2 = 0;
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 != 0)
+      {
+        std::cout << TABLE_COLUMN_STRING << std::setw(std::to_string(count2).length()+TABLE_INDENTATION) << std::to_string(count2) << std::setw(10-(std::to_string(count2).length()+2)) << TABLE_COLUMN_STRING << std::setw(NFT_DATA_HASH_LENGTH+TABLE_INDENTATION) << data.substr(0,NFT_DATA_HASH_LENGTH) << std::setw(135-(NFT_DATA_HASH_LENGTH+2)) << TABLE_COLUMN_STRING << std::setw((data.length()-(NFT_DATA_HASH_LENGTH+1))+TABLE_INDENTATION) << data.substr(NFT_DATA_HASH_LENGTH+1) << std::setw(40-((data.length()-(NFT_DATA_HASH_LENGTH+1))+2)) << TABLE_COLUMN_STRING << std::endl; 
+        std::cout << TABLE_DATA << std::endl;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the nft list");
+    return true;
+  }
+  return true;
+
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
@@ -3365,6 +3467,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::update_nft_fee, this, _1),
                            tr("update_nft_fee"),
                            tr("Updates the non fungible token fees"));
+  m_cmd_binder.set_handler("get_nft_list",
+                           boost::bind(&simple_wallet::get_nft_list, this, _1),
+                           tr("get_nft_list"),
+                           tr("Gets the non fungible token that the wallet currently owns"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
