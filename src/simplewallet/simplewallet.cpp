@@ -2885,6 +2885,103 @@ bool simple_wallet::get_nft_fee(const std::vector<std::string>& args)
   #undef MESSAGE
 }
 
+bool simple_wallet::update_nft_fee(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string string = "";
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string data2;
+  std::string data3;
+  std::string error_message;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
+  #define UPDATE_NFT_FEE_ERROR \
+  tools::color_print(epee::console_color_red) << "Could not get the NFT fees"; \
+  return true;
+
+  try
+  {
+    // error check
+    if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid parameters");
+      return true;
+    } 
+
+    // check if the fee to update is a valid fee item
+    if (args[0] != "registration_fee" && args[0] != "token_fee" && args[0] != "tx_fee" && args[0] != "non_fungible_token_fee" && args[0] != "non_fungible_tx_fee")
+    { 
+      fail_msg_writer() << tr("Failed to update the fee\nInvalid fee item. Valid items are: registration_fee, token_fee, tx_fee, non_fungible_token_fee, non_fungible_tx_fee");
+      return true;  
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // create the data
+    data2 = "NODES_TO_TOKEN_TRANSFER_UPDATE_FEE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+ 
+    // send the message to a token transfer program
+    string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (string.find("|") == std::string::npos)
+    {
+      UPDATE_NFT_FEE_ERROR;
+    }
+
+    // check the result of the data
+    if (string != "Could not update the fee")
+    {
+      message_writer(console_color_green, false) << "The NFT fee has been updated successfully";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to update the NFT fee");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to update the NFT fee");
+  }
+  return true;
+
+  #undef MESSAGE
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -3264,6 +3361,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::get_nft_fee, this, _1),
                            tr("get_nft_fee"),
                            tr("Gets the current non fungible token fees"));
+  m_cmd_binder.set_handler("update_nft_fee",
+                           boost::bind(&simple_wallet::update_nft_fee, this, _1),
+                           tr("update_nft_fee"),
+                           tr("Updates the non fungible token fees"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
