@@ -77,6 +77,7 @@ namespace cryptonote
     bool run();
     void stop();
     void interrupt();
+    void simple_wallet_address(const std::vector<std::string>& args) { print_address(); }
 
     //wallet *create_wallet();
     bool process_command(const std::vector<std::string> &args);

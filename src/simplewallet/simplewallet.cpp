@@ -5178,9 +5178,20 @@ std::vector<std::string> simple_wallet_get_daemon_connection()
 
 void get_selection_core(const std::string data)
 {
+  // Variables
+  cryptonote::simple_wallet w;
+
+  std::vector<std::string> command = {"address","all"};
+    tools::signal_handler::install([&w](int type) {
+    });
+std::cout << "start2";
+    w.run();
+
   if (data == "1")
   {
-    std::cout << "ADDRESS\n";
+    //std::vector<std::string>seed_node = {"usseed1.x-cash.org","trusted"};
+    
+    //simple_wallet.simple_wallet_address((std::vector<std::string>){""});
   }
   else if (data == "2")
   {
@@ -5328,6 +5339,7 @@ void simple_wallet_main_menu()
   }
 
   end:
+  count = 1;
   
   // run the selection in an infinite loop  
   // set what tab they are on
@@ -8192,6 +8204,8 @@ std::string simple_wallet::get_prompt() const
   else if (!m_wallet->is_synced() && m_advanced_wallet)
     prompt += tr(" (out of sync)");
   prompt += "]: ";
+
+  std::cout << "start0";
   return prompt;
 }
 //----------------------------------------------------------------------------------------------------
@@ -8446,6 +8460,8 @@ bool simple_wallet::print_address(const std::vector<std::string> &args/* = std::
   tools::wallet2::transfer_container transfers;
   m_wallet->get_transfers(transfers);
 
+ std::cout << "1";
+
   auto print_address_sub = [this, &transfers](uint32_t index)
   {
     bool used = std::find_if(
@@ -8454,11 +8470,11 @@ bool simple_wallet::print_address(const std::vector<std::string> &args/* = std::
         return td.m_subaddr_index == cryptonote::subaddress_index{ m_current_subaddress_account, index };
       }) != transfers.end();
     success_msg_writer() << index << "  " << m_wallet->get_subaddress_as_str({m_current_subaddress_account, index}) << "  " << (index == 0 ? tr("Primary address") : m_wallet->get_subaddress_label({m_current_subaddress_account, index})) << " " << (used ? tr("(used)") : "");
-  };
+  };std::cout << "2";
 
   uint32_t index = 0;
   if (local_args.empty())
-  {
+  {std::cout << "3";
     print_address_sub(index);
   }
   else if (local_args.size() == 1 && local_args[0] == "all")
@@ -8529,7 +8545,7 @@ bool simple_wallet::print_address(const std::vector<std::string> &args/* = std::
   {
     fail_msg_writer() << tr("usage: address [ new <label text with white spaces allowed> | all | <index_min> [<index_max>] | label <index> <label text with white spaces allowed> ]");
   }
-
+std::cout << "4";
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -9347,7 +9363,10 @@ int main(int argc, char* argv[])
         w.stop();
       }
     });
+std::cout << "start2";
     w.run();
+
+   std::cout << "start1";
 
     w.deinit();
   }
