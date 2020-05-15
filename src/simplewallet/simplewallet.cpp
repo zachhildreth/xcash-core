@@ -3009,26 +3009,39 @@ bool simple_wallet::get_nft_list(const std::vector<std::string>& args)
   #define TABLE_DATA "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
 
   try
-  {
-    // get the wallet transfers   
-    m_wallet->get_transfers(transfers);
-
-    // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address]()
-      {
-        bool used = std::find_if(
-          transfers.begin(), transfers.end(),
-          [this](const tools::wallet2::transfer_details& td) {
-            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
-          }) != transfers.end();
-          public_address = m_wallet->get_subaddress_as_str({0, 0});
-      };
-      print_address_sub();
-  
-    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {    
+    if (args.empty())
     {
-      fail_msg_writer() << tr("Failed to get the nft list");
-      return true;
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        fail_msg_writer() << tr("Failed to get the nft list");
+        return true;
+      }
+    }
+    else
+    {
+      // error check
+      if (args.front().length() != XCASH_WALLET_LENGTH)
+      {
+        fail_msg_writer() << tr("Failed to check if the public address is registered in the NFT database");
+        return true;
+      }
+      public_address = args.front();
     }
 
     // create the message
@@ -3263,6 +3276,8 @@ bool simple_wallet::check_if_public_address_is_registered_for_nft(const std::vec
   #undef TABLE_COLUMN_STRING
   #undef TABLE_DATA
 }
+
+
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
@@ -3645,20 +3660,21 @@ simple_wallet::simple_wallet()
                            tr("Gets the current non fungible token fees"));
   m_cmd_binder.set_handler("update_nft_fee",
                            boost::bind(&simple_wallet::update_nft_fee, this, _1),
-                           tr("update_nft_fee"),
-                           tr("Updates the non fungible token fees"));
+                           tr("update_nft_fee <fee type> <amount>"),
+                           tr("Updates the non fungible token fees. Fee type can be registration_fee, token_fee, tx_fee, non_fungible_token_fee, non_fungible_tx_fee. Amount can be an xcash amount (not in atomic units)"));
   m_cmd_binder.set_handler("get_nft_list",
                            boost::bind(&simple_wallet::get_nft_list, this, _1),
-                           tr("get_nft_list"),
-                           tr("Gets the non fungible token that the wallet currently owns"));
+                           tr("get_nft_list <public_address>"),
+                           tr("Gets the non fungible token that the wallet currently owns. The wallets current public address is used if no public address is specified"));
   m_cmd_binder.set_handler("get_nft_data",
                            boost::bind(&simple_wallet::get_nft_data, this, _1),
-                           tr("get_nft_data"),
-                           tr("Gets the non fungible token details"));
+                           tr("get_nft_data <NFT data hash>"),
+                           tr("Gets the non fungible token details for the specified NFT data hash"));
   m_cmd_binder.set_handler("check_if_public_address_is_registered_for_nft",
                            boost::bind(&simple_wallet::check_if_public_address_is_registered_for_nft, this, _1),
                            tr("check_if_public_address_is_registered_for_nft <public_address>"),
                            tr("Check if a public address is registered in the NFT database. The wallets current public address is used if no public address is specified"));
+  
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
