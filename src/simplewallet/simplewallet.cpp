@@ -74,6 +74,8 @@
 #include "wallet/wallet_args.h"
 #include "version.h"
 #include <stdexcept>
+#include "../../external/VRF_functions/VRF_functions.h"
+#include "../../external/VRF_functions/VRF_functions.cpp"
 #include "common/send_and_receive_data.h"
 
 #ifdef WIN32
@@ -3651,9 +3653,6 @@ bool simple_wallet::register_public_address(const std::vector<std::string>& args
       fail_msg_writer() << tr("Failed to register the public address in the NFT database");
       return true;  
     }
-    
-    
-  
   }
   catch (...)
   {
@@ -3669,6 +3668,355 @@ bool simple_wallet::register_public_address(const std::vector<std::string>& args
   #undef TABLE_DATA
   #undef MESSAGE
 }
+
+bool simple_wallet::create_nft(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  if (!try_connect_to_daemon())
+    return true;
+
+  if (m_wallet->multisig() || m_wallet->watch_only() || m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to send the transaction");
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // set the store-tx-info to true so we can get the tx_key
+  m_wallet->store_tx_info(true); 
+
+  // Variables
+  int transfer_type = Transfer;
+  std::vector<std::string> local_args = args;
+  std::string tx_privacy_settings = "private";
+  std::set<uint32_t> subaddr_indices;
+  uint32_t priority = m_wallet->adjust_priority(0);
+  size_t fake_outs_count = BLOCKCHAIN_DEFAULT_MIXIN;
+  uint64_t adjusted_fake_outs_count = m_wallet->adjust_mixin(fake_outs_count);
+  std::stringstream stringstream;
+  std::string tx_hash;
+  std::string tx_key;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  size_t count = 0;
+  int count2 = 0;
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string string = "";
+  std::string data;
+  std::string data2;
+  std::string data3;
+  std::string fee;
+  char buffer[NFT_DATA_HASH_LENGTH+1];
+
+  // define macros
+  #define PARAMETER_AMOUNT 10
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_TOKEN_TRANSFER_GET_FEE\",\r\n}"
+
+  memset(buffer,0,sizeof(buffer));
+
+  // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Invalid parameters usage is create_nft name description tags terms website image_url animation_url video_url atrributes_url unique_id");
+    return true;
+  }
+  
+  // check the parameters
+  if (args[0].length() > 100 || args[1].length() > 1000 || args[2].length() > 100 || args[3].length() > 1000 || args[4].length() > 100 || args[5].length() > 100 || args[6].length() > 100 || args[7].length() > 100 || args[8].length() > 1000)
+  {
+    fail_msg_writer() << tr("Invalid parameters usage is create_nft name description tags terms website image_url animation_url video_url atrributes_url unique_id");
+    return true;
+  }
+
+
+
+  // check if that NFT is already created
+    data2 = args[0] + "|" + args[1] + "|" + args[2] + "|" + args[3] + "|" + args[4] + "|" + args[5] + "|" + args[6] + "|" + args[7] + "|" + args[8] + "|";    
+    crypto_hash_sha512((unsigned char*)buffer,(const unsigned char*)data2.c_str(),data2.length());
+    std::string non_fungible_token_data_hash(buffer);
+
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_NON_FUNBILE_TOKEN_DATA\",\r\n \"non_fungible_token_data_hash\": \"" + non_fungible_token_data_hash + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string == "" && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the nft data");
+      return true;
+    }
+   
+    if (string != "The NFT data hash does not exist")
+    {
+      fail_msg_writer() << tr("The NFT already exists");
+      return true;
+    }
+
+
+
+
+  // get the NFT fees and display them
+  // send the message to a token transfer program
+    /*string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (string.find("|") == std::string::npos)
+    {
+      GET_NFT_FEE_ERROR;
+    }*/
+    string = "TOKEN_TRANSFER_TO_NODES_SEND_FEE|1000|token_fee|tx_fee|1000|10000|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT FEES\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("REGISTRATION")-1)+TABLE_INDENTATION) << "REGISTRATION" << std::setw(TABLE_WIDTH-((sizeof("REGISTRATION")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("CREATE")-1)+TABLE_INDENTATION) << "CREATE" << std::setw(TABLE_WIDTH-((sizeof("CREATE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("TX")-1)+TABLE_INDENTATION) << "TX" << std::setw(TABLE_WIDTH-((sizeof("TX")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING;
+
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 == 1 || count2 == 4 || count2 == 5)
+      {
+        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
+      }
+      
+      // get the fee for the NFT action
+      if (count2 == 2)
+      {
+        fee = data;
+      }
+
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+    std::cout << std::endl << TABLE_DATA << std::endl;
+
+    // confirm the fees before sending the tx
+    std::string accepted = input_line(tr("If your okay with the above fee for creating a NFT then confirm to send the payment  (Y/Yes/N/No): "));
+     if (std::cin.eof())
+       return true;
+     if (!command_line::is_yes(accepted))
+     {
+       fail_msg_writer() << tr("NFT action cancelled.");
+       return true; 
+     }
+
+
+  // send the transaction  
+
+  std::vector<uint8_t> extra;
+  bool payment_id_seen = false;
+  uint64_t locked_blocks = 0;
+
+  vector<cryptonote::tx_destination_entry> dsts;
+  size_t num_subaddresses = 0;
+ 
+    cryptonote::tx_destination_entry de;
+    cryptonote::address_parse_info info;
+    bool r = true;
+
+    std::string address_uri, payment_id_uri, tx_description, recipient_name, error;
+    std::vector<std::string> unknown_parameters;
+    uint64_t amount = 0;
+    
+   
+      cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), NFT_TRANSFER_PUBLIC_ADDRESS, oa_prompter);
+      cryptonote::parse_amount(de.amount, fee);
+    
+
+    de.addr = info.address;
+    de.is_subaddress = info.is_subaddress;
+    num_subaddresses += info.is_subaddress;
+
+  try
+  {
+    // figure out what tx will be necessary
+    std::vector<tools::wallet2::pending_tx> ptx_vector;
+    uint64_t bc_height, unlock_block = 0;
+    std::string err;
+    switch (transfer_type)
+    {
+      case TransferLocked:
+        bc_height = get_daemon_blockchain_height(err);
+        if (!err.empty())
+        {
+          fail_msg_writer() << tr("failed to get blockchain height: ") << err;
+          return true;
+        }
+        unlock_block = bc_height + locked_blocks;
+        ptx_vector = m_wallet->create_transactions_2(dsts, fake_outs_count, unlock_block /* unlock_time */, tx_privacy_settings, priority, extra, m_current_subaddress_account, subaddr_indices);
+      break;
+      default:
+        LOG_ERROR("Unknown transfer method, using default");
+        /* FALLTHRU */
+      case Transfer:
+        ptx_vector = m_wallet->create_transactions_2(dsts, fake_outs_count, 0 /* unlock_time */, tx_privacy_settings, priority, extra, m_current_subaddress_account, subaddr_indices);
+      break;
+    }
+
+    if (ptx_vector.empty())
+    {
+      fail_msg_writer() << tr("No outputs found, or daemon is not ready");
+      return true;
+    }
+
+    // if we need to check for backlog, check the worst case tx
+    if (m_wallet->confirm_backlog())
+    {
+      std::stringstream prompt;
+      double worst_fee_per_byte = std::numeric_limits<double>::max();
+      for (size_t n = 0; n < ptx_vector.size(); ++n)
+      {
+        const uint64_t blob_size = cryptonote::tx_to_blob(ptx_vector[n].tx).size();
+        const double fee_per_byte = ptx_vector[n].fee / (double)blob_size;
+        if (fee_per_byte < worst_fee_per_byte)
+        {
+          worst_fee_per_byte = fee_per_byte;
+        }
+      }
+      try
+      {
+        std::vector<std::pair<uint64_t, uint64_t>> nblocks = m_wallet->estimate_backlog({std::make_pair(worst_fee_per_byte, worst_fee_per_byte)});
+        if (nblocks.size() != 1)
+        {
+          prompt << "Internal error checking for backlog. " << tr("Is this okay anyway?  (Y/Yes/N/No): ");
+        }
+        else
+        {
+          if (nblocks[0].first > m_wallet->get_confirm_backlog_threshold())
+            prompt << (boost::format(tr("There is currently a %u block backlog at that fee level. Is this okay?  (Y/Yes/N/No): ")) % nblocks[0].first).str();
+        }
+      }
+      catch (const std::exception &e)
+      {
+        prompt << tr("Failed to check for backlog: ") << e.what() << ENDL << tr("Is this okay anyway?  (Y/Yes/N/No): ");
+      }
+
+      std::string prompt_str = prompt.str();
+      if (!prompt_str.empty())
+      {
+        std::string accepted = input_line(prompt_str);
+        if (std::cin.eof())
+          return true;
+        if (!command_line::is_yes(accepted))
+        {
+          fail_msg_writer() << tr("transaction cancelled.");
+
+          return true; 
+        }
+      }
+    }
+
+    // if more than one tx necessary, prompt user to confirm
+    if (m_wallet->always_confirm_transfers() || ptx_vector.size() > 1)
+    {
+      fail_msg_writer() << tr("Mulitple transactions needed to send that amount, please use sweep_all to lower your unspents amount");
+    }
+
+    // send the transaction
+    auto & ptx = ptx_vector.back();
+    const crypto::hash txid = get_transaction_hash(ptx.tx);
+    m_wallet->commit_tx(ptx);
+    
+    // get the tx_hash
+    stringstream << txid;
+    tx_hash = stringstream.str();
+
+    // get the tx_key
+    crypto::secret_key tx_key_data;
+    std::vector<crypto::secret_key> additional_tx_keys;
+    m_wallet->get_tx_key(txid, tx_key_data, additional_tx_keys);
+    stringstream.str("");
+    stringstream << epee::string_tools::pod_to_hex(tx_key_data);
+    tx_key = stringstream.str();
+
+
+
+    // send the tx_hash and tx_key to the token transfer program
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to register the public address in the NFT database");
+      return true;    
+    }
+
+    // create the data
+    data2 = "NODES_TO_TOKEN_TRANSFER_CREATE_NON_FUNGIBLE_TOKEN|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + args[3] + "|" + args[4] + "|" + args[5] + "|" + args[6] + "|" + args[7] + "|" + args[8] + "|" + tx_hash + "|" + tx_key + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+ 
+    // send the message to the token transfer program
+    string = send_and_receive_data(NFT_TRANSFER_IP_ADDRESS,data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    if (string.find("|") == std::string::npos)
+    {
+      fail_msg_writer() << tr("Could not register the public address, please resend these details ") << tx_hash << " and " << tx_key;
+      return true;
+    }
+
+    // check the result of the data
+    if (string == "The non fungible token payment has been received successfully")
+    {
+      message_writer(console_color_green, false) << "The public address has been registered successfully in the NFT database";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to register the public address in the NFT database");
+      return true;  
+    }
+  }
+  catch (...)
+  {
+    LOG_ERROR("unknown error");
+    fail_msg_writer() << tr("unknown error");
+  }
+
+  return true;
+
+  #undef PARAMETER_AMOUNT
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+  #undef MESSAGE
+}
+
+
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
@@ -4068,7 +4416,12 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("register_public_address",
                            boost::bind(&simple_wallet::register_public_address, this, _1),
                            tr("register_public_address"),
-                           tr("Registers the current wallets public address in the NFT database so they can use NFT"));  
+                           tr("Registers the current wallets public address in the NFT database so they can use NFT")); 
+  m_cmd_binder.set_handler("create_nft",
+                           boost::bind(&simple_wallet::create_nft, this, _1),
+                           tr("create_nft <name> <description> <tags> <terms> <website> <image_url> <animation_url> <video_url> <atrributes_url> <unique_id>"),
+                           tr("Create a NFT"));  
+ 
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
