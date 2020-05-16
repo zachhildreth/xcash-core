@@ -287,6 +287,7 @@ network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_
 
 // Non Fungible Tokens
 #define NFT_TRANSFER_IP_ADDRESS ""
+#define NFT_TRANSFER_PUBLIC_ADDRESS "XCA1kzoR3ZLNg5zxNmxrY8FYKtgEvPZqC2xoRpm1axCpQcrrZfoKTSkSNsASDspdt3j1WcEnQJyuuB5VPSB56WWy36A4sQtQhe"
 #define NFT_DATA_HASH_LENGTH 128
 
 
