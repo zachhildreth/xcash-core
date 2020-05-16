@@ -235,7 +235,7 @@ namespace cryptonote
     bool update_attributes_url(const std::vector<std::string>& args);
     bool register_public_address(const std::vector<std::string>& args);
     bool create_nft(const std::vector<std::string>& args);
-
+    bool send_nft(const std::vector<std::string>& args);
 
     uint64_t get_daemon_blockchain_height(std::string& err);
     bool try_connect_to_daemon(bool silent = false, uint32_t* version = nullptr);
