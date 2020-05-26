@@ -259,11 +259,11 @@ full_addrs.insert(SEED_NODE_5);
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1c2ahjRvBsp35ynTknNYczj9y42hN9ht1vNyns2FCTU4qbLqahtsTw2E7JTKLd3ecSGLe2zWJgCiwrMhecsbT38i3Smy9vW"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1jN7CNCKEN1kDuqxiuUPyKWiVp68RsYxshdohaQ1k8NN11ZWX9dSJv3hx6qxfPaKVAnet4LTda9fsK81c9wRN5Aj78KyZEg"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1hKDayQXECEA5Yja4a8CU6Suoo9XT9jET7Ng2Rx2z3fLsGy5iVQCL9hWWTi3TroJxihWY4j84n9WMJvpFvagW5hMNpq1jh9"
-#define NETWORK_DATA_NODE_IP_ADDRESS_1 "delegates.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_1 "us1.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_2 "europe1.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_3 "europe2.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_4 "europe3.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "asia1.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "us2.xcash.foundation"
 
 /*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
@@ -315,7 +315,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x62 , 0x41, 0x65, 0x14, 0x30, 0x00, 0x85, 0x35, 0xA1, 0x45, 0x89
+      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x62 , 0x41, 0x65, 0x14, 0x30, 0x00, 0x85, 0x35, 0xA5, 0x45, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
