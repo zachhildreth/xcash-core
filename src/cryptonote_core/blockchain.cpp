@@ -3707,6 +3707,7 @@ bool Blockchain::update_next_cumulative_weight_limit()
 #define XCASH_WALLET_LENGTH 98 // The length of a XCA addres
 #define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
 #define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_ERROR_MESSAGE "Could not get a list of the current block verifiers"
+#define NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER\",\r\n}"
 #define NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE "Could not get the network blocks reserve bytes database hash"
 #define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
 #define RANDOM_STRING_LENGTH 100 // The length of the random string
@@ -3724,6 +3725,7 @@ pointer = NULL;
 
 // global variables
 std::vector<std::string> block_verifiers_database_hashes(BLOCK_VERIFIERS_TOTAL_AMOUNT);
+std::vector<std::string> network_data_nodes_database_hashes(NETWORK_DATA_NODES_AMOUNT);
 
 
 
@@ -3876,13 +3878,37 @@ int sign_data(char *message)
 
 
 
-bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
+bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, std::vector<std::string> &network_data_nodes_database_hashes, const block bl)
 {
   // Variables
   std::string network_block_string;
   std::string data_hash;
   std::size_t count;
   int number = 0;
+  int network_data_node_count = 0;
+
+  // define macros
+  #define VERIFY_DATA_HASH(total,data,counter) \
+  for (count = 0; count < total; count++) \
+  { \
+    if (data[count].length() >= DATA_HASH_LENGTH) \
+    { \
+      if (data_hash == data[count].substr(0,DATA_HASH_LENGTH)) \
+      { \
+        counter++; \
+      } \
+    } \
+  } \
+
+  #define RESET_DATA_HASH(total,data) \
+  for (count = 0; count < total; count++) \
+  { \
+    if (data[count].length() >= DATA_HASH_LENGTH+1) \
+    { \
+      block_verifiers_database_hashes[count] = data[count].substr(DATA_HASH_LENGTH+1); \
+    } \
+  } \
+  
 
   // get the network block string 
   network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
@@ -3891,34 +3917,26 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
   // check if the blocks reserve bytes hash matches at least the valid amount of block verifiers database hash
-  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
-  {
-    if (block_verifiers_database_hashes[count].length() >= DATA_HASH_LENGTH)
-    {
-      if (data_hash == block_verifiers_database_hashes[count].substr(0,DATA_HASH_LENGTH))
-      {
-        number++;
-      }
-    } 
-  }
+  VERIFY_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes,number);
 
-  if (number >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  // check if the blocks reserve bytes hash matches any of the network data nodes
+  VERIFY_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes,network_data_node_count);
+
+  if ((number >= BLOCK_VERIFIERS_VALID_AMOUNT) || (number >= BLOCK_VERIFIERS_VALID_AMOUNT_NETWORK_DATA_NODE && network_data_node_count >= (NETWORK_DATA_NODES_AMOUNT-1)))
   {
-    for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
-    {
-      if (block_verifiers_database_hashes[count].length() >= DATA_HASH_LENGTH+1)
-      {
-        block_verifiers_database_hashes[count] = block_verifiers_database_hashes[count].substr(DATA_HASH_LENGTH+1);
-      }
-    } 
+    RESET_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes);
+    RESET_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes);
     return true;
   }
   return false;
+
+  #undef VERIFY_DATA_HASH
+  #undef RESET_DATA_HASH
 }
 
 
 
-bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
+bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::vector<std::string> &network_data_nodes_database_hashes,std::size_t current_block_height)
 {
   // Variables
   std::string string = "";
@@ -3977,7 +3995,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   }
 
   // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; )
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     // get the current block verifier
     count3 = current_block_verifiers_list_IP_address.find("|",count2);
@@ -3986,18 +4004,66 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
 
     // get the reserve bytes database hash from the current block verifier
     string = send_and_receive_data(current_block_verifier,message_string,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-  
-    if (string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "")
+
+    block_verifiers_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
+    if (current_block_verifier == NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 || current_block_verifier == NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 || current_block_verifier == NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 || current_block_verifier == NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 || current_block_verifier == NETWORK_DATA_NODE_PUBLIC_ADDRESS_5)
     {
-      block_verifiers_database_hashes[count] = "";
-    }
-    else
-    {
-      block_verifiers_database_hashes[count] = string;
-      count++;
+      network_data_nodes_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
     }
   }
-  return count >= BLOCK_VERIFIERS_VALID_AMOUNT ? true : false;
+  return true;
+}
+
+
+
+bool verify_network_block_if_current_block_verifier(const block bl, std::size_t current_block_height)
+{
+  // Variables
+  std::string string = "";
+  std::string network_block_string;
+  std::string data_hash;
+  std::string message_string = "";
+  char message[2048];
+
+  if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "1")
+  {
+     // create the message
+     if (xcash_dpops_delegates_public_address != "" && xcash_dpops_delegates_secret_key != "")
+     {
+       std::string data = "NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH|" + std::to_string(current_block_height) + "|" + xcash_dpops_delegates_public_address + "|";
+       memset(message,0,sizeof(message));
+       memcpy(message,data.c_str(),data.length());
+
+       // sign the data
+       if (sign_data(message) == 0)
+       {
+         return false;
+       }
+
+       message_string += message;
+     }
+     else
+     {
+       message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+     }
+
+    // get the data hash from the block verifiers decentralized database
+    string = send_and_receive_data(xcash_dpops_delegates_ip_address,message_string,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+
+    if (string != NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE && string != "")
+    {    
+      string = string.substr(0,DATA_HASH_LENGTH);
+
+      // get the network block string 
+      network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+
+      // get the data hash
+      data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+(sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1),DATA_HASH_LENGTH);
+
+      return data_hash == string ? true : false;
+    }
+  }
+  return false;
 }
 
 
@@ -4035,16 +4101,22 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
 
   // check if you need to get the datbase hashes. This will be the first time running the program, or if you have synced 288 * 30 blocks and need the next 288 * 30 blocks database hashes
   if (check_if_synced(block_verifiers_database_hashes))
-  {    
+  {
+    // check if you are a current block verifier and fully synced and if so just get the database data from your decentralized database
+    if (verify_network_block_if_current_block_verifier(bl,current_block_height) == true)
+    {
+      return true;
+    }
+
     // get the decentralized database hash for each block from the current block on the local copy of the blockchain to the synced current network block up to a maximum of 288 * 30 blocks
-    if (!get_network_block_database_hash(block_verifiers_database_hashes,current_block_height))
+    if (!get_network_block_database_hash(block_verifiers_database_hashes,network_data_nodes_database_hashes,current_block_height))
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not receive the blocks database hashes from the block verifiers");
     }
   }
 
   // verify the current block
-  if (!verify_network_block(block_verifiers_database_hashes,bl))
+  if (!verify_network_block(block_verifiers_database_hashes,network_data_nodes_database_hashes,bl))
   {
     CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash for block " << current_block_height);
   }
