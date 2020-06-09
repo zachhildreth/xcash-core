@@ -181,7 +181,7 @@
 
 #define BLOCKCHAIN_DEFAULT_MIXIN                20
 
-#define PER_KB_FEE_QUANTIZATION_DECIMALS        8
+#define PER_KB_FEE_QUANTIZATION_DECIMALS        6
 
 #define HASH_OF_HASHES_STEP                     256
 

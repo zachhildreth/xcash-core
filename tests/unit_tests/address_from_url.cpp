@@ -37,9 +37,9 @@
 
 TEST(AddressFromTXT, Success)
 {
-  std::string addr = "46BeWrHpwXmHDpDEUmZBWZfoQpdc6HaERCNmx1pEYL2rAcuwufPN9rXHHtyUA4QVy66qeFQkn6sfK8aHYjA3jk3o1Bv16em";
+  std::string addr = "XCA1X855VCnZhXvjPZrToya58eTZTBGsMgZCXXHmPiz91A1pUxRQHHvaufsgeBxift4beBLoMPNnugWKvMMdj6qQ1MMbFtcCQY";
 
-  std::string txtr = "oa1:xmr";
+  std::string txtr = "oa1:xcash";
   txtr += " recipient_address=";
   txtr += addr;
   txtr += ";";
@@ -58,7 +58,7 @@ TEST(AddressFromTXT, Success)
 
   EXPECT_STREQ(addr.c_str(), res.c_str());
 
-  std::string txtr3 = "foobar oa1:xmr tx_description=\"Donation for X-CASH Development Fund\"; ";
+  std::string txtr3 = "foobar oa1:xcash tx_description=\"Donation to X-CASH Team\"; ";
   txtr3 += "recipient_address=";
   txtr3 += addr;
   txtr3 += "; foobar";
@@ -70,7 +70,7 @@ TEST(AddressFromTXT, Success)
 
 TEST(AddressFromTXT, Failure)
 {
-  std::string txtr = "oa1:xmr recipient_address=not a real address";
+  std::string txtr = "oa1:xcash recipient_address=not a real address";
 
   std::string res = tools::dns_utils::address_from_txt_record(txtr);
 

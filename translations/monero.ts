@@ -2073,7 +2073,7 @@ Otherwise, you prove the reserve of the smallest possible amount above &lt;amoun
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="2650"/>
-        <source>xcash, millinero, micronero, nanonero, piconero</source>
+        <source>xcash, zachy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3915,7 +3915,7 @@ Outputs per *: </source>
    Set the fee to default/unimportant/normal/elevated/priority.
  confirm-missing-payment-id &lt;1|0&gt;
  ask-password &lt;0|1|2   (or never|action|decrypt)&gt;
- unit &lt;xcash|millinero|micronero|nanonero|piconero&gt;
+ unit &lt;xcash|zachy&gt;
    Set the default xcash (sub-)unit.
  min-outputs-count [n]
    Try to keep at least that many outputs of value at least min-outputs-value.
