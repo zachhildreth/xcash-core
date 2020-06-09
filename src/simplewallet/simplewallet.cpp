@@ -2040,7 +2040,7 @@ bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vecto
   if (unit == "xcash")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
   else if (unit == "zachy")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 2;
+    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6;
   else
   {
     fail_msg_writer() << tr("invalid unit");
