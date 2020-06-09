@@ -2869,7 +2869,7 @@ Attention&#xa0;: Certaines clés d&apos;entrées étant dépensées sont issues 
    Set the fee to default/unimportant/normal/elevated/priority.
  confirm-missing-payment-id &lt;1|0&gt;
  ask-password &lt;0|1|2   (or never|action|decrypt)&gt;
- unit &lt;xcash|millinero|micronero|nanonero|piconero&gt;
+ unit &lt;xcash|zachy&gt;
    Set the default xcash (sub-)unit.
  min-outputs-count [n]
    Try to keep at least that many outputs of value at least min-outputs-value.
@@ -2913,7 +2913,7 @@ subaddress-lookahead &lt;major&gt;:&lt;minor&gt;
    Utiliser les frais pour la priorité par défaut/peu importante/normale/élevée/prioritaire.
  confirm-missing-payment-id &lt;1|0&gt;
  ask-password &lt;0|1|2 (ou never|action|decrypt)&gt;
- unit &lt;xcash|millinero|micronero|nanonero|piconero&gt;
+ unit &lt;xcash|zachy&gt;
    Définir la (sous-)unité xcash par défaut.
  min-outputs-count [n]
    Essayer de garder au moins ce nombre de sorties d&apos;une valeur d&apos;au moins min-outputs-value.
@@ -3055,8 +3055,8 @@ subaddress-lookahead &lt;major&gt;:&lt;minor&gt;
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="2650"/>
-        <source>xcash, millinero, micronero, nanonero, piconero</source>
-        <translation>xcash, millinero, micronero, nanonero, piconero</translation>
+        <source>xcash, zachy</source>
+        <translation>xcash, zachy</translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="2661"/>
