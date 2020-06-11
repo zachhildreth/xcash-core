@@ -1585,7 +1585,7 @@ If the &quot;tag_description&quot; argument is specified, the tag &lt;tag_name&g
    Set the fee to default/unimportant/normal/elevated/priority.
  confirm-missing-payment-id &lt;1|0&gt;
  ask-password &lt;1|0&gt;
- unit &lt;xcash|millinero|micronero|nanonero|piconero&gt;
+ unit &lt;xcash|zachy&gt;
    Set the default xcash (sub-)unit.
  min-outputs-count [n]
    Try to keep at least that many outputs of value at least min-outputs-value.
@@ -2448,8 +2448,8 @@ Avviso: alcune chiavi di input spese vengono da </translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="1923"/>
-        <source>xcash, millinero, micronero, nanonero, piconero</source>
-        <translation>xcash, millinero, micronero, nanonero, piconero</translation>
+        <source>xcash, zachy</source>
+        <translation>xcash, zachy</translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="1975"/>

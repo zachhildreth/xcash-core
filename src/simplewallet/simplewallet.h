@@ -52,7 +52,7 @@
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "wallet.simplewallet"
 // Hardcode X-CASH's donation address (see #1447)
-constexpr const char XCASH_DONATION_ADDR[] = "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A";
+constexpr const char XCASH_DONATION_ADDR[] = "XCA1hVzVdYV4SSVG4nPvQY3SFBdHA2HbdGWPsTQsMfYehXVu5ESLsDtMg9WZozzBpR3pPcEnW2iMBVKRP1nkm3TD52Kkyq1Qrt";
 
 /*!
  * \namespace cryptonote
