@@ -37,7 +37,7 @@
 
 TEST(AddressFromTXT, Success)
 {
-  std::string addr = "XCA1X855VCnZhXvjPZrToya58eTZTBGsMgZCXXHmPiz91A1pUxRQHHvaufsgeBxift4beBLoMPNnugWKvMMdj6qQ1MMbFtcCQY";
+  std::string addr = "XCA1hVzVdYV4SSVG4nPvQY3SFBdHA2HbdGWPsTQsMfYehXVu5ESLsDtMg9WZozzBpR3pPcEnW2iMBVKRP1nkm3TD52Kkyq1Qrt";
 
   std::string txtr = "oa1:xcash";
   txtr += " recipient_address=";
