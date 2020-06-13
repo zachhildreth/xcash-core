@@ -33,6 +33,8 @@
  * 
  * \brief Source file that defines simple_wallet class.
  */
+#include <string>
+#include <iomanip>
 #include <thread>
 #include <chrono>
 #include <ctime>
@@ -3256,6 +3258,67 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to revote");
   }
   return true; 
+}
+
+bool simple_wallet::get_smart_contracts_fee(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_WIDTH 20
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_FEE\",\r\n}"
+  #define GET_SMART_CONTRACTS_FEE_ERROR \
+  tools::color_print(epee::console_color_red) << "Could not get the smart contracts fees"; \
+  return true;
+
+  try
+  {
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the smart contracts fee\n");
+      return true; 
+    }
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nSMART_CONTRACTS FEES\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("SMART_CONTRACT_FEE")-1)+TABLE_INDENTATION) << "SMART_CONTRACT_FEE" << std::setw(TABLE_WIDTH-((sizeof("SMART_CONTRACT_FEE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("FEE_PER_HOUR")-1)+TABLE_INDENTATION) << "FEE_PER_HOUR" << std::setw(TABLE_WIDTH-((sizeof("FEE_PER_HOUR")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING;
+
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 != 0)
+      {
+        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+    std::cout << std::endl << TABLE_DATA << std::endl;
+  }
+  catch (...)
+  {
+    GET_SMART_CONTRACTS_FEE_ERROR;
+  }
+  return true;
+
+  #undef MESSAGE
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
