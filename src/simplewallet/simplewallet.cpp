@@ -2656,7 +2656,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   try
   {
     // check if the second paramter is multiple words and combine them
-    if (args.size() > PARAMETER_AMOUNT && (args.front() == "about" || args.front() == "team" || args.front() == "server_settings"))
+    if (args.size() > PARAMETER_AMOUNT && (args.front() == "about" || args.front() == "team" || args.front() == "server_specs"))
     {
       for (count = 1; count < args.size(); count++)
       {
@@ -2686,9 +2686,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     }
 
     // check if the item to update is a valid item
-    if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "pool_mode" && args[0] != "fee_structure" && args[0] != "server_settings")
+    if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "shared_delegate_status" && args[0] != "delegate_fee" && args[0] != "server_specs")
     { 
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings");
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, shared_delegate_status, delegate_fee and server_specs");
       return true;  
     }
     if (args[0] == "IP_address" && (args[1].length() > 100 || args[1].find(".") != std::string::npos))
@@ -2711,19 +2711,19 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid team. Team length must be less than 255");
       return true;  
     }
-    if (args[0] == "pool_mode" && args[1] != "true" && args[1] != "false")
+    if (args[0] == "shared_delegate_status" && args[1] != "true" && args[1] != "false")
     {
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false");
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false");
       return true;  
     }
-    if (args[0] == "fee_structure" && args[1].length() > 10)
+    if (args[0] == "delegate_fee" && args[1].length() > 10)
     {
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10");
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid delegate_fee. delegate_fee length must be less than 10");
       return true;  
     }
-    if (args[0] == "server_settings" && parameters.length() > 255)
+    if (args[0] == "server_specs" && parameters.length() > 255)
     {
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255");
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_specs. server_specs length must be less than 255");
       return true;  
     }
 
@@ -3192,16 +3192,16 @@ simple_wallet::simple_wallet()
                            tr("Returns version information"));
   m_cmd_binder.set_handler("vote",
                            boost::bind(&simple_wallet::vote, this, _1),
-                           tr("vote <delegates_name | delegates_public_address>"),
-                           tr("Votes for a delegate, for the X-CASH Proof Of Stake"));
+                           tr("vote <delegates_name|delegates_public_address>"),
+                           tr("Votes for a delegate in the DPOPS system"));
   m_cmd_binder.set_handler("delegate_register",
                            boost::bind(&simple_wallet::delegate_register, this, _1),
                            tr("delegate_register <delegates_name> <delegates_IP_address> <delegates_public_key>"),
-                           tr("Registers a delegate, for the X-CASH Proof Of Stake"));
+                           tr("Registers a delegate in the DPOPS system"));
   m_cmd_binder.set_handler("delegate_update",
                            boost::bind(&simple_wallet::delegate_update, this, _1),
-                           tr("delegate_update <item: about, website, team, pool_mode, fee_structure and server_settings> <value>"),
-                           tr("Updates a registered delegates data, for the X-CASH Proof Of Stake"));
+                           tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs] <value>"),
+                           tr("Updates a registered delegates data in the DPOPS system"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),

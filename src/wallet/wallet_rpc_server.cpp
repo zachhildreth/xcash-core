@@ -3772,10 +3772,10 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
 
   // check if the item to update is a valid item
-  if (req.item != "IP_address" && req.item != "about" && req.item != "website" && req.item != "team" && req.item != "pool_mode" && req.item != "fee_structure" && req.item != "server_settings")
+  if (req.item != "IP_address" && req.item != "about" && req.item != "website" && req.item != "team" && req.item != "shared_delegate_status" && req.item != "delegate_fee" && req.item != "server_specs")
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, pool_mode, fee_structure and server_settings";
+    er.message = "Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, shared_delegate_status, delegate_fee and server_specs";
     return false;
   }
   if (req.item == "IP_address" && (req.value.length() > 255 || req.value.find(":") != std::string::npos))
@@ -3802,22 +3802,22 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information\nInvalid team. Team length must be less than 255";
     return false; 
   }
-  if (req.item == "pool_mode" && req.value != "true" && req.value != "false")
+  if (req.item == "shared_delegate_status" && req.value != "true" && req.value != "false")
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid pool_mode. Pool_mode must be either true or false";
+    er.message = "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false";
     return false; 
   }
-  if (req.item == "fee_structure" && req.value.length() > 10)
+  if (req.item == "delegate_fee" && req.value.length() > 10)
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid fee_structure. Fee_structure length must be less than 10";
+    er.message = "Failed to update the delegates information\nInvalid delegate_fee. delegate_fee length must be less than 10";
     return false;  
   }
-  if (req.item == "server_settings" && req.value.length() > 1024)
+  if (req.item == "server_specs" && req.value.length() > 1024)
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid server_settings. Server_settings length must be less than 255";
+    er.message = "Failed to update the delegates information\nInvalid server_specs. server_specs length must be less than 255";
     return false;
   }
 
