@@ -2266,15 +2266,11 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
   return true;
 }
 
-#define get_current_UTC_time(current_date_and_time,current_UTC_date_and_time) \
-time(&current_date_and_time); \
-gmtime_r(&current_date_and_time,&current_UTC_date_and_time);
-
 void sync_minutes_and_seconds(const int SETTINGS)
 {
   // Variables
-  time_t current_date_and_time;
-  struct tm current_UTC_date_and_time;
+  std::time_t current_date_and_time;
+  std::tm* current_UTC_date_and_time;
 
   if (SETTINGS == 0)
   {
@@ -2282,9 +2278,10 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
     do
     {
-      nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
-      get_current_UTC_time(current_date_and_time,current_UTC_date_and_time);
-    } while (current_UTC_date_and_time.tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time.tm_min % BLOCK_TIME != 3); 
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time->tm_min % BLOCK_TIME != 3); 
   }
   else
   {
@@ -2292,13 +2289,14 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
     do
     {
-      nanosleep((const struct timespec[]){{0, 200000000L}}, NULL);
-      get_current_UTC_time(current_date_and_time,current_UTC_date_and_time);
-    } while (current_UTC_date_and_time.tm_min != 2); 
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min != 2); 
   }
 
   // wait a few more seconds due to not all clocks being synced at the same second
-  sleep(3);
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   return;
 }
 
@@ -2365,7 +2363,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2534,7 +2532,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
@@ -2737,7 +2735,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
     {
       string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-      sleep(1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
