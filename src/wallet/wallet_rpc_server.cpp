@@ -3389,11 +3389,9 @@ void sync_minutes_and_seconds(const int SETTINGS)
   std::time_t current_date_and_time;
   std::tm* current_UTC_date_and_time;
 
-  std::cout << "Waiting until the next valid data interval, this will be less than 5 minutes";
-
   if (SETTINGS == 0)
   {
-    std::cout << "Waiting until the next valid data interval, this will be less than 5 minutes";
+    std::cout << "Waiting until the next valid data interval, this will be less than 5 minutes. Please leave the wallet open until this time and you receive a confirmation";
 
     do
     {
@@ -3404,7 +3402,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
   else
   {
-    std::cout << "Waiting until the next valid data interval, this will be at the beginning of the hour";
+    std::cout << "Sending the vote at the beginning of the hour. Please leave the wallet open until this time and you receive a confirmation";
 
     do
     {

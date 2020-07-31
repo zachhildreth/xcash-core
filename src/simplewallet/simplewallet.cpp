@@ -2274,7 +2274,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
   if (SETTINGS == 0)
   {
-    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes";
+    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes. Please leave the wallet open until this time and you receive a confirmation";
 
     do
     {
@@ -2285,7 +2285,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
   else
   {
-    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be at the beginning of the hour";
+    message_writer(console_color_yellow, false) << "Sending the vote at the beginning of the hour. Please leave the wallet open until this time and you receive a confirmation";
 
     do
     {
