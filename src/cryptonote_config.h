@@ -248,7 +248,6 @@ full_addrs.insert(SEED_NODE_5);
 #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
 #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
 #define BLOCK_VERIFIERS_VALID_AMOUNT 34 // The amount of block verifiers that need to vote true for the part of the round to be valid.
-#define BLOCK_VERIFIERS_VALID_AMOUNT_NETWORK_DATA_NODE 34 // The amount of block verifiers that need to vote true with at least 3 of the network data nodes for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.67 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
 

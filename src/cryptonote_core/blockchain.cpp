@@ -3922,7 +3922,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   // check if the blocks reserve bytes hash matches any of the network data nodes
   VERIFY_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes,network_data_node_count);
 
-  if ((number >= BLOCK_VERIFIERS_VALID_AMOUNT) || (number >= BLOCK_VERIFIERS_VALID_AMOUNT_NETWORK_DATA_NODE && network_data_node_count >= (NETWORK_DATA_NODES_AMOUNT-1)))
+  if (number >= BLOCK_VERIFIERS_VALID_AMOUNT || network_data_node_count >= (NETWORK_DATA_NODES_AMOUNT-1))
   {
     RESET_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes);
     RESET_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes);
@@ -4159,7 +4159,7 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
   }
 
   // check if the block is valid in the X-CASH proof of stake
-  if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE && check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()) != true)
+  if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
   {
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
