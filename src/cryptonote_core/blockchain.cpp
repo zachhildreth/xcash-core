@@ -3922,7 +3922,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   // check if the blocks reserve bytes hash matches any of the network data nodes
   VERIFY_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes,network_data_node_count);
 
-  if (number >= BLOCK_VERIFIERS_VALID_AMOUNT || network_data_node_count >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (number >= BLOCK_VERIFIERS_VALID_AMOUNT)
   {
     RESET_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes);
     RESET_DATA_HASH(NETWORK_DATA_NODES_AMOUNT,network_data_nodes_database_hashes);
