@@ -2689,7 +2689,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, shared_delegate_status, delegate_fee and server_specs");
       return true;  
     }
-    if (args[0] == "IP_address" && (args[1].length() > 100 || args[1].find(".") != std::string::npos))
+    if (args[0] == "IP_address" && (args[1].length() > 100 || args[1].find(".") == std::string::npos))
     {
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
       return true;  
