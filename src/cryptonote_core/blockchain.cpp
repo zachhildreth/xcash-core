@@ -3887,11 +3887,12 @@ bool verify_network_block(std::vector<std::string> &network_data_nodes_database_
 
   // define macros
   #define VERIFY_DATA_HASH(total,data,counter) \
-  for (count = 0; count < total; count++) \
+  for (count = 0, counter = 0; count < total; count++) \
   { \
+    MGINFO_YELLOW("data hash =  " << data_hash << " data[count] =  " << data[count].substr(0,DATA_HASH_LENGTH) << "\n"); \
     if (data[count].length() >= DATA_HASH_LENGTH) \
     { \
-      if (data_hash == data[count].substr(0,DATA_HASH_LENGTH)) \
+      if (data[count] != "" && data_hash == data[count].substr(0,DATA_HASH_LENGTH)) \
       { \
         counter++; \
       } \
@@ -3968,11 +3969,14 @@ bool get_network_block_database_hash(std::vector<std::string> &network_data_node
     message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
   }
 
+  MGINFO_RED("sending message to seed nodes\n" << message_string << "\n");
+
   // get the reserve bytes database hash from each network data node up to a maxium of 288 * 30 blocks
   for (count = 0; count < NETWORK_DATA_NODES_AMOUNT; count++)
   {    
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[count],message_string,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
     network_data_nodes_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
+    MGINFO_RED("received " << network_data_nodes_database_hashes[count] << " from " << network_data_nodes_list.network_data_nodes_IP_address[count] << "\n");
   }
   return true;
 }
