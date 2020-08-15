@@ -981,9 +981,103 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
 //------------------------------------------------------------------
 // This function attempts to switch to an alternate chain, returning
 // boolean based on success therein.
-bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain)
+bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain, const uint8_t version)
 {
-  return false;
+  // check the version, as DPOPS does not have any chances of reorgs
+  if (version >= HF_VERSION_PROOF_OF_STAKE)
+  {
+    return false;
+  }
+
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  CRITICAL_REGION_LOCAL(m_blockchain_lock);
+
+  m_timestamps_and_difficulties_height = 0;
+
+  // if empty alt chain passed (not sure how that could happen), return false
+  CHECK_AND_ASSERT_MES(alt_chain.size(), false, "switch_to_alternative_blockchain: empty chain passed");
+
+  // verify that main chain has front of alt chain's parent block
+  if (!m_db->block_exists(alt_chain.front()->second.bl.prev_id))
+  {
+    LOG_ERROR("Attempting to move to an alternate chain, but it doesn't appear to connect to the main chain!");
+    return false;
+  }
+
+  // pop blocks from the blockchain until the top block is the parent
+  // of the front block of the alt chain.
+  std::list<block> disconnected_chain;
+  while (m_db->top_block_hash() != alt_chain.front()->second.bl.prev_id)
+  {
+    block b = pop_block_from_blockchain();
+    disconnected_chain.push_front(b);
+  }
+
+  auto split_height = m_db->height();
+
+  //connecting new alternative chain
+  for(auto alt_ch_iter = alt_chain.begin(); alt_ch_iter != alt_chain.end(); alt_ch_iter++)
+  {
+    auto ch_ent = *alt_ch_iter;
+    block_verification_context bvc = boost::value_initialized<block_verification_context>();
+
+    // add block to main chain
+    bool r = handle_block_to_main_chain(ch_ent->second.bl, bvc);
+
+    // if adding block to main chain failed, rollback to previous state and
+    // return false
+    if(!r || !bvc.m_added_to_main_chain)
+    {
+      MERROR("Failed to switch to alternative blockchain");
+
+      // rollback_blockchain_switching should be moved to two different
+      // functions: rollback and apply_chain, but for now we pretend it is
+      // just the latter (because the rollback was done above).
+      rollback_blockchain_switching(disconnected_chain, split_height);
+
+      // FIXME: Why do we keep invalid blocks around?  Possibly in case we hear
+      // about them again so we can immediately dismiss them, but needs some
+      // looking into.
+      add_block_as_invalid(ch_ent->second, get_block_hash(ch_ent->second.bl));
+      MERROR("The block was inserted as invalid while connecting new alternative chain, block_id: " << get_block_hash(ch_ent->second.bl));
+      m_alternative_chains.erase(*alt_ch_iter++);
+
+      for(auto alt_ch_to_orph_iter = alt_ch_iter; alt_ch_to_orph_iter != alt_chain.end(); )
+      {
+        add_block_as_invalid((*alt_ch_to_orph_iter)->second, (*alt_ch_to_orph_iter)->first);
+        m_alternative_chains.erase(*alt_ch_to_orph_iter++);
+      }
+      return false;
+    }
+  }
+
+  // if we're to keep the disconnected blocks, add them as alternates
+  if(!discard_disconnected_chain)
+  {
+    //pushing old chain as alternative chain
+    for (auto& old_ch_ent : disconnected_chain)
+    {
+      block_verification_context bvc = boost::value_initialized<block_verification_context>();
+      bool r = handle_alternative_block(old_ch_ent, get_block_hash(old_ch_ent), bvc, version);
+      if(!r)
+      {
+        MERROR("Failed to push ex-main chain blocks to alternative chain ");
+        // previously this would fail the blockchain switching, but I don't
+        // think this is bad enough to warrant that.
+      }
+    }
+  }
+
+  //removing alt_chain entries from alternative chains container
+  for (auto ch_ent: alt_chain)
+  {
+    m_alternative_chains.erase(ch_ent);
+  }
+
+  m_hardfork->reorganize_from_chain_height(split_height);
+
+  MGINFO_GREEN("REORGANIZE SUCCESS! on height: " << split_height << ", new blockchain size: " << m_db->height());
+  return true;
 }
 //------------------------------------------------------------------
 // This function calculates the difficulty target for the block being added to
@@ -1431,8 +1525,15 @@ bool Blockchain::complete_timestamps_vector(uint64_t start_top_height, std::vect
 // if that chain is long enough to become the main chain and re-org accordingly
 // if so.  If not, we need to hang on to the block in case it becomes part of
 // a long forked chain eventually.
-bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc)
+bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc, const uint8_t version)
 {
+  // check the version, as DPOPS does not have any chances of reorgs
+  if (version >= HF_VERSION_PROOF_OF_STAKE)
+  {
+    bvc.m_verifivation_failed = true;
+    return false;
+  }
+
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
   m_timestamps_and_difficulties_height = 0;
@@ -1579,7 +1680,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       //do reorganize!
       MGINFO_GREEN("###### REORGANIZE on height: " << alt_chain.front()->second.height << " of " << m_db->height() - 1 << ", checkpoint is found in alternative chain on height " << bei.height);
 
-      bool r = switch_to_alternative_blockchain(alt_chain, true);
+      bool r = switch_to_alternative_blockchain(alt_chain, true, version);
 
       if(r) bvc.m_added_to_main_chain = true;
       else bvc.m_verifivation_failed = true;
@@ -1591,7 +1692,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       //do reorganize!
       MGINFO_GREEN("###### REORGANIZE on height: " << alt_chain.front()->second.height << " of " << m_db->height() - 1 << " with cum_difficulty " << m_db->get_block_cumulative_difficulty(m_db->height() - 1) << std::endl << " alternative blockchain size: " << alt_chain.size() << " with cum_difficulty " << bei.cumulative_difficulty);
 
-      bool r = switch_to_alternative_blockchain(alt_chain, false);
+      bool r = switch_to_alternative_blockchain(alt_chain, false, version);
       if (r)
         bvc.m_added_to_main_chain = true;
       else
@@ -3960,8 +4061,23 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
     return false;
   }
 
+  // get the hard fork version
+  const uint8_t version = get_current_hard_fork_version();
+
+  //check that block refers to chain tail
+  if(version < HF_VERSION_PROOF_OF_STAKE && !(bl.prev_id == get_tail_id()))
+  {
+    //chain switching or wrong block
+    bvc.m_added_to_main_chain = false;
+    m_db->block_txn_stop();
+    bool r = handle_alternative_block(bl, id, bvc, version);
+    m_blocks_txs_check.clear();
+    return r;
+    //never relay alternative blocks
+  }
+
   // check if the block is valid in the X-CASH proof of stake
-  if (get_current_hard_fork_version() >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
+  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
   {
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
