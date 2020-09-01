@@ -2347,8 +2347,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  //total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-  total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
   for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
@@ -2404,7 +2403,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+  if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
   {
     return "Success";        
   } 
@@ -2501,8 +2500,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     }
 
     total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-   // total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-    total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
     // initialize the current_block_verifiers_list struct
     for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
@@ -2560,7 +2558,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+    if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
     {
     return "Success";        
     } 
@@ -2620,8 +2618,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
- // total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-  total_delegates_valid_amount = BLOCK_VERIFIERS_VALID_AMOUNT;
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
   for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
@@ -2693,7 +2690,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+  if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
   {
         return "Success";  
   }
