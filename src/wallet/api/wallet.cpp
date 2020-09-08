@@ -2610,6 +2610,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
   {
     string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
