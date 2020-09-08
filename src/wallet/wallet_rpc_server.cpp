@@ -3413,7 +3413,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   }
 
   // wait a few more seconds due to not all clocks being synced at the same second
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(SOCKET_CONNECTION_BUFFER_SETTINGS));
   return;
 }
 

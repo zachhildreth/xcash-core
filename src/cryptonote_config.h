@@ -242,6 +242,7 @@ full_addrs.insert(SEED_NODE_5);
 #define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
 #define SOCKET_CONNECTION_TIMEOUT_SETTINGS 3000 // The time in milliseconds, to wait before a connection is cancelled
 #define SOCKET_CONNECTION_TIMEOUT_SETTINGS_SYNCING_BLOCKS_RESERVE_BYTES 60000 // The time in milliseconds, to wait before a connection is cancelled for syncing the blocks reserve bytes
+#define SOCKET_CONNECTION_BUFFER_SETTINGS 10000 // The time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 
 // XCASH DPOPS
@@ -315,7 +316,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x65 , 0x47, 0x61, 0x15, 0x36, 0x18, 0x61, 0xF1, 0xA5, 0x48, 0x89
+      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x65 , 0x45, 0x61, 0x15, 0x36, 0x18, 0x61, 0xF1, 0xA5, 0x48, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
