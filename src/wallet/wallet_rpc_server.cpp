@@ -3412,8 +3412,8 @@ void sync_minutes_and_seconds(const int SETTINGS)
     } while (current_UTC_date_and_time->tm_min != 2); 
   }
 
-  // wait a few more seconds due to not all clocks being synced at the same second
-  std::this_thread::sleep_for(std::chrono::milliseconds(SOCKET_CONNECTION_BUFFER_SETTINGS));
+  // wait a random amount of time, so all messages from delegates that have been waiting dont get sent at the same time
+  std::this_thread::sleep_for(std::chrono::milliseconds(rand() % (SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS - SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS + 1) + SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS));
   return;
 }
 
