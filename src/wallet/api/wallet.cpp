@@ -2305,6 +2305,40 @@ bool WalletImpl::isKeysFileLocked()
     return m_wallet->is_keys_file_locked();
 }
 
+void sync_minutes_and_seconds(const int SETTINGS)
+{
+  // Variables
+  std::time_t current_date_and_time;
+  std::tm* current_UTC_date_and_time;
+
+  if (SETTINGS == 0)
+  {
+    std::cout << "Waiting until the next valid data interval, this will be less than 5 minutes. Please leave the wallet open until this time and you receive a confirmation";
+
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time->tm_min % BLOCK_TIME != 3);  
+  }
+  else
+  {
+    std::cout << "Sending the vote at the beginning of the hour. Please leave the wallet open until this time and you receive a confirmation";
+
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min != 2); 
+  }
+
+  // wait a few more seconds due to not all clocks being synced at the same second
+  std::this_thread::sleep_for(std::chrono::milliseconds(SOCKET_CONNECTION_BUFFER_SETTINGS));
+  return;
+}
+
 std::string WalletImpl::delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) {
   // structures
   struct network_data_nodes_list {
@@ -2384,6 +2418,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2538,7 +2575,8 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 
     data2 += data3 + "|";
 
-   std::cout << "DATA=" << data2;
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
 
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2672,6 +2710,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
