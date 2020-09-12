@@ -191,17 +191,17 @@
 
 
 // Seed Nodes
-#define SEED_NODE_1 "delegates.xcash.foundation:18280"
+/*#define SEED_NODE_1 "delegates.xcash.foundation:18280"
 #define SEED_NODE_2 "europe1.xcash.foundation:18280"
 #define SEED_NODE_3 "europe2.xcash.foundation:18280"
 #define SEED_NODE_4 "europe3.xcash.foundation:18280"
-#define SEED_NODE_5 "asia.xcash.foundation:18280"
+#define SEED_NODE_5 "asia.xcash.foundation:18280"*/
 
-/*#define SEED_NODE_1 "192.168.1.201:18280"
+#define SEED_NODE_1 "192.168.1.201:18280"
 #define SEED_NODE_2 "192.168.1.202:18280"
 #define SEED_NODE_3 "192.168.1.203:18280"
 #define SEED_NODE_4 "192.168.1.204:18280"
-#define SEED_NODE_5 "192.168.1.205:18280"*/
+#define SEED_NODE_5 "192.168.1.205:18280"
 
 #define SEED_NODES_LIST_1 const std::vector<std::string> m_seed_nodes_list = {SEED_NODE_1,SEED_NODE_2,SEED_NODE_3,SEED_NODE_4,SEED_NODE_5};
 #define SEED_NODES_LIST_2 \
@@ -217,8 +217,8 @@ full_addrs.insert(SEED_NODE_5);
 
 // Blockchain
 #define HF_VERSION_PROOF_OF_STAKE 13
-//#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 521850 // The first block of the X-CASH proof of stake
-#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 640000 // The first block of the X-CASH proof of stake
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 521850 // The first block of the X-CASH proof of stake
+//#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 640000 // The first block of the X-CASH proof of stake
 #define BLOCK_TIME 5 // the block time in minutes
 #define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
@@ -248,15 +248,15 @@ full_addrs.insert(SEED_NODE_5);
 
 // XCASH DPOPS
 #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
-#define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
-#define BLOCK_VERIFIERS_VALID_AMOUNT 27 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_AMOUNT 20 // The amount of block verifiers in a round
+#define BLOCK_VERIFIERS_VALID_AMOUNT 10 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.67 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
 
 // Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
 
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
+/*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1YhckQgqGQvMsS2xi4n3cHBPo39WYFC1AXskqaFB87Q6EX5LheKK6E3ZqQmD9CDFX8br8Mfvff7RqT6UcuUja46qKC1vEJb"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1c2ahjRvBsp35ynTknNYczj9y42hN9ht1vNyns2FCTU4qbLqahtsTw2E7JTKLd3ecSGLe2zWJgCiwrMhecsbT38i3Smy9vW"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1jN7CNCKEN1kDuqxiuUPyKWiVp68RsYxshdohaQ1k8NN11ZWX9dSJv3hx6qxfPaKVAnet4LTda9fsK81c9wRN5Aj78KyZEg"
@@ -265,9 +265,9 @@ full_addrs.insert(SEED_NODE_5);
 #define NETWORK_DATA_NODE_IP_ADDRESS_2 "europe1.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_3 "europe2.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_4 "europe3.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "us2.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "us2.xcash.foundation"*/
 
-/*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1f8ngVg6fW5pJ49TC3DK4axYDMu5teUKUf7aP5rLCRvsL1ZCnf2LjAFtSYF6xfVWygSMMvn1hCEeupgGTX5n82GDZvcapbj"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1skiymYUHN5Vjg5kXhriGi25ZDKpgdLMZks3DKCwy9sxzyqY7uEr6hxRPnAvkYwLoT6peBi4aVT1g4t4vgtFj96eE1JF1L4"
@@ -276,7 +276,7 @@ full_addrs.insert(SEED_NODE_5);
 #define NETWORK_DATA_NODE_IP_ADDRESS_2 "192.168.1.202"
 #define NETWORK_DATA_NODE_IP_ADDRESS_3 "192.168.1.203"
 #define NETWORK_DATA_NODE_IP_ADDRESS_4 "192.168.1.204"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "192.168.1.205"*/
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "192.168.1.205"
 
 #define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5}
 #define INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT \
@@ -317,7 +317,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x65 , 0x45, 0x61, 0x15, 0x36, 0x18, 0x61, 0xF1, 0xA5, 0x48, 0x89
+      0x10 ,0x01, 0x41, 0x55 , 0x50, 0x65 , 0x47, 0x61, 0x11, 0x35, 0x18, 0x61, 0xF1, 0xA5, 0x48, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
