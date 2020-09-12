@@ -2440,7 +2440,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     return "Success";        
   } 
@@ -2596,7 +2596,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
     {
     return "Success";        
     } 
@@ -2732,7 +2732,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
   {
         return "Success";  
   }

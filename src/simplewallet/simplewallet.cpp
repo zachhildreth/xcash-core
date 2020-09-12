@@ -2451,7 +2451,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     message_writer(console_color_green, false) << "Vote has been sent successfully";             
   } 
@@ -2603,7 +2603,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     message_writer(console_color_green, false) << "The delegate has been registered successfully";             
   } 
@@ -2805,7 +2805,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+    if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
     {
       message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
     } 

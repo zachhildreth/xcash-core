@@ -3558,7 +3558,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     res.vote_status = "success";
     return true;            
@@ -3700,7 +3700,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     res.delegate_register_status = "success";
     return true;            
@@ -3892,7 +3892,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 >= (NETWORK_DATA_NODES_AMOUNT-1))
+  if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     res.delegate_update_status = "success";
     return true;            

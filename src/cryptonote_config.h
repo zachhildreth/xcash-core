@@ -254,6 +254,7 @@ full_addrs.insert(SEED_NODE_5);
 
 // Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
+#define NETWORK_DATA_NODES_VALID_AMOUNT 3 // The amount of network data nodes need to reach a consensus on the database data
 
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1YhckQgqGQvMsS2xi4n3cHBPo39WYFC1AXskqaFB87Q6EX5LheKK6E3ZqQmD9CDFX8br8Mfvff7RqT6UcuUja46qKC1vEJb"
