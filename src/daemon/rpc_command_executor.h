@@ -152,8 +152,6 @@ public:
   bool relay_tx(const std::string &txid);
 
   bool sync_info();
-
-  bool verify_round_statistics(const std::string block_data);
 };
 
 } // namespace daemonize
