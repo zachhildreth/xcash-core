@@ -242,7 +242,7 @@ full_addrs.insert(SEED_NODE_5);
 #define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
 #define SOCKET_CONNECTION_TIMEOUT_SETTINGS 5000 // The time in milliseconds, to wait before a connection is cancelled
 #define SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS 5000 // The minimum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
-#define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 30000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
+#define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
 #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
 
 // XCASH DPOPS
