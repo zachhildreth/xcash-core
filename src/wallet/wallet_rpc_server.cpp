@@ -3450,7 +3450,7 @@ std::string get_current_block_verifiers_list()
     network_data_nodes_array[count] = random_network_data_node;
 
     // get the block verifiers list from the network data node
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node],MESSAGE);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
@@ -3575,7 +3575,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "The vote was successfully added to the database")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "The vote was successfully added to the database")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
@@ -3700,7 +3700,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Registered the delegate")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Registered the delegate")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
@@ -3875,7 +3875,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SOCKET_CONNECTION_TIMEOUT_SETTINGS) == "Updated the delegates information")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
