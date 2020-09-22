@@ -2381,6 +2381,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2537,6 +2541,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     }
 
     total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
     total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
     // initialize the current_block_verifiers_list struct
@@ -2657,6 +2665,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct

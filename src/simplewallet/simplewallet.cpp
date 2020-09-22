@@ -2324,7 +2324,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::size_t resend_count = 0;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2374,6 +2373,10 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2435,7 +2438,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   sync_minutes_and_seconds(1);
 
 
-  start:
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2458,11 +2460,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     message_writer(console_color_green, false) << "Vote has been sent successfully";             
-  } 
-  else if (resend_count == 0)
-  {
-    resend_count++;
-    goto start;
   }
   else
   {
@@ -2502,7 +2499,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::size_t resend_count = 0;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2552,6 +2548,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -2594,7 +2594,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // wait until the next valid data time
   sync_minutes_and_seconds(0);
 
-  start:
+
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2617,11 +2617,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
   {
     message_writer(console_color_green, false) << "The delegate has been registered successfully";             
-  } 
-  else if (resend_count == 0)
-  {
-    resend_count++;
-    goto start;
   }
   else
   {
@@ -2662,7 +2657,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   std::size_t count3;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
-  std::size_t resend_count = 0;
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
@@ -2762,6 +2756,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     }
 
     total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
     total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
     // initialize the current_block_verifiers_list struct
@@ -2804,7 +2802,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     // wait until the next valid data time
     sync_minutes_and_seconds(0);
 
-    start:
+
 
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2827,11 +2825,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     if (count2 >= total_delegates_valid_amount || count3 >= NETWORK_DATA_NODES_VALID_AMOUNT)
     {
       message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
-    } 
-    else if (resend_count == 0)
-    {
-      resend_count++;
-      goto start;
     }
     else
     {
