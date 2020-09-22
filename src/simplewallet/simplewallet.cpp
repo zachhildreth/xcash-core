@@ -2391,6 +2391,9 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -2459,11 +2462,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
-
-
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2548,6 +2546,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -2598,11 +2599,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(0);
-
-
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2738,6 +2734,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
     // get the current block verifiers list
     if ((string = get_current_block_verifiers_list()) == "")
     {
@@ -2788,11 +2787,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     data3 = m_wallet->sign(data2);
 
     data2 += data3 + "|";
-
-    // wait until the next valid data time
-    sync_minutes_and_seconds(0);
-
-
 
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)

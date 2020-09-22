@@ -2403,6 +2403,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 
   try
   {
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -2451,9 +2454,6 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2547,6 +2547,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     {
       return "Failed to update the delegates information\nInvalid server_specs. server_specs length must be less than 255";  
     }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
     // get the current block verifiers list
     if ((string = get_current_block_verifiers_list()) == "")
     {
@@ -2595,9 +2599,6 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     data3 = m_wallet->sign(data2);
 
     data2 += data3 + "|";
-
-    // wait until the next valid data time
-    sync_minutes_and_seconds(0);
 
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -2653,6 +2654,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 
   try
   {
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -2717,9 +2722,6 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)

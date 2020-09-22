@@ -3496,6 +3496,9 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     return false;
   }
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -3569,9 +3572,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
 
   data2 += data3 + "|";
 
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
-
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
@@ -3641,6 +3641,9 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
     return false;
   }
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -3693,9 +3696,6 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -3816,6 +3816,9 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     return false;
   }
 
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -3868,9 +3871,6 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   data3 = m_wallet->sign(data2);
 
   data2 += data3 + "|";
-
-  // wait until the next valid data time
-  sync_minutes_and_seconds(0);
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
