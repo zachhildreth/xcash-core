@@ -2300,7 +2300,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
   return;
 }
 
-bool simple_wallet::vote(const std::vector<std::string>& args)
+std::string get_current_block_verifiers_list()
 {
   // structures
   struct network_data_nodes_list {
@@ -2309,11 +2309,47 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
 };
 
   // Variables
+  std::string string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::size_t count = 0;
+  int random_network_data_node;
+  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+
+  // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  {
+    do
+    {
+      // get a random network data node
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT);
+    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+
+    network_data_nodes_array[count] = random_network_data_node;
+
+    // get the block verifiers list from the network data node
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+
+  return count == NETWORK_DATA_NODES_AMOUNT ? "" : string;
+
+  #undef MESSAGE
+}
+
+bool simple_wallet::vote(const std::vector<std::string>& args)
+{
+  // Variables
   std::string public_address = "";
   std::string reserve_proof = "";
   tools::wallet2::transfer_container transfers;
   boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
-  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2326,7 +2362,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::size_t total_delegates_valid_amount;
 
   // define macros
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
   #define PARAMETER_AMOUNT 1
 
   try
@@ -2356,17 +2391,8 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-  // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  }
-
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
   {
     fail_msg_writer() << tr("Failed to send the vote\n");
     return true; 
@@ -2474,21 +2500,13 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   return true;  
 
   #undef PARAMETER_AMOUNT
-  #undef MESSAGE
 }
 
 bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 {
-  // structures
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
-};
-
   // Variables
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
-  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2501,7 +2519,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::size_t total_delegates_valid_amount;
 
   // define macros
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
   #define PARAMETER_AMOUNT 3
 
   try
@@ -2531,17 +2548,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-  // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-  {
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  }
-
-  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
   {
     fail_msg_writer() << tr("Failed to register the delegate\n");
     return true; 
@@ -2631,22 +2639,14 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   return true;  
 
   #undef PARAMETER_AMOUNT
-  #undef MESSAGE
 }
 
 bool simple_wallet::delegate_update(const std::vector<std::string>& args)
 {
-  // structures
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
-};
-
   // Variables
   std::string parameters = "";
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
-  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
   std::string string = "";
   std::string data2 = "";
@@ -2659,7 +2659,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   std::size_t total_delegates_valid_amount;
 
   // define macros
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
   #define PARAMETER_AMOUNT 2
 
   try
@@ -2739,17 +2738,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
-    // initialize the network_data_nodes_list struct
-    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-    // send the message to a random network data node
-    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
-    {
-      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE,SOCKET_CONNECTION_TIMEOUT_SETTINGS);
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-
-    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
     {
       fail_msg_writer() << tr("Failed to update the delegates information\n");
       return true; 
@@ -2839,7 +2829,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
   return true;  
 
   #undef PARAMETER_AMOUNT
-  #undef MESSAGE
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
