@@ -2383,7 +2383,6 @@ std::string get_current_block_verifiers_list()
 }
 
 std::string WalletImpl::delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) {
-
   // Variables
   std::string public_address = "";
   tools::wallet2::transfer_container transfers;
@@ -2403,9 +2402,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 
   try
   {
+
   // wait until the next valid data time
   sync_minutes_and_seconds(0);
-
+  
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
@@ -2456,24 +2456,20 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="Registered the delegate")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
-      {
-        count3++;
-      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
     return "Success";        
   } 
@@ -2488,7 +2484,6 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 }
 
  std::string WalletImpl::delegate_update(const  std::string &item,const  std::string &value)  {
-
   // Variables
   std::string parameters = "";
   std::string public_address = "";
@@ -2601,24 +2596,20 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     data2 += data3 + "|";
 
     // send the data to all block verifiers
-    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+    for (count = 0, count2 = 0; count < total_delegates; count++)
     {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="Updated the delegates information")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
-      {
-        count3++;
-      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
     }
 
     // check the result of the data
-    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
+    if (count2 >= total_delegates_valid_amount)
     {
     return "Success";        
     } 
@@ -2632,7 +2623,6 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
  }
 
  std::string WalletImpl::vote(const  std::string &value) {
-
   // Variables
   std::string public_address = "";
   std::string reserve_proof = "";
@@ -2724,24 +2714,20 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="The vote was successfully added to the database")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
-      {
-        count3++;
-      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }         
   }
 
   // check the result of the data
-  if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_VALID_AMOUNT)
+  if (count2 >= total_delegates_valid_amount)
   {
         return "Success";  
   }
@@ -2756,3 +2742,4 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
 } // namespace
 
 namespace Bitxcash = XCash;
+
