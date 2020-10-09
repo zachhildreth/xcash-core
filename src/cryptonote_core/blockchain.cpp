@@ -3924,8 +3924,6 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   // get the data hash
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
-MGINFO_YELLOW("data hash = " << data_hash);
-
   // check if the blocks reserve bytes hash matches any of the network data nodes
   VERIFY_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes,block_verifier_count);
 
@@ -3963,6 +3961,16 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
 
+  // check if your a current block verifier, and if so just load the current block verifiers list from your own delegate, as this will keep block producing going when 0 network data nodes are online
+  if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE) == "1")
+  {
+    string = send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE);
+    if (string.find("|") != std::string::npos)
+    {
+      goto start;
+    }
+  }
+
   // initialize the network_data_nodes_list struct
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
@@ -3972,13 +3980,13 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     do
     {
       // get a random network data node
-      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT);
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
     } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
 
     network_data_nodes_array[count] = random_network_data_node;
 
     // get the block verifiers list from the network data node
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
@@ -3988,6 +3996,8 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     MGINFO_RED("Could not get the list of current block verifiers");
     return false;
   }
+
+  start:
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
@@ -4029,12 +4039,10 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     // get the reserve bytes database hash from the current block verifier
     string = send_and_receive_data(current_block_verifier,message_string);
 
-    MGINFO_YELLOW("received " << string << " from " << current_block_verifier);
-
     block_verifiers_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
   }
 
-return true;
+  return true;
 }
 
 
@@ -5078,4 +5086,5 @@ namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::vector<transaction>&, std::vector<crypto::hash>&) const;
 template bool Blockchain::get_transactions_blobs(const std::vector<crypto::hash>&, std::vector<cryptonote::blobdata>&, std::vector<crypto::hash>&, bool) const;
 }
+
 

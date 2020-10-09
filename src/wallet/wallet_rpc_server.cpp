@@ -3446,13 +3446,13 @@ std::string get_current_block_verifiers_list()
     do
     {
       // get a random network data node
-      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT);
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
     } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
 
     network_data_nodes_array[count] = random_network_data_node;
 
     // get the block verifiers list from the network data node
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node],MESSAGE);
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],MESSAGE);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
@@ -4116,4 +4116,5 @@ int main(int argc, char** argv) {
   return daemonizer::daemonize(argc, const_cast<const char**>(argv), t_executor{}, *vm) ? 0 : 1;
   CATCH_ENTRY_L0("main", 1);
 }
+
 
