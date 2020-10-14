@@ -239,7 +239,6 @@ full_addrs.insert(SEED_NODE_5);
 
 // Network
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
-#define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
 #define CONNECTION_TIMEOUT_SETTINGS 1000 // the time in milliseconds for a connection to be created
 #define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 3000 // The time in milliseconds to wait for sending or receving socket data
 #define SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS 5000 // The minimum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
@@ -255,7 +254,6 @@ full_addrs.insert(SEED_NODE_5);
 
 // Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
-#define NETWORK_DATA_NODES_VALID_AMOUNT 3 // The amount of network data nodes need to reach a consensus on the database data
 
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1YhckQgqGQvMsS2xi4n3cHBPo39WYFC1AXskqaFB87Q6EX5LheKK6E3ZqQmD9CDFX8br8Mfvff7RqT6UcuUja46qKC1vEJb"
@@ -318,7 +316,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x01, 0x41, 0x55 , 0x15, 0x75 , 0x40, 0x02, 0x10, 0x25, 0x12, 0x61, 0xF3, 0xA5, 0x48, 0x89
+      0x10 ,0x01, 0x41, 0x55 , 0x15, 0x75 , 0x40, 0x05, 0x02, 0x25, 0x12, 0x61, 0xF3, 0xA5, 0x48, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
