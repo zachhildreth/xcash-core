@@ -195,7 +195,7 @@
 #define SEED_NODE_2 "europe1.xcash.foundation:18280"
 #define SEED_NODE_3 "europe2.xcash.foundation:18280"
 #define SEED_NODE_4 "europe3.xcash.foundation:18280"
-#define SEED_NODE_5 "us2.xcash.foundation:18280"
+#define SEED_NODE_5 "oceania1.xcash.foundation:18280"
 
 /*#define SEED_NODE_1 "192.168.1.201:18280"
 #define SEED_NODE_2 "192.168.1.202:18280"
@@ -248,7 +248,7 @@ full_addrs.insert(SEED_NODE_5);
 // XCASH DPOPS
 #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
 #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
-#define BLOCK_VERIFIERS_VALID_AMOUNT 33 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_VALID_AMOUNT 27 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.55 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
 
@@ -264,7 +264,7 @@ full_addrs.insert(SEED_NODE_5);
 #define NETWORK_DATA_NODE_IP_ADDRESS_2 "europe1.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_3 "europe2.xcash.foundation"
 #define NETWORK_DATA_NODE_IP_ADDRESS_4 "europe3.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "us2.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "oceania1.xcash.foundation"
 
 /*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
 #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
