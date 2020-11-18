@@ -3893,7 +3893,7 @@ int sign_data(char *message)
 bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
 {
   // Variables
-  std::string network_block_string;
+  std::string network_block_string = "";
   std::string data_hash;
   std::size_t count;
   int block_verifier_count = 0;
