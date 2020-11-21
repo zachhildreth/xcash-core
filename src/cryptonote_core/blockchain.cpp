@@ -3961,6 +3961,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   std::size_t display_count = 0;
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+  int settings = 0;
 
   // define macros
   #define DISPLAY_BLOCK_COUNT 1000
@@ -4041,7 +4042,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     count2 = count3 + 1;
 
     // get the reserve bytes database hash from the current block verifier
-    string = send_and_receive_data(current_block_verifier,message_string);
+    string = settings == 0 ? send_and_receive_data(current_block_verifier,message_string) : send_and_receive_data(current_block_verifier,message_string,SEND_OR_RECEIVE_SOCKET_DATA_DOWNLOAD_DATABASE_HASH_TIMEOUT_SETTINGS);
 
     // display the message if syncing over the DISPLAY_BLOCK_COUNT
     if (display_count == 0 && string != NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE && string != "")
@@ -4050,6 +4051,10 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
       if (std::count(string.begin(), string.end(), '|') >= DISPLAY_BLOCK_COUNT)
       {
         MGINFO_YELLOW("Downloading block data from the current block verifiers, this might take a while");
+      }
+      if (std::count(string.begin(), string.end(), '|') > 10)
+      {
+        settings = 1;
       }
     }
 

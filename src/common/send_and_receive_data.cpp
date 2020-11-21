@@ -1,12 +1,12 @@
 #include "common/send_and_receive_data.h"
 #include "common/blocking_tcp_client.h"
 
-std::string send_and_receive_data(std::string IP_address,std::string data2)
+std::string send_and_receive_data(std::string IP_address,std::string data2, int send_or_receive_socket_data_timeout_settings)
 {
   // Variables
   std::string string;
   auto connection_timeout = boost::posix_time::milliseconds(CONNECTION_TIMEOUT_SETTINGS);
-  auto send_and_receive_data_timeout = boost::posix_time::milliseconds(SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+  auto send_and_receive_data_timeout = boost::posix_time::milliseconds(send_or_receive_socket_data_timeout_settings);
 
   try
   {
