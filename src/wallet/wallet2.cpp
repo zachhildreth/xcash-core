@@ -816,6 +816,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended):
   m_multisig_rescan_info(NULL),
   m_multisig_rescan_k(NULL),
   m_run(true),
+  destory(false),
   m_callback(0),
   m_trusted_daemon(false),
   m_nettype(nettype),
@@ -2542,6 +2543,9 @@ void wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
   size_t current_index = m_blockchain.size();
   while(m_run.load(std::memory_order_relaxed) && current_index < stop_height)
   {
+    if(destory){
+        break;
+    }
     pull_hashes(0, blocks_start_height, short_chain_history, hashes);
     if (hashes.size() <= 3)
       return;
@@ -2692,6 +2696,9 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   bool first = true;
   while(m_run.load(std::memory_order_relaxed))
   {
+    if(destory){
+        break;
+    }
     try
     {
       // pull the next set of blocks while we're processing the current one
@@ -3769,7 +3776,11 @@ crypto::secret_key wallet2::generate(const std::string& wallet_, const epee::wip
 
   // calculate a starting refresh height
   if(m_refresh_from_block_height == 0 && !recover){
-    m_refresh_from_block_height = estimate_blockchain_height();
+   try {
+        m_refresh_from_block_height = estimate_blockchain_height();
+    } catch (const std::exception &e) {
+        LOG_ERROR("Error estimate_blockchain_height: " << e.what());
+    }
   }
 
   create_keys_file(wallet_, false, password, m_nettype != MAINNET || create_address_file);
@@ -3786,7 +3797,7 @@ crypto::secret_key wallet2::generate(const std::string& wallet_, const epee::wip
  {
    // -1 month for fluctuations in block time and machine date/time setup.   
    // ~num blocks per month
-   const uint64_t blocks_per_month = use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? 21600 : 43200; // 720 blocks per day if 2 minute block times, 1440 blocks per day if 1 minute block times
+   const uint64_t blocks_per_month = use_fork_rules(HF_VERSION_PROOF_OF_STAKE, 0) ? 8640 : use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? 21600 : 43200; // 288 blocks per day if using 5 minute block times, 720 blocks per day if 2 minute block times, 1440 blocks per day if 1 minute block times
 
    // try asking the daemon first
    std::string err;
@@ -10196,18 +10207,24 @@ uint64_t wallet2::get_daemon_blockchain_target_height(string &err)
 
 uint64_t wallet2::get_approximate_blockchain_height() const
 {
-  // get the current time
-  const uint64_t current_time = (uint64_t)time(NULL);
-  // avg seconds per block
-  const int seconds_per_block = current_time > HF_TIME_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V12 : DIFFICULTY_TARGET_V2;
+  // define macros
+  #define HF_TIME_ONE_MINUTE_BLOCK_TIME 1532831597
+  #define HF_TIME_TWO_MINUTE_BLOCK_TIME 1550244791
+  #define HF_TIME_FIVE_MINUTE_BLOCK_TIME 1554224013
+  #define ESTIMATE_BLOCKS 9500
+ 
   // Calculated blockchain height
-  uint64_t approx_blockchain_height = HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME + (current_time - HF_TIME_TWO_MINUTE_BLOCK_TIME)/seconds_per_block;
+  uint64_t approx_blockchain_height = ((HF_TIME_TWO_MINUTE_BLOCK_TIME - HF_TIME_ONE_MINUTE_BLOCK_TIME) / DIFFICULTY_TARGET_V1) + ((HF_TIME_FIVE_MINUTE_BLOCK_TIME - HF_TIME_TWO_MINUTE_BLOCK_TIME) / DIFFICULTY_TARGET_V12) + (((uint64_t)time(NULL) - HF_TIME_FIVE_MINUTE_BLOCK_TIME) / DIFFICULTY_TARGET_V13) + ESTIMATE_BLOCKS;
   // testnet got some huge rollbacks, so the estimation is way off
   static const uint64_t approximate_testnet_rolled_back_blocks = 303967;
   if (m_nettype == TESTNET && approx_blockchain_height > approximate_testnet_rolled_back_blocks)
     approx_blockchain_height -= approximate_testnet_rolled_back_blocks;
   LOG_PRINT_L2("Calculated blockchain height: " << approx_blockchain_height);
   return approx_blockchain_height;
+ 
+  #undef HF_TIME_ONE_MINUTE_BLOCK_TIME
+  #undef HF_TIME_TWO_MINUTE_BLOCK_TIME
+  #undef HF_TIME_FIVE_MINUTE_BLOCK_TIME
 }
 
 void wallet2::set_tx_note(const crypto::hash &txid, const std::string &note)
@@ -10293,13 +10310,13 @@ std::string wallet2::sign(const std::string &data) const
   const cryptonote::account_keys &keys = m_account.get_keys();
   crypto::signature signature;
   crypto::generate_signature(hash, keys.m_account_address.m_spend_public_key, keys.m_spend_secret_key, signature);
-  return std::string("SigV1") + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
+  return std::string(XCASH_SIGN_DATA_PREFIX) + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
 }
 
 bool wallet2::verify(const std::string &data, const cryptonote::account_public_address &address, const std::string &signature) const
 {
-  const size_t header_len = strlen("SigV1");
-  if (signature.size() < header_len || signature.substr(0, header_len) != "SigV1") {
+  const size_t header_len = sizeof(XCASH_SIGN_DATA_PREFIX)-1;
+  if (signature.size() < header_len || signature.substr(0, header_len) != XCASH_SIGN_DATA_PREFIX) {
     LOG_PRINT_L0("Signature header check error");
     return false;
   }

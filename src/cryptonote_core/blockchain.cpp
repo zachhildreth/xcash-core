@@ -28,12 +28,22 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <thread>
+#include <vector>
 #include <algorithm>
 #include <cstdio>
+#include <cmath>
+#include <stdlib.h>
+#include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
-
+#include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
+#include <boost/asio/ip/address.hpp>
+#include <boost/thread.hpp>
+ 
 #include "include_base_utils.h"
+#include "string_tools.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "tx_pool.h"
 #include "blockchain.h"
@@ -47,15 +57,22 @@
 #include "common/int-util.h"
 #include "common/threadpool.h"
 #include "common/boost_serialization_helper.h"
+#include "common/base58.h"
 #include "warnings.h"
+#include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
 #include "ringct/rctSigs.h"
+#include "serialization/binary_utils.h"
+#include "serialization/container.h"
 #include "common/perf_timer.h"
 #include "common/notify.h"
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif
+#include "../../external/VRF_functions/VRF_functions.h"
+#include "../../external/VRF_functions/VRF_functions.cpp"
+#include "common/send_and_receive_data.h"
 
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "blockchain"
@@ -63,6 +80,7 @@
 #define FIND_BLOCKCHAIN_SUPPLEMENT_MAX_SIZE (100*1024*1024) // 100 MB
 
 using namespace crypto;
+using boost::asio::ip::tcp;
 
 //#include "serialization/json_archive.h"
 
@@ -110,6 +128,9 @@ static const struct {
 
   // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to Cryptonight HeavyX and changes the block time to 2 minutes.
   { 12, 281000, 0, 1549310115 },
+
+  // version 13 starts from block 440875, which is on or around Feb 15, 2019. This version changes the consensus mechanism from proof of work to delegated proof of privacy stake (DPOPS), changes the block time from 2 to 5 minutes, and double the block reward.
+  { 13, HF_BLOCK_HEIGHT_PROOF_OF_STAKE, 0, 1561310115 },
 };
 static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
@@ -123,22 +144,7 @@ static const struct {
   { 1, 0, 0, 1531875600 },
 
   // version 7 starts from block 1, which is on or around July 18, 2018. This version includes the new POW cryptonight_v7 algorithm.
-  { 7, 1, 0, 1531962000 },
-
-  // version 8 starts from block 105000, which is on or around Oct 8, 2018. This version includes a new difficulty algorithm.
-  { 8, 105000, 0, 1538524800 },
-
-  // version 9 starts from block 125000, which is on or around Oct 20, 2018. This version includes a change to the new difficulty algorithm.
-  { 9, 125000, 0, 1539550195 },
-
-  // version 10 starts from block 136000, which is on or around Nov 6, 2018. This version includes bullet proofs, public transactions, fixed ring size of 21 and a few other items.
-  { 10, 136000, 0, 1540145330 },
-
-  // version 11 starts from block 137000, which is on or around Nov 7, 2018. This version makes sure that all non bullet proof transactions are confirmed before bullet proofs transactions are required.
-  { 11, 137000, 0, 1540146330 },
-
-  // version 12 starts from block 281000, which is on or around Feb 15, 2019. This version changes the proof of work algorithm to CN/DOUBLE and changes the block time to 2 minutes.
-  { 12, 281000, 0, 1549310115 },
+  { 13, 1, 0, 1531962000 },
 };
 static const uint64_t testnet_hard_fork_version_1_till = 1;
 
@@ -830,8 +836,11 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
   }
-  else{
+  else if(version == 12){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V13;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -894,7 +903,7 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_timestamps = timestamps;
     m_difficulties = difficulties;
   }
-  size_t target;
+    size_t target;
   difficulty_type diff;
   if(version <= 7){
     target = DIFFICULTY_TARGET_V10;
@@ -912,9 +921,13 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     target = DIFFICULTY_TARGET_V10;
     diff = next_difficulty_V10(timestamps, difficulties, target);
   }
-  else{
+  else if(version == 12){
     target = DIFFICULTY_TARGET_V12;
     diff = next_difficulty_V12(timestamps, difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V13;
+    diff = next_difficulty_V13(timestamps, difficulties, target);
   }
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
@@ -968,8 +981,14 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
 //------------------------------------------------------------------
 // This function attempts to switch to an alternate chain, returning
 // boolean based on success therein.
-bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain)
+bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain, const uint8_t version)
 {
+  // check the version, as DPOPS does not have any chances of reorgs
+  if (version >= HF_VERSION_PROOF_OF_STAKE)
+  {
+    return false;
+  }
+
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
 
@@ -1039,7 +1058,7 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::
     for (auto& old_ch_ent : disconnected_chain)
     {
       block_verification_context bvc = boost::value_initialized<block_verification_context>();
-      bool r = handle_alternative_block(old_ch_ent, get_block_hash(old_ch_ent), bvc);
+      bool r = handle_alternative_block(old_ch_ent, get_block_hash(old_ch_ent), bvc, version);
       if(!r)
       {
         MERROR("Failed to push ex-main chain blocks to alternative chain ");
@@ -1086,8 +1105,11 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   else if(version == 10 || version == 11){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V10;
   }
-  else{
+  else if(version == 12){
     difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V12;
+  }
+  else{
+    difficulty_blocks_count = DIFFICULTY_BLOCKS_COUNT_V13;
   }
 
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -1162,9 +1184,13 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
     target = DIFFICULTY_TARGET_V10;
     return next_difficulty_V10(timestamps, cumulative_difficulties, target);
   }
-  else{
+  else if(version == 12){
     target = DIFFICULTY_TARGET_V12;
     return next_difficulty_V12(timestamps, cumulative_difficulties, target);
+  }
+  else{
+    target = DIFFICULTY_TARGET_V13;
+    return next_difficulty_V13(timestamps, cumulative_difficulties, target);
   }
 }
 //------------------------------------------------------------------
@@ -1499,8 +1525,15 @@ bool Blockchain::complete_timestamps_vector(uint64_t start_top_height, std::vect
 // if that chain is long enough to become the main chain and re-org accordingly
 // if so.  If not, we need to hang on to the block in case it becomes part of
 // a long forked chain eventually.
-bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc)
+bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc, const uint8_t version)
 {
+  // check the version, as DPOPS does not have any chances of reorgs
+  if (version >= HF_VERSION_PROOF_OF_STAKE)
+  {
+    bvc.m_verifivation_failed = true;
+    return false;
+  }
+
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
   m_timestamps_and_difficulties_height = 0;
@@ -1647,7 +1680,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       //do reorganize!
       MGINFO_GREEN("###### REORGANIZE on height: " << alt_chain.front()->second.height << " of " << m_db->height() - 1 << ", checkpoint is found in alternative chain on height " << bei.height);
 
-      bool r = switch_to_alternative_blockchain(alt_chain, true);
+      bool r = switch_to_alternative_blockchain(alt_chain, true, version);
 
       if(r) bvc.m_added_to_main_chain = true;
       else bvc.m_verifivation_failed = true;
@@ -1659,7 +1692,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       //do reorganize!
       MGINFO_GREEN("###### REORGANIZE on height: " << alt_chain.front()->second.height << " of " << m_db->height() - 1 << " with cum_difficulty " << m_db->get_block_cumulative_difficulty(m_db->height() - 1) << std::endl << " alternative blockchain size: " << alt_chain.size() << " with cum_difficulty " << bei.cumulative_difficulty);
 
-      bool r = switch_to_alternative_blockchain(alt_chain, false);
+      bool r = switch_to_alternative_blockchain(alt_chain, false, version);
       if (r)
         bvc.m_added_to_main_chain = true;
       else
@@ -3112,7 +3145,7 @@ bool Blockchain::is_tx_spendtime_unlocked(uint64_t unlock_time) const
   {
     //interpret as time
     uint64_t current_time = static_cast<uint64_t>(time(NULL));
-    if(current_time + (get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12) >= unlock_time)
+    if(current_time + (get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 : get_current_hard_fork_version() < HF_VERSION_PROOF_OF_STAKE ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V13) >= unlock_time)
       return true;
     else
       return false;
@@ -3231,9 +3264,13 @@ bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) cons
    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V10;
    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V10;
   }
+  else if(version == 12){
+   cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V12;
+   blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12;
+  }
   else{
-    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V12;
-    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12;
+    cryptonote_block_future_time_limit = CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V13;
+    blockchain_timestamp_check_window = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V13;
   }
   LOG_PRINT_L3("Blockchain::" << __func__);
   if(b.timestamp > get_adjusted_time() + cryptonote_block_future_time_limit)
@@ -3676,6 +3713,414 @@ bool Blockchain::update_next_cumulative_weight_limit()
   m_current_block_cumul_weight_limit = median*2;
   return true;
 }
+
+
+
+// define macros
+#define XCASH_WALLET_LENGTH 98 // The length of a XCA addres
+#define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+#define NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_ERROR_MESSAGE "Could not get a list of the current block verifiers"
+#define NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER\",\r\n}"
+#define NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE "Could not get the network blocks reserve bytes database hash"
+#define BLOCKCHAIN_RESERVED_BYTES_START "7c424c4f434b434841494e5f52455345525645445f42595445535f53544152547c"
+#define RANDOM_STRING_LENGTH 100 // The length of the random string
+#define DATA_HASH_LENGTH 128 // The length of the SHA2-512 hash
+#define BUFFER_SIZE 200000
+
+#define VRF_PUBLIC_KEY_LENGTH 64
+#define VRF_SECRET_KEY_LENGTH 128
+#define VRF_PROOF_LENGTH 160
+#define VRF_BETA_LENGTH 128
+
+#define pointer_reset(pointer) \
+free(pointer); \
+pointer = NULL;
+
+// global variables
+std::vector<std::string> block_verifiers_database_hashes(BLOCK_VERIFIERS_TOTAL_AMOUNT);
+
+
+
+int random_string(char *result, const size_t LENGTH)
+{  
+  // define macros
+  #define STRING "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" 
+  #define MINIMUM 0
+  #define MAXIMUM 61
+  
+  // Variables
+  char data[100];
+  size_t count;
+  
+  memset(data,0,sizeof(data));
+  memcpy(data,STRING,sizeof(STRING)-1);
+  for (count = 0; count < LENGTH; count++)
+  {
+    memcpy(result+count,&data[(rand() % (MAXIMUM - MINIMUM + 1)) + MINIMUM],1);
+  }
+  return 1;
+  
+  #undef STRING
+  #undef MINIMUM
+  #undef MAXIMUM  
+}
+
+int VRF_sign_data(char *beta_string, char *proof, const char* data)
+{
+  // Variables
+  unsigned char proof_data[crypto_vrf_PROOFBYTES+1];
+  unsigned char beta_string_data[crypto_vrf_OUTPUTBYTES+1];
+  unsigned char secret_key_data[crypto_vrf_SECRETKEYBYTES+1];
+  char data2[VRF_SECRET_KEY_LENGTH];
+  char data3[VRF_SECRET_KEY_LENGTH];
+  int count;
+  int count2;
+
+  memset(data2,0,sizeof(data2));
+  memset(data3,0,sizeof(data3));
+  memset(secret_key_data,0,sizeof(secret_key_data));
+  memset(beta_string,0,strlen(beta_string));
+  memset(proof,0,strlen(proof));
+  memset(proof_data,0,sizeof(proof_data));
+  memset(beta_string_data,0,sizeof(beta_string_data));
+
+  memcpy(data2,xcash_dpops_delegates_secret_key.c_str(),VRF_SECRET_KEY_LENGTH);
+
+  // convert the hexadecimal string to a string
+  for (count = 0, count2 = 0; count < VRF_SECRET_KEY_LENGTH; count2++, count += 2)
+  {
+    memset(data3,0,sizeof(data3));
+    memcpy(data3,&data2[count],2);
+    secret_key_data[count2] = (int)strtol(data3, NULL, 16);
+  }
+
+  // sign data
+  if (crypto_vrf_prove((unsigned char*)proof_data,(const unsigned char*)secret_key_data,(const unsigned char*)data,(unsigned long long)strlen((const char*)data)) != 0 || crypto_vrf_proof_to_hash((unsigned char*)beta_string_data,(const unsigned char*)proof_data) != 0)
+  {
+    return 0;
+  }
+
+  // convert the data to a string
+  for (count2 = 0, count = 0; count2 < (int)crypto_vrf_PROOFBYTES; count2++, count += 2)
+  {
+    snprintf(proof+count,VRF_PROOF_LENGTH,"%02x",proof_data[count2] & 0xFF);
+  }
+  for (count2 = 0, count = 0; count2 < (int)crypto_vrf_OUTPUTBYTES; count2++, count += 2)
+  {
+    snprintf(beta_string+count,VRF_BETA_LENGTH,"%02x",beta_string_data[count2] & 0xFF);
+  }
+  return 1;
+}
+
+int sign_data(char *message)
+{
+  // Constants
+  const size_t MAXIMUM_AMOUNT = strlen(message)+BUFFER_SIZE;
+
+  // Variables
+  char random_data[RANDOM_STRING_LENGTH+1];
+  char data[BUFFER_SIZE];
+  char proof[VRF_PROOF_LENGTH+1];
+  char beta_string[VRF_BETA_LENGTH+1];
+  char* result = (char*)calloc(MAXIMUM_AMOUNT,sizeof(char));
+  char* string = (char*)calloc(MAXIMUM_AMOUNT,sizeof(char));
+  time_t current_date_and_time;
+  struct tm current_UTC_date_and_time;
+
+  // define macros
+  #define pointer_reset_all \
+  free(result); \
+  result = NULL; \
+  free(string); \
+  string = NULL;
+
+  #define SIGN_DATA_ERROR \
+  pointer_reset_all; \
+  return 0;
+
+  // check if the memory needed was allocated on the heap successfully
+  if (result == NULL || string == NULL)
+  {    
+    if (result != NULL)
+    {
+      pointer_reset(result);
+    }
+    if (string != NULL)
+    {
+      pointer_reset(string);
+    }
+    exit(0);
+  }
+  
+  memset(proof,0,sizeof(proof));
+  memset(beta_string,0,sizeof(beta_string));
+  memset(random_data,0,sizeof(random_data));
+  memset(data,0,sizeof(data));
+  
+  // create the random data
+  if (random_string(random_data,RANDOM_STRING_LENGTH) == 0)
+  {
+    SIGN_DATA_ERROR;
+  }
+
+  // create the message
+  memcpy(result,message,strlen(message));
+  memcpy(result+strlen(result),random_data,RANDOM_STRING_LENGTH);
+  memcpy(result+strlen(result),"|",1);
+ 
+  // sign data
+  if (VRF_sign_data(beta_string,proof,result) == 0)
+  {
+    SIGN_DATA_ERROR;
+  }    
+
+  // create the message  
+  memcpy(message+strlen(message),random_data,RANDOM_STRING_LENGTH);
+  memcpy(message+strlen(message),"|",1);
+  memcpy(message+strlen(message),proof,VRF_PROOF_LENGTH);
+  memcpy(message+strlen(message),beta_string,VRF_BETA_LENGTH);
+  memcpy(message+strlen(message),"|",1);
+  
+  pointer_reset_all;
+  return 1;
+
+  #undef pointer_reset_all  
+  #undef SIGN_DATA_ERROR
+}
+
+
+
+bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
+{
+  // Variables
+  std::string network_block_string;
+  std::string data_hash;
+  std::size_t count;
+  int block_verifier_count = 0;
+
+  // define macros
+  #define VERIFY_DATA_HASH(total,data,counter) \
+  for (count = 0, counter = 0; count < total; count++) \
+  { \
+    if (data[count].length() >= DATA_HASH_LENGTH && data[count] != "" && data_hash == data[count].substr(0,DATA_HASH_LENGTH)) \
+    { \
+      counter++; \
+    } \
+  } \
+
+  #define RESET_DATA_HASH(total,data) \
+  for (count = 0; count < total; count++) \
+  { \
+    if (data[count].length() >= DATA_HASH_LENGTH+1) \
+    { \
+      data[count] = data[count].substr(DATA_HASH_LENGTH+1); \
+    } \
+  } \
+  
+
+  // get the network block string 
+  network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+
+  // get the data hash
+  data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
+
+  // check if the blocks reserve bytes hash matches any of the network data nodes
+  VERIFY_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes,block_verifier_count);
+
+  if (block_verifier_count >= BLOCK_VERIFIERS_VALID_AMOUNT)
+  {
+    RESET_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes);
+    return true;
+  }
+  return false;
+
+  #undef VERIFY_DATA_HASH
+  #undef RESET_DATA_HASH
+}
+
+
+bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string string = "";
+  std::string message_string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string current_block_verifiers_list_IP_address;
+  std::string current_block_verifier;
+  char message[2048];
+  std::size_t total_delegates;
+  std::size_t count = 0;
+  std::size_t count2 = 0;
+  std::size_t count3 = 0;
+  std::size_t display_count = 0;
+  int random_network_data_node;
+  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+  int settings = 0;
+
+  // define macros
+  #define DISPLAY_BLOCK_COUNT 1000
+
+  // check if your a current block verifier, and if so just load the current block verifiers list from your own delegate, as this will keep block producing going when 0 network data nodes are online
+  if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE) == "1")
+  {
+    string = send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE);
+    if (string.find("|") != std::string::npos)
+    {
+      goto start;
+    }
+  }
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  {
+    do
+    {
+      // get a random network data node
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
+    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+
+    network_data_nodes_array[count] = random_network_data_node;
+
+    // get the block verifiers list from the network data node
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST_MESSAGE);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+
+  if (count == NETWORK_DATA_NODES_AMOUNT)
+  {
+    MGINFO_RED("Could not get the list of current block verifiers");
+    return false;
+  }
+
+  start:
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+
+  // parse the message
+  current_block_verifiers_list_IP_address = string.substr(string.find("\"block_verifiers_IP_address_list\": \"")+36,(string.find("\"",string.find("\"block_verifiers_IP_address_list\": \"")+36)) - (string.find("\"block_verifiers_IP_address_list\": \"")+36));
+
+  // create the message
+  if (xcash_dpops_delegates_public_address != "" && xcash_dpops_delegates_secret_key != "")
+  {
+    std::string data = "NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH|" + std::to_string(current_block_height) + "|" + xcash_dpops_delegates_public_address + "|";
+    memset(message,0,sizeof(message));
+    memcpy(message,data.c_str(),data.length());
+
+    // sign the data
+    if (sign_data(message) == 0)
+    {
+      return false;
+    }
+
+    message_string += message;
+  }
+  else
+  {
+    message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
+  }
+
+  // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+  {
+    // get the current block verifier
+    count3 = current_block_verifiers_list_IP_address.find("|",count2);
+    current_block_verifier = current_block_verifiers_list_IP_address.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+
+    // get the reserve bytes database hash from the current block verifier
+    string = settings == 0 ? send_and_receive_data(current_block_verifier,message_string) : send_and_receive_data(current_block_verifier,message_string,SEND_OR_RECEIVE_SOCKET_DATA_DOWNLOAD_DATABASE_HASH_TIMEOUT_SETTINGS);
+
+    // display the message if syncing over the DISPLAY_BLOCK_COUNT
+    if (display_count == 0 && string != NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE && string != "")
+    {
+      display_count = 1;
+      if (std::count(string.begin(), string.end(), '|') >= DISPLAY_BLOCK_COUNT)
+      {
+        MGINFO_YELLOW("Downloading block data from the current block verifiers, this might take a while");
+      }
+      if (std::count(string.begin(), string.end(), '|') > 10)
+      {
+        settings = 1;
+      }
+    }
+
+    block_verifiers_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
+  }
+
+  return true;
+
+  #undef DISPLAY_BLOCK_COUNT
+}
+
+
+
+bool check_if_synced(const std::vector<std::string> block_verifiers_database_hashes)
+{
+  // Variables
+  std::size_t count;
+
+  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
+  {
+    if (block_verifiers_database_hashes[count] != "")
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
+
+bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height)
+{
+  // Variables
+  std::size_t count = 0;
+  
+  #define CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR(message) \
+  MGINFO_RED(message); \
+  for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++) \
+  { \
+    block_verifiers_database_hashes[count] = ""; \
+  } \
+  return false;
+
+  // check if you need to get the datbase hashes. This will be the first time running the program, or if you have synced 288 * 30 blocks and need the next 288 * 30 blocks database hashes
+  if (check_if_synced(block_verifiers_database_hashes))
+  {
+    // get the decentralized database hash for each block from the current block on the local copy of the blockchain to the synced current network block up to a maximum of 288 * 30 blocks
+    if (!get_network_block_database_hash(block_verifiers_database_hashes,current_block_height))
+    {
+      CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not receive the blocks database hashes from the block verifiers");
+    }
+  }
+
+  // verify the current block
+  if (!verify_network_block(block_verifiers_database_hashes,bl))
+  {
+    CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash for block " << current_block_height);
+  }
+  return true;
+
+  #undef CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR
+}
+
+
+
 //------------------------------------------------------------------
 bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc)
 {
@@ -3695,16 +4140,28 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
     return false;
   }
 
+  // get the hard fork version
+  const uint8_t version = get_current_hard_fork_version();
+
   //check that block refers to chain tail
-  if(!(bl.prev_id == get_tail_id()))
+  if(version < HF_VERSION_PROOF_OF_STAKE && !(bl.prev_id == get_tail_id()))
   {
     //chain switching or wrong block
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
-    bool r = handle_alternative_block(bl, id, bvc);
+    bool r = handle_alternative_block(bl, id, bvc, version);
     m_blocks_txs_check.clear();
     return r;
     //never relay alternative blocks
+  }
+
+  // check if the block is valid in the X-CASH proof of stake
+  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
+  {
+    bvc.m_added_to_main_chain = false;
+    m_db->block_txn_stop();
+    m_blocks_txs_check.clear();    
+    return false;
   }
 
   m_db->block_txn_stop();
@@ -4456,7 +4913,7 @@ bool Blockchain::get_hard_fork_voting_info(uint8_t version, uint32_t &window, ui
 
 uint64_t Blockchain::get_difficulty_target() const
 {
-  return get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V12;
+  return get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : get_current_hard_fork_version() < HF_VERSION_PROOF_OF_STAKE ? DIFFICULTY_TARGET_V12 : DIFFICULTY_TARGET_V13;
 }
 
 std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> Blockchain:: get_output_histogram(const std::vector<uint64_t> &amounts, bool unlocked, uint64_t recent_cutoff, uint64_t min_count) const
@@ -4650,3 +5107,5 @@ namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::vector<transaction>&, std::vector<crypto::hash>&) const;
 template bool Blockchain::get_transactions_blobs(const std::vector<crypto::hash>&, std::vector<cryptonote::blobdata>&, std::vector<crypto::hash>&, bool) const;
 }
+
+

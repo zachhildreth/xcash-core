@@ -1,3 +1,6 @@
+NOTE If you need the current main net xcash on proof of work consensus, after cloning the repository please run the following command  
+`git reset --hard 2c01fd338c63970e487840fe126591e6de8bd36f`
+
 <div align=middle>
 
 <a align="center" href="https://x-network.io/xcash"><img src="header.png" alt="X-Cash Core"></a>

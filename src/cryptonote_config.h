@@ -45,14 +45,14 @@
 #define CURRENT_BLOCK_MAJOR_VERSION                     1
 #define CURRENT_BLOCK_MINOR_VERSION                     0
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*60*2
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             10
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             1
 
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               60
 
 // MONEY_SUPPLY - total number coins to be generated
 #define MONEY_SUPPLY                                    ((uint64_t)(100000000000000000))
 #define EMISSION_SPEED_FACTOR_PER_MINUTE                (19)
-#define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)3000) // 3 * pow(10, 5)
+#define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)2000000000) // 2000 X-CASH per minute, creates 1051200000 X-CASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2    60000 //size of block (bytes) after which reward for block calculated using block size
@@ -118,10 +118,18 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V12            11
 #define DIFFICULTY_TARGET_V12                            120  // seconds
 
+// LWMA difficulty V13
+#define DIFFICULTY_WINDOW_V13                            120
+#define DIFFICULTY_BLOCKS_COUNT_V13                      121
+#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V13           60*4
+#define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V13            11
+#define DIFFICULTY_TARGET_V13                            300  // seconds
+
 
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1   DIFFICULTY_TARGET_V1 * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2   DIFFICULTY_TARGET_V2 * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12  120 // seconds
+#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V13  300 // seconds
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS       1
 
 
@@ -177,11 +185,115 @@
 #define HF_VERSION_PER_BYTE_FEE                 10
 #define HF_VERSION_TWO_MINUTE_BLOCK_TIME        12
 #define HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME   281000
-#define HF_TIME_TWO_MINUTE_BLOCK_TIME           1550241230
 
 #define BLOCKCHAIN_DEFAULT_MIXIN                20
 
-#define PER_KB_FEE_QUANTIZATION_DECIMALS        6
+
+
+// Seed Nodes
+#define SEED_NODE_1 "us1.xcash.foundation:18280"
+#define SEED_NODE_2 "europe1.xcash.foundation:18280"
+#define SEED_NODE_3 "europe2.xcash.foundation:18280"
+#define SEED_NODE_4 "europe3.xcash.foundation:18280"
+#define SEED_NODE_5 "oceania1.xcash.foundation:18280"
+
+/*#define SEED_NODE_1 "192.168.1.201:18280"
+#define SEED_NODE_2 "192.168.1.202:18280"
+#define SEED_NODE_3 "192.168.1.203:18280"
+#define SEED_NODE_4 "192.168.1.204:18280"
+#define SEED_NODE_5 "192.168.1.205:18280"*/
+
+#define SEED_NODES_LIST_1 const std::vector<std::string> m_seed_nodes_list = {SEED_NODE_1,SEED_NODE_2,SEED_NODE_3,SEED_NODE_4,SEED_NODE_5};
+#define SEED_NODES_LIST_2 \
+full_addrs.insert(SEED_NODE_1); \
+full_addrs.insert(SEED_NODE_2); \
+full_addrs.insert(SEED_NODE_3); \
+full_addrs.insert(SEED_NODE_4); \
+full_addrs.insert(SEED_NODE_5);
+
+
+
+// XCASH DPOPS
+
+// Blockchain
+#define HF_VERSION_PROOF_OF_STAKE 13
+//#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 521850 // The first block of the X-CASH proof of stake
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 640000 // The first block of the X-CASH proof of stake
+#define BLOCK_TIME 5 // the block time in minutes
+#define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
+#define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
+#define BLOCK_TEMPLATE_BUFFER_SIZE 5000
+#define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+#define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address 
+#define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix of a xcash_proof_of_stake_signature for the signed data
+#define XCASH_SIGN_DATA_LENGTH 93 // The length of a xcash_proof_of_stake_signature for the signed data
+#define BUFFER_SIZE_RESERVE_PROOF 25000 // The maximum length of a reserve proof
+
+// Lengths
+#define BITS_IN_BYTE 8 // 8 bits in 1 byte
+#define MAXIMUM_BUFFER_SIZE_DELEGATES_NAME 100 // The maximum length of the block verifiers name
+#define MINIMUM_BUFFER_SIZE_DELEGATES_NAME 5 // The minimum length of the block verifiers name
+#define MAXIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 505 // The maximum length of the block verifiers name
+#define MINIMUM_BUFFER_SIZE_DELEGATES_BACKUP_NAMES 30 // The minimum length of the block verifiers name
+#define DELEGATES_PUBLIC_KEY_LENGTH 64 // The delegates public key length for signing and verifying messages
+
+// Network
+#define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
+#define CONNECTION_TIMEOUT_SETTINGS 1000 // the time in milliseconds for a connection to be created
+#define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 3000 // The time in milliseconds to wait for sending or receving socket data
+#define SEND_OR_RECEIVE_SOCKET_DATA_DOWNLOAD_DATABASE_HASH_TIMEOUT_SETTINGS 60000 // The time in milliseconds to wait for downloading multiple data hashes
+#define SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS 5000 // The minimum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
+#define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
+#define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
+
+// XCASH DPOPS
+#define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
+#define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
+#define BLOCK_VERIFIERS_VALID_AMOUNT 28 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.55 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
+
+
+// Network data nodes
+#define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
+
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1YhckQgqGQvMsS2xi4n3cHBPo39WYFC1AXskqaFB87Q6EX5LheKK6E3ZqQmD9CDFX8br8Mfvff7RqT6UcuUja46qKC1vEJb"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1c2ahjRvBsp35ynTknNYczj9y42hN9ht1vNyns2FCTU4qbLqahtsTw2E7JTKLd3ecSGLe2zWJgCiwrMhecsbT38i3Smy9vW"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1jN7CNCKEN1kDuqxiuUPyKWiVp68RsYxshdohaQ1k8NN11ZWX9dSJv3hx6qxfPaKVAnet4LTda9fsK81c9wRN5Aj78KyZEg"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1hKDayQXECEA5Yja4a8CU6Suoo9XT9jET7Ng2Rx2z3fLsGy5iVQCL9hWWTi3TroJxihWY4j84n9WMJvpFvagW5hMNpq1jh9"
+#define NETWORK_DATA_NODE_IP_ADDRESS_1 "us1.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_2 "europe1.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_3 "europe2.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_4 "europe3.xcash.foundation"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "oceania1.xcash.foundation"
+
+/*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1f8ngVg6fW5pJ49TC3DK4axYDMu5teUKUf7aP5rLCRvsL1ZCnf2LjAFtSYF6xfVWygSMMvn1hCEeupgGTX5n82GDZvcapbj"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1skiymYUHN5Vjg5kXhriGi25ZDKpgdLMZks3DKCwy9sxzyqY7uEr6hxRPnAvkYwLoT6peBi4aVT1g4t4vgtFj96eE1JF1L4"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1c8vbHxUiFfgnp7P5pPaAWEJac1W8vjiNHSLRB1k7G6XrWQkWXy85RfefFiCzB8V43jopp5AwmcezSoUVbXcp8Z4Eki8Gmt"
+#define NETWORK_DATA_NODE_IP_ADDRESS_1 "192.168.1.201"
+#define NETWORK_DATA_NODE_IP_ADDRESS_2 "192.168.1.202"
+#define NETWORK_DATA_NODE_IP_ADDRESS_3 "192.168.1.203"
+#define NETWORK_DATA_NODE_IP_ADDRESS_4 "192.168.1.204"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "192.168.1.205"*/
+
+#define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5}
+#define INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT \
+network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1; \
+network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1; \
+network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2; \
+network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; \
+network_data_nodes_list.network_data_nodes_public_address[2] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_3; \
+network_data_nodes_list.network_data_nodes_IP_address[2] = NETWORK_DATA_NODE_IP_ADDRESS_3; \
+network_data_nodes_list.network_data_nodes_public_address[3] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_4; \
+network_data_nodes_list.network_data_nodes_IP_address[3] = NETWORK_DATA_NODE_IP_ADDRESS_4; \
+network_data_nodes_list.network_data_nodes_public_address[4] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_5; \
+network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_ADDRESS_5;
+
+
+
+#define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 
 #define HASH_OF_HASHES_STEP                     256
 
@@ -205,7 +317,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x10
+      0x10 ,0x29, 0x41, 0x55 , 0x15, 0x75 , 0x40, 0x05, 0x02, 0x25, 0x12, 0x61, 0xF3, 0xA5, 0x48, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
@@ -219,7 +331,7 @@ namespace config
     uint16_t const RPC_DEFAULT_PORT = 28281;
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 28282;
     boost::uuids::uuid const NETWORK_ID = { {
-        0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x11
+        0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x91
       } };
     std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
     uint32_t const GENESIS_NONCE = 10001;
@@ -234,7 +346,7 @@ namespace config
     uint16_t const RPC_DEFAULT_PORT = 38081;
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 38082;
     boost::uuids::uuid const NETWORK_ID = { {
-        0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x12
+        0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x92
       } };
     std::string const GENESIS_TX = "013c01ff0001ffffffffffff0302df5d56da0c7d643ddd1ce61901c7bdc5fb1738bfe39fbe69c28a3a7032729c0f2101168d0c4ca86fb55a4cf6a36d31431be1c53a3bd7411bb24e8832410289fa6f3b";
     uint32_t const GENESIS_NONCE = 10002;
@@ -308,3 +420,4 @@ namespace cryptonote
     }
   };
 }
+

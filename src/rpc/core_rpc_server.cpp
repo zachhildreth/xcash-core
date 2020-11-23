@@ -28,6 +28,9 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <sstream>
+#include <algorithm>
+
 #include "include_base_utils.h"
 #include "string_tools.h"
 using namespace epee;
@@ -41,6 +44,7 @@ using namespace epee;
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
+#include "cryptonote_core/cryptonote_core.h"
 #include "misc_language.h"
 #include "storages/http_abstract_invoke.h"
 #include "crypto/hash.h"
@@ -1056,10 +1060,10 @@ namespace cryptonote
       return false;
     }
 
-    if(req.reserve_size > 255)
+    if(req.reserve_size > MAXIMUM_RESERVE_BYTES_LEGNTH)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_RESERVE_SIZE;
-      error_resp.message = "Too big reserved size, maximum 255";
+      error_resp.message = "Too big reserved size, maximum " + std::to_string(MAXIMUM_RESERVE_BYTES_LEGNTH);
       return false;
     }
 
@@ -1581,7 +1585,7 @@ namespace cryptonote
     res.top_block_hash = string_tools::pod_to_hex(top_hash);
     res.target_height = m_core.get_target_blockchain_height();
     res.difficulty = m_core.get_blockchain_storage().get_difficulty_for_next_block();
-    res.target = m_core.get_blockchain_storage().get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V12;
+    res.target = m_core.get_blockchain_storage().get_current_hard_fork_version() < HF_VERSION_TWO_MINUTE_BLOCK_TIME ? DIFFICULTY_TARGET_V1 : m_core.get_blockchain_storage().get_current_hard_fork_version() < HF_VERSION_PROOF_OF_STAKE ? DIFFICULTY_TARGET_V12 : DIFFICULTY_TARGET_V13;
     res.tx_count = m_core.get_blockchain_storage().get_total_transactions() - res.height; //without coinbase
     res.tx_pool_size = m_core.get_pool_transactions_count();
     res.alt_blocks_count = m_core.get_blockchain_storage().get_alternative_blocks_count();
@@ -2195,6 +2199,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+
 
 
   const command_line::arg_descriptor<std::string, false, true, 2> core_rpc_server::arg_rpc_bind_port = {

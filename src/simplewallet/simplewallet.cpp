@@ -34,15 +34,23 @@
  * \brief Source file that defines simple_wallet class.
  */
 #include <thread>
+#include <chrono>
+#include <ctime>
+#include <time.h>
+#include <unistd.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <cmath>
 #include <ctype.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
+#include <boost/asio/ip/address.hpp>
 #include "include_base_utils.h"
 #include "common/i18n.h"
 #include "common/command_line.h"
@@ -64,6 +72,7 @@
 #include "wallet/wallet_args.h"
 #include "version.h"
 #include <stdexcept>
+#include "common/send_and_receive_data.h"
 
 #ifdef WIN32
 #include <boost/locale.hpp>
@@ -78,6 +87,7 @@ using namespace std;
 using namespace epee;
 using namespace cryptonote;
 using boost::lexical_cast;
+using boost::asio::ip::tcp;
 namespace po = boost::program_options;
 typedef cryptonote::simple_wallet sw;
 
@@ -825,8 +835,8 @@ bool simple_wallet::print_fee_info(const std::vector<std::string> &args/* = std:
       {
         msg = tr(" (current)");
       }
-      uint64_t minutes_low = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_low * DIFFICULTY_TARGET_V12 / 60 : nblocks_low * DIFFICULTY_TARGET_V2 / 60;
-      uint64_t minutes_high = m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_high * DIFFICULTY_TARGET_V12 / 60 : nblocks_high * DIFFICULTY_TARGET_V2 / 60;
+      uint64_t minutes_low = m_wallet->use_fork_rules(HF_VERSION_PROOF_OF_STAKE, 0) ? nblocks_high * DIFFICULTY_TARGET_V13 / 60 : m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_low * DIFFICULTY_TARGET_V12 / 60 : nblocks_low * DIFFICULTY_TARGET_V2 / 60;
+      uint64_t minutes_high = m_wallet->use_fork_rules(HF_VERSION_PROOF_OF_STAKE, 0) ? nblocks_high * DIFFICULTY_TARGET_V13 / 60 : m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 0) ? nblocks_high * DIFFICULTY_TARGET_V12 / 60 : nblocks_high * DIFFICULTY_TARGET_V2 / 60;
       if (nblocks_high == nblocks_low)
         message_writer() << (boost::format(tr("%u block (%u minutes) backlog at priority %u%s")) % nblocks_low % minutes_low % priority % msg).str();
       else
@@ -2040,7 +2050,7 @@ bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vecto
   if (unit == "xcash")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
   else if (unit == "zachy")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6;
+    decimal_point = 0;
   else
   {
     fail_msg_writer() << tr("invalid unit");
@@ -2248,6 +2258,553 @@ bool simple_wallet::set_ignore_fractional_outputs(const std::vector<std::string>
     });
   }
   return true;
+}
+
+void sync_minutes_and_seconds(const int SETTINGS)
+{
+  // Variables
+  std::time_t current_date_and_time;
+  std::tm* current_UTC_date_and_time;
+
+  if (SETTINGS == 0)
+  {
+    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes. Please leave the wallet open until this time and you receive a confirmation";
+
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time->tm_min % BLOCK_TIME != 3); 
+  }
+  else
+  {
+    message_writer(console_color_yellow, false) << "Sending the vote at the beginning of the hour. Please leave the wallet open until this time and you receive a confirmation";
+
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      current_date_and_time = std::time(0);
+      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
+    } while (current_UTC_date_and_time->tm_min != 2); 
+  }
+
+  // wait a random amount of time, so all messages from delegates that have been waiting dont get sent at the same time
+  std::this_thread::sleep_for(std::chrono::milliseconds(rand() % (SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS - SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS + 1) + SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS));
+  return;
+}
+
+std::string get_current_block_verifiers_list()
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::size_t count = 0;
+  int random_network_data_node;
+  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+
+  // define macros
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  {
+    do
+    {
+      // get a random network data node
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
+    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+
+    network_data_nodes_array[count] = random_network_data_node;
+
+    // get the block verifiers list from the network data node
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],MESSAGE);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+
+  return count == NETWORK_DATA_NODES_AMOUNT ? "" : string;
+
+  #undef MESSAGE
+}
+
+bool simple_wallet::vote(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 1
+
+  try
+  {
+  // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return true;
+  }    
+  if (m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    return true;
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    fail_msg_writer() << tr("Failed to send the vote\n");
+    return true; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
+ 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to create the reserve proof");
+    return true;  
+  }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    fail_msg_writer() << tr("Failed to send the vote\nReserve proof is over the maximum length");
+    return true;  
+  }
+ 
+  // create the data
+  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + args.front() + "|" + reserve_proof + "|" + public_address + "|";
+ 
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The vote was successfully added to the database")
+    {
+      count2++;
+    } 
+    else
+    {
+      error_message = data3;
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    message_writer(console_color_green, false) << "Vote has been sent successfully";             
+  }
+  else
+  {
+    fail_msg_writer() << tr("Failed to send the vote"); 
+    fail_msg_writer() << error_message;  
+  }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to send the vote");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
+bool simple_wallet::delegate_register(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 3
+
+  try
+  {
+  // error check
+  if (args.size() != PARAMETER_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid parameters");
+    return true;
+  }  
+  if (m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nFailed to connect to the daemon");
+    return true;
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\n");
+    return true; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
+ 
+  // create the data  
+  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Registered the delegate")
+    {
+      count2++;
+    }
+    else
+    {
+      error_message = data3;
+    }   
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    message_writer(console_color_green, false) << "The delegate has been registered successfully";             
+  }
+  else
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+    fail_msg_writer() << error_message; 
+  }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to register the delegate");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
+bool simple_wallet::delegate_update(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    // check if the second paramter is multiple words and combine them
+    if (args.size() > PARAMETER_AMOUNT && (args.front() == "about" || args.front() == "team" || args.front() == "server_specs"))
+    {
+      for (count = 1; count < args.size(); count++)
+      {
+        parameters = parameters + " " + args[count]; 
+      }
+      parameters = parameters.substr(1);
+    }
+    else if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nInvalid parameters");
+      return true;
+    } 
+    if (m_wallet->key_on_device())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nThe reserve proof can be generated only by a full wallet");
+      return true;
+    }
+    if (!try_connect_to_daemon())
+    {
+      fail_msg_writer() << tr("Failed to update the delegate\nFailed to connect to the daemon");
+      return true;
+    }
+
+    // check if the item to update is a valid item
+    if (args[0] != "IP_address" && args[0] != "about" && args[0] != "website" && args[0] != "team" && args[0] != "shared_delegate_status" && args[0] != "delegate_fee" && args[0] != "server_specs")
+    { 
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid item. Valid items are: about, website, team, shared_delegate_status, delegate_fee and server_specs");
+      return true;  
+    }
+    if (args[0] == "IP_address" && (args[1].length() > 100 || args[1].find(".") == std::string::npos))
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255");
+      return true;  
+    }
+    if (args[0] == "about" && parameters.length() > 1024)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid about. About length must be less than 1024");
+      return true;  
+    }
+    if (args[0] == "website" && args[1].length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid website. Website length must be less than 255");
+      return true;  
+    }
+    if (args[0] == "team" && parameters.length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid team. Team length must be less than 255");
+      return true;  
+    }
+    if (args[0] == "shared_delegate_status" && args[1] != "true" && args[1] != "false")
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false");
+      return true;  
+    }
+    if (args[0] == "delegate_fee" && args[1].length() > 10)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid delegate_fee. delegate_fee length must be less than 10");
+      return true;  
+    }
+    if (args[0] == "server_specs" && parameters.length() > 255)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid server_specs. server_specs length must be less than 255");
+      return true;  
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+ 
+    // create the data
+    data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the delegates information")
+      {
+        count2++;
+      } 
+      else
+      {
+        error_message = data3;
+      }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      message_writer(console_color_green, false) << "The delegates information has been updated successfully";             
+    }
+    else
+    {
+      fail_msg_writer() << tr("Failed to update the delegates information");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to update the delegate");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
 }
 
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
@@ -2613,6 +3170,18 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::version, this, _1),
                            tr("version"),
                            tr("Returns version information"));
+  m_cmd_binder.set_handler("vote",
+                           boost::bind(&simple_wallet::vote, this, _1),
+                           tr("vote <delegates_name|delegates_public_address>"),
+                           tr("Votes for a delegate in the DPOPS system"));
+  m_cmd_binder.set_handler("delegate_register",
+                           boost::bind(&simple_wallet::delegate_register, this, _1),
+                           tr("delegate_register <delegates_name> <delegates_IP_address> <delegates_public_key>"),
+                           tr("Registers a delegate in the DPOPS system"));
+  m_cmd_binder.set_handler("delegate_update",
+                           boost::bind(&simple_wallet::delegate_update, this, _1),
+                           tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs] <value>"),
+                           tr("Updates a registered delegates data in the DPOPS system"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
@@ -3985,7 +4554,7 @@ bool simple_wallet::save_watch_only(const std::vector<std::string> &args/* = std
 
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::start_mining(const std::vector<std::string>& args)
-{
+{  
   if (!m_wallet->is_trusted_daemon())
   {
     fail_msg_writer() << tr("this command requires a trusted daemon. Enable with --trusted-daemon");
@@ -7947,7 +8516,7 @@ bool simple_wallet::show_transfer(const std::vector<std::string> &args)
       else
       {
         uint64_t current_time = static_cast<uint64_t>(time(NULL));
-        uint64_t threshold = current_time + (m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 10) ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1);
+        uint64_t threshold = current_time + (m_wallet->use_fork_rules(HF_VERSION_PROOF_OF_STAKE, 10) ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V13 : m_wallet->use_fork_rules(HF_VERSION_TWO_MINUTE_BLOCK_TIME, 10) ? CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V12 : CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1);
         if (threshold >= pd.m_unlock_time)
           success_msg_writer() << "unlocked for " << get_human_readable_timespan(std::chrono::seconds(threshold - pd.m_unlock_time));
         else
@@ -8195,3 +8764,6 @@ int main(int argc, char* argv[])
   return 0;
   CATCH_ENTRY_L0("main", 1);
 }
+
+
+

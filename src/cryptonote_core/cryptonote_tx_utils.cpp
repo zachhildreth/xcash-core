@@ -358,7 +358,7 @@ namespace cryptonote
     crypto::cn_fast_hash(tx_key_str.data(), tx_key_str.size(), hash);
     crypto::signature signature;
     crypto::generate_signature(hash, sender_account_keys.m_account_address.m_spend_public_key, sender_account_keys.m_spend_secret_key, signature);
-    std::string tx_key_data = std::string("SigV1") + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
+    std::string tx_key_data = std::string(XCASH_SIGN_DATA_PREFIX) + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
 
     // add the data to the transaction if the user has chosen a public transaction
     if (tx_privacy_settings == "public")

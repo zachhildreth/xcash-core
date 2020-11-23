@@ -28,7 +28,13 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <thread>
+#include <future>
+#include "include_base_utils.h"
 #include "string_tools.h"
+#include "cryptonote_basic/cryptonote_boost_serialization.h"
+#include "common/boost_serialization_helper.h"
+#include "common/base58.h"
 #include "common/password.h"
 #include "common/scoped_message_writer.h"
 #include "daemon/rpc_command_executor.h"
@@ -36,8 +42,17 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_basic/hardfork.h"
 #include <boost/format.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
+#include <boost/asio/ip/address.hpp>
 #include <ctime>
 #include <string>
+#include "serialization/binary_utils.h"
+#include "serialization/container.h"
+#include "../../external/VRF_functions/VRF_functions.h"
+#include "common/send_and_receive_data.h"
+
+using boost::asio::ip::tcp;
 
 #undef XCASH_DEFAULT_LOG_CATEGORY
 #define XCASH_DEFAULT_LOG_CATEGORY "daemon"
@@ -1018,7 +1033,7 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
   else
   {
     uint64_t backlog = (res.pool_stats.bytes_total + full_reward_zone - 1) / full_reward_zone;
-    backlog_message = ires.height >= HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME ? (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET_V12 / 60)).str() : (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET_V2 / 60)).str();
+    backlog_message = ires.height >= HF_BLOCK_HEIGHT_PROOF_OF_STAKE ? (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET_V13 / 60)).str() : ires.height >= HF_BLOCK_HEIGHT_TWO_MINUTE_BLOCK_TIME ? (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET_V12 / 60)).str() : (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET_V2 / 60)).str();
   }
 
   tools::msg_writer() << n_transactions << " tx(es), " << res.pool_stats.bytes_total << " bytes total (min " << res.pool_stats.bytes_min << ", max " << res.pool_stats.bytes_max << ", avg " << avg_bytes << ", median " << res.pool_stats.bytes_med << ")" << std::endl
@@ -1956,3 +1971,4 @@ bool t_rpc_command_executor::sync_info()
 }
 
 }// namespace daemonize
+

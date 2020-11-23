@@ -57,12 +57,20 @@ namespace cryptonote
      const std::pair<uint8_t, uint64_t> *hard_forks;
    };
 
+  extern const command_line::arg_descriptor<std::string> arg_xcash_dpops_delegates_ip_address;
+  extern const command_line::arg_descriptor<std::string> arg_xcash_dpops_delegates_public_address;
+  extern const command_line::arg_descriptor<std::string> arg_xcash_dpops_delegates_secret_key;
+
   extern const command_line::arg_descriptor<std::string, false, true, 2> arg_data_dir;
   extern const command_line::arg_descriptor<bool, false> arg_testnet_on;
   extern const command_line::arg_descriptor<bool, false> arg_stagenet_on;
   extern const command_line::arg_descriptor<bool, false> arg_regtest_on;
   extern const command_line::arg_descriptor<difficulty_type> arg_fixed_difficulty;
   extern const command_line::arg_descriptor<bool> arg_offline;
+
+  extern std::string xcash_dpops_delegates_ip_address;
+  extern std::string xcash_dpops_delegates_public_address;
+  extern std::string xcash_dpops_delegates_secret_key;
 
   /************************************************************************/
   /*                                                                      */

@@ -155,6 +155,7 @@ namespace tools
     friend class wallet_keys_unlocker;
   public:
     static constexpr const std::chrono::seconds rpc_timeout = std::chrono::minutes(3) + std::chrono::seconds(30);
+    std::atomic<bool>  destory;
 
     enum RefreshType {
       RefreshFull,

@@ -1121,7 +1121,7 @@ namespace cryptonote
      *
      * @return false if the reorganization fails, otherwise true
      */
-    bool switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain);
+    bool switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::iterator>& alt_chain, bool discard_disconnected_chain, const uint8_t version);
 
     /**
      * @brief removes the most recent block from the blockchain
@@ -1172,7 +1172,7 @@ namespace cryptonote
      *
      * @return true if the block was added successfully, otherwise false
      */
-    bool handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc);
+    bool handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc, const uint8_t version);
 
     /**
      * @brief gets the difficulty requirement for a new block on an alternate chain
