@@ -248,8 +248,8 @@ full_addrs.insert(SEED_NODE_5);
 
 // XCASH DPOPS
 #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
-#define BLOCK_VERIFIERS_AMOUNT 30 // The amount of block verifiers in a round
-#define BLOCK_VERIFIERS_VALID_AMOUNT 20 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
+#define BLOCK_VERIFIERS_VALID_AMOUNT 27 // The amount of block verifiers that need to vote true for the part of the round to be valid.
 #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.55 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
 
@@ -317,7 +317,7 @@ namespace config
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x63, 0x41, 0x55 , 0x15, 0x75 , 0x40, 0x05, 0x02, 0x25, 0x12, 0x61, 0xF3, 0xA5, 0x48, 0x89
+      0x10 ,0x56, 0x41, 0x55 , 0x15, 0x75 , 0x40, 0x05, 0x02, 0x25, 0x12, 0x61, 0xF3, 0xA5, 0x48, 0x89
     } };
   std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
   uint32_t const GENESIS_NONCE = 10000;
