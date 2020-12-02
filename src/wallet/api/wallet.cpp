@@ -2396,6 +2396,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
   std::string errorInfo= ":";
+  uint64_t current_block_height;
 
   // define macros
   #define PARAMETER_AMOUNT 3
@@ -2446,6 +2447,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   {
     return "Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed";  
   }
+
+  // get the current block height
+  current_block_height = m_wallet->get_blockchain_current_height();
  
   // create the data  
   data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + delegate_name + "|" +delegate_IP_address + "|" + block_verifier_messages_public_key + "|" + public_address + "|";
@@ -2456,20 +2460,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="Registered the delegate")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
   }
 
-  // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
+  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
   {
     return "Success";        
   } 
@@ -2498,6 +2506,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
   std::string errorInfo= ":";
+  uint64_t current_block_height;
 
   // define macros
   #define PARAMETER_AMOUNT 2
@@ -2586,7 +2595,10 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     {
     return "Failed to update the delegate\nInvalid public address. Only XCA addresses are allowed";  
     }
- 
+
+    // get the current block height
+    current_block_height = m_wallet->get_blockchain_current_height();
+  
     // create the data
     data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + item + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" +item + "|" + value + "|" + public_address + "|";
  
@@ -2596,20 +2608,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     data2 += data3 + "|";
 
     // send the data to all block verifiers
-    for (count = 0, count2 = 0; count < total_delegates; count++)
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
     {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="Updated the delegates information")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }     
     }
 
-    // check the result of the data
-    if (count2 >= total_delegates_valid_amount)
+    // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
+    if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
     {
     return "Success";        
     } 
@@ -2638,6 +2654,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
   std::string errorInfo= ":";
+  uint64_t current_block_height;
 
   // define macros
   #define PARAMETER_AMOUNT 1
@@ -2704,6 +2721,9 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   {
     return "Failed to send the vote\nReserve proof is over the maximum length";  
   }
+
+  // get the current block height
+  current_block_height = m_wallet->get_blockchain_current_height();
  
   // create the data
   data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" +value+ "|" + reserve_proof + "|" + public_address + "|";
@@ -2714,20 +2734,24 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   data2 += data3 + "|";
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0; count < total_delegates; count++)
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
     if (result=="The vote was successfully added to the database")
     {
       count2++;
       errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
     }else{
       errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
     }         
   }
 
-  // check the result of the data
-  if (count2 >= total_delegates_valid_amount)
+  // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
+  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
   {
         return "Success";  
   }
