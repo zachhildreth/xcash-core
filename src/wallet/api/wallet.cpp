@@ -2610,7 +2610,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
     {
-    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2);
     if (result=="Updated the delegates information")
     {
       count2++;

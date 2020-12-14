@@ -3889,7 +3889,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if (send_and_receive_data(block_verifiers_IP_address[count],data2) == "Updated the delegates information")
+    if (send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2) == "Updated the delegates information")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
