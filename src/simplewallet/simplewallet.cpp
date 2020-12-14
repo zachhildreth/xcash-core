@@ -2605,7 +2605,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Registered the delegate")
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "Registered the delegate")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
