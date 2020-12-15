@@ -2150,5 +2150,26 @@ namespace wallet_rpc
     };
   };
 
+  struct COMMAND_RPC_DELEGATE_RECOVER
+  {
+    struct request
+    {
+      std::string domain_name;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(domain_name)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }

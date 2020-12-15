@@ -936,6 +936,8 @@ struct Wallet
     virtual std::string delegate_update(const  std::string &item,const  std::string &value)  = 0;
 
     virtual std::string vote(const  std::string &value)  = 0;
+
+    virtual std::string delegate_recover(const  std::string &domain_name)  = 0;
 };
 
 /**

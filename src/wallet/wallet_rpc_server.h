@@ -148,6 +148,7 @@ namespace tools
         MAP_JON_RPC_WE("vote",               on_vote,               wallet_rpc::COMMAND_RPC_VOTE)
         MAP_JON_RPC_WE("delegate_register",               on_delegate_register,               wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER)
         MAP_JON_RPC_WE("delegate_update",               on_delegate_update,               wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE)
+        MAP_JON_RPC_WE("delegate_recover",               on_delegate_recover,               wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -229,6 +230,7 @@ namespace tools
       bool on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er);
       bool on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::response& res, epee::json_rpc::error& er);
       bool on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res, epee::json_rpc::error& er);
+      bool on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er);
 
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
