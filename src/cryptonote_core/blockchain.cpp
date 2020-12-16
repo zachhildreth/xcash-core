@@ -3964,7 +3964,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   int settings = 0;
 
   // define macros
-  #define DISPLAY_BLOCK_COUNT 1000
+  #define DISPLAY_BLOCK_COUNT 10
 
   // check if your a current block verifier, and if so just load the current block verifiers list from your own delegate, as this will keep block producing going when 0 network data nodes are online
   if (send_and_receive_data(xcash_dpops_delegates_ip_address,NODE_TO_BLOCK_VERIFIERS_CHECK_IF_CURRENT_BLOCK_VERIFIER_MESSAGE) == "1")
@@ -4051,9 +4051,6 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
       if (std::count(string.begin(), string.end(), '|') >= DISPLAY_BLOCK_COUNT)
       {
         MGINFO_YELLOW("Downloading block data from the current block verifiers, this might take a while");
-      }
-      if (std::count(string.begin(), string.end(), '|') > 10)
-      {
         settings = 1;
       }
     }
