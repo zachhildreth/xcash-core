@@ -2718,7 +2718,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid team. Team length must be less than 255");
       return true;  
     }
-    if (args[0] == "shared_delegate_status" && args[1] != "true" && args[1] != "false")
+    if (args[0] == "shared_delegate_status" && args[1] != "solo" && args[1] != "shared" && args[1] != "group")
     {
       fail_msg_writer() << tr("Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false");
       return true;  

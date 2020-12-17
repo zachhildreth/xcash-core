@@ -2531,7 +2531,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     {
       return "Failed to update the delegates information\nInvalid team. Team length must be less than 255";  
     }
-    if (item == "shared_delegate_status" && value != "true" && value!= "false")
+    if (item == "shared_delegate_status" && value != "solo" && value != "shared" && value!= "group")
     {
       return "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false";  
     }

@@ -3808,7 +3808,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
     er.message = "Failed to update the delegates information\nInvalid team. Team length must be less than 255";
     return false; 
   }
-  if (req.item == "shared_delegate_status" && req.value != "true" && req.value != "false")
+  if (req.item == "shared_delegate_status" && req.value != "solo" && req.value != "shared" && req.value != "group")
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
     er.message = "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false";
