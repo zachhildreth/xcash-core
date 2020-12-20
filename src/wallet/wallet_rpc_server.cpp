@@ -3811,7 +3811,7 @@ bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGAT
   if (req.item == "shared_delegate_status" && req.value != "solo" && req.value != "shared" && req.value != "group")
   {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false";
+    er.message = "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either solo, shared or group";
     return false; 
   }
   if (req.item == "delegate_fee" && req.value.length() > 10)

@@ -2533,7 +2533,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
     }
     if (item == "shared_delegate_status" && value != "solo" && value != "shared" && value!= "group")
     {
-      return "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false";  
+      return "Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either solo, shared or group";  
     }
     if (item == "delegate_fee" && value.length() > 10)
     {

@@ -2720,7 +2720,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     }
     if (args[0] == "shared_delegate_status" && args[1] != "solo" && args[1] != "shared" && args[1] != "group")
     {
-      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either true or false");
+      fail_msg_writer() << tr("Failed to update the delegates information\nInvalid shared_delegate_status. shared_delegate_status must be either solo, shared or group");
       return true;  
     }
     if (args[0] == "delegate_fee" && args[1].length() > 10)
