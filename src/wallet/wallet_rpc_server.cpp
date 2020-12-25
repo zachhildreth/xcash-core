@@ -3409,7 +3409,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       current_date_and_time = std::time(0);
       current_UTC_date_and_time = std::gmtime(&current_date_and_time);
-    } while (current_UTC_date_and_time->tm_min != 2); 
+    } while (current_UTC_date_and_time->tm_min != 3); 
   }
 
   // wait a random amount of time, so all messages from delegates that have been waiting dont get sent at the same time
