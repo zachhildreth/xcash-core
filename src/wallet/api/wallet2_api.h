@@ -940,6 +940,8 @@ struct Wallet
     virtual std::string delegate_recover(const  std::string &domain_name)  = 0;
 
     virtual std::string vote_status()  = 0;
+
+    virtual std::string revote()  = 0;
 };
 
 /**

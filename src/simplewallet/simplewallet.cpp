@@ -2973,12 +2973,12 @@ bool simple_wallet::vote_status(const std::vector<std::string>& args)
   }
   if (m_wallet->watch_only() || m_wallet->multisig())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Failed to get the vote status\nThe reserve proof can be generated only by a full wallet");
     return true;
   }
   if (!try_connect_to_daemon())
   {
-    fail_msg_writer() << tr("Failed to send the vote\nFailed to connect to the daemon");
+    fail_msg_writer() << tr("Failed to get the vote status\nFailed to connect to the daemon");
     return true;
   }
 
@@ -2999,7 +2999,7 @@ bool simple_wallet::vote_status(const std::vector<std::string>& args)
   
   if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
+    fail_msg_writer() << tr("Failed to get the vote status\nInvalid public address. Only XCA addresses are allowed.");
     return true;  
   }
 
@@ -3037,6 +3037,205 @@ bool simple_wallet::vote_status(const std::vector<std::string>& args)
   catch (...)
   {
     fail_msg_writer() << tr("Failed to get the vote status");
+  }
+  return true; 
+}
+
+bool simple_wallet::revote(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string delegate_name = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  uint64_t current_block_height;
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  int random_network_data_node;
+  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+
+  try
+  {
+  // error check   
+  if (m_wallet->key_on_device())
+  {
+    fail_msg_writer() << tr("Failed to revote\nCommand not supported by HW wallet");
+    return true;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    fail_msg_writer() << tr("Failed to revote\nThe reserve proof can be generated only by a full wallet");
+    return true;
+  }
+  if (!try_connect_to_daemon())
+  {
+    fail_msg_writer() << tr("Failed to revote\nFailed to connect to the daemon");
+    return true;
+  }
+
+  // ask for the password
+  SCOPED_WALLET_UNLOCK();
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    fail_msg_writer() << tr("Failed to revote\nInvalid public address. Only XCA addresses are allowed.");
+    return true;  
+  }
+
+  // create the data
+  data2 = "NODE_TO_NETWORK_DATA_NODES_CHECK_VOTE_STATUS|" + public_address + "|";  
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  // send the message to a random network data node
+  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  {
+    do
+    {
+      // get a random network data node
+      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
+    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+
+    network_data_nodes_array[count] = random_network_data_node;
+
+    // get the block verifiers list from the network data node
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],data2);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+
+  if (count == NETWORK_DATA_NODES_AMOUNT)
+  {
+    fail_msg_writer() << tr("Failed to revote");
+    return true;
+  }
+
+  // get the delegate name
+  if (string.find("delegate_name:") == std::string::npos)
+  {
+    fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
+    return true; 
+  }
+
+  delegate_name = string.substr(15,string.find(",")-15);
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    fail_msg_writer() << tr("Failed to revote\n");
+    return true; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to create the reserve proof");
+    return true;  
+  }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    fail_msg_writer() << tr("Failed to revote\nReserve proof is over the maximum length");
+    return true;  
+  }
+
+  // get the current block height
+  current_block_height = m_wallet->get_blockchain_current_height();
+
+   // create the data
+  data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + delegate_name + "|" + reserve_proof + "|" + public_address + "|";
+ 
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+  {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The vote was successfully added to the database")
+    {
+      count2++;
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      {
+        count3++;
+      }
+    } 
+    else
+    {
+      error_message = data3;
+    }     
+  }
+
+  // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
+  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
+  {
+    message_writer(console_color_green, false) << "Revote has been sent successfully";             
+  }
+  else
+  {
+    fail_msg_writer() << tr("Failed to revote"); 
+    fail_msg_writer() << error_message;  
+  }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to revote");
   }
   return true; 
 }
@@ -3424,6 +3623,10 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::vote_status, this, _1),
                            tr("vote_status"),
                            tr("Gets the vote status of the wallet (delegate name voted to and the total)"));
+  m_cmd_binder.set_handler("revote",
+                           boost::bind(&simple_wallet::revote, this, _1),
+                           tr("revote"),
+                           tr("Revotes to the currently staked to delegate with the full wallet balance"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
