@@ -2842,6 +2842,8 @@ std::string WalletImpl::vote_status() {
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+  std::string delegate_name = "";
+  double total;
 
   try
   {
@@ -2873,7 +2875,7 @@ std::string WalletImpl::vote_status() {
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
   {
     do
     {
@@ -2893,6 +2895,10 @@ std::string WalletImpl::vote_status() {
   {
     return "Failed to get the vote status"; 
   }
+
+  delegate_name = string.substr(15,string.find(",")-15);
+  total = std::stod(string.substr(string.find("total: ")+7)) / COIN; 
+  string = "delegate_name: " + delegate_name + ", total: " + std::to_string(total);
 
   return string;
 
@@ -2961,7 +2967,7 @@ std::string WalletImpl::revote() {
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
   {
     do
     {

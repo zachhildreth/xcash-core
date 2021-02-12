@@ -4039,6 +4039,8 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+  std::string delegate_name = "";
+  double total;
 
   try
   {
@@ -4088,7 +4090,7 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
   {
     do
     {
@@ -4110,6 +4112,10 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
     er.message = "Failed to check the vote status";
     return false;
   }
+
+  delegate_name = string.substr(15,string.find(",")-15);
+  total = std::stod(string.substr(string.find("total: ")+7)) / COIN; 
+  string = "delegate_name: " + delegate_name + ", total: " + std::to_string(total);
 
   res.status = string;
   return true; 
@@ -4200,7 +4206,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
   // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
   {
     do
     {
