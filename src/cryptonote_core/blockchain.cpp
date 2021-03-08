@@ -3939,7 +3939,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
 }
 
 
-bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
+int get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height,const block bl)
 {
   // structures
   struct network_data_nodes_list {
@@ -3962,6 +3962,10 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
   int settings = 0;
+  bool live_sync = false;
+  int verification_count = 0;
+  std::string network_block_string;
+  std::string data_hash;
 
   // define macros
   #define DISPLAY_BLOCK_COUNT 10
@@ -3999,7 +4003,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
   if (count == NETWORK_DATA_NODES_AMOUNT)
   {
     MGINFO_RED("Could not get the list of current block verifiers");
-    return false;
+    return 0;
   }
 
   start:
@@ -4023,7 +4027,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     // sign the data
     if (sign_data(message) == 0)
     {
-      return false;
+      return 0;
     }
 
     message_string += message;
@@ -4033,7 +4037,7 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
     message_string = "{\r\n \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH\",\r\n \"block_height\": \"" + std::to_string(current_block_height) + "\",\r\n}";
   }
 
-  // get the reserve bytes database hash from each block verifier up to a maxium of 288 * 30 blocks
+  // get the reserve bytes database hash from each block verifier up to a maxium of 288 blocks
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
     // get the current block verifier
@@ -4055,10 +4059,43 @@ bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_d
       }
     }
 
+    // check if this is a live sync (meaning your only syncing 1 block as it gets added to the network) to speed of syncing for delegates
+    if (!live_sync && string != "" && string.length() == DATA_HASH_LENGTH+1 && std::count(string.begin(), string.end(), '|') == 1)
+    {
+      live_sync = true;
+
+      // get the network block string 
+      network_block_string = epee::string_tools::buff_to_hex_nodelimer(t_serializable_object_to_blob(bl));
+
+      // get the data hash
+      data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
+    }
+
+    // add the received block data to the block_verifiers_database_hashes
     block_verifiers_database_hashes[count] = string == NODE_TO_BLOCK_VERIFIERS_GET_RESERVE_BYTES_DATABASE_HASH_ERROR_MESSAGE || string == "" ? "" : string;
+
+    // if live_sync is turned on, every data we receive verify right now, this way we could possibly save 50-27 = 23 checks to delegates
+    if (live_sync)
+    {
+      if (string.length() == DATA_HASH_LENGTH+1 && std::count(string.begin(), string.end(), '|') == 1 && string != "" && data_hash == string.substr(0,DATA_HASH_LENGTH))
+      {
+        verification_count++;
+      }
+   
+      // check if we have enough verifications to add the block to the network, and reset the block_verifiers_database_hashes if we do
+      if (verification_count >= BLOCK_VERIFIERS_VALID_AMOUNT)
+      {
+        // reset the block_verifiers_database_hashes
+        for (count = 0; count < BLOCK_VERIFIERS_TOTAL_AMOUNT; count++)
+        {
+          block_verifiers_database_hashes[count] = "";
+        }
+        return BLOCK_VERIFIERS_TOTAL_AMOUNT;
+      }
+    }
   }
 
-  return true;
+  return 1;
 
   #undef DISPLAY_BLOCK_COUNT
 }
@@ -4087,6 +4124,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
 {
   // Variables
   std::size_t count = 0;
+  int count2;
   
   #define CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR(message) \
   MGINFO_RED(message); \
@@ -4096,13 +4134,19 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   } \
   return false;
 
-  // check if you need to get the datbase hashes. This will be the first time running the program, or if you have synced 288 * 30 blocks and need the next 288 * 30 blocks database hashes
+  // check if you need to get the datbase hashes. This will be the first time running the program, or if you have synced 288 * 30 blocks and need the next 288 blocks database hashes
   if (check_if_synced(block_verifiers_database_hashes))
   {
-    // get the decentralized database hash for each block from the current block on the local copy of the blockchain to the synced current network block up to a maximum of 288 * 30 blocks
-    if (!get_network_block_database_hash(block_verifiers_database_hashes,current_block_height))
+    // get the decentralized database hash for each block from the current block on the local copy of the blockchain to the synced current network block up to a maximum of 288 blocks
+    count2 = get_network_block_database_hash(block_verifiers_database_hashes,current_block_height,bl);
+    if (count2 == 0)
     {
       CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Could not receive the blocks database hashes from the block verifiers");
+    }
+    else if (count2 == BLOCK_VERIFIERS_TOTAL_AMOUNT)
+    {
+      // live syncing mode was enabled and the block verification has already happened
+      return true;
     }
   }
 
