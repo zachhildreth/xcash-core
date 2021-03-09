@@ -3157,6 +3157,18 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
   delegate_name = string.substr(15,string.find(",")-15);
 
+  // make sure the user still wants to vote for that delegate
+  std::string prompt_str = input_line((boost::format(tr("Revoting for %s. Is this okay? (Y/Yes/N/No): ")) % delegate_name).str());
+  if (std::cin.eof())
+  {
+    return true;
+  }
+  if (!command_line::is_yes(prompt_str))
+  {
+    fail_msg_writer() << tr("Failed to revote\n");
+    return true; 
+  }
+
   // wait until the next valid data time
   sync_minutes_and_seconds(1);
 
