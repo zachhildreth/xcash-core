@@ -2927,6 +2927,7 @@ std::string WalletImpl::revote() {
   std::string data2 = "";
   std::string data3 = ""; 
   std::string error_message;
+  std::string errorInfo= ":";
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
@@ -2985,13 +2986,13 @@ std::string WalletImpl::revote() {
 
   if (count == NETWORK_DATA_NODES_AMOUNT)
   {
-    return "Failed to revote"
+    return "Failed to revote";
   }
 
   // get the delegate name
   if (string.find("delegate_name:") == std::string::npos)
   {
-    return "Failed to revote"
+    return "Failed to revote";
   }
 
   delegate_name = string.substr(15,string.find(",")-15);
@@ -3002,7 +3003,7 @@ std::string WalletImpl::revote() {
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
-    return "Failed to revote"
+    return "Failed to revote";
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
@@ -3027,7 +3028,7 @@ std::string WalletImpl::revote() {
   }
   catch (...)
   {
-    return "Failed to create the reserve proof"
+    return "Failed to create the reserve proof";
   }
 
   // check if the reserve proof is not over the maximum length
