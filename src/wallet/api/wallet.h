@@ -198,9 +198,9 @@ public:
     virtual std::string delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) override;
     virtual std::string delegate_update(const  std::string &item,const  std::string &value)  override;
     virtual std::string vote(const  std::string &value) override;
-    virtual std::string WalletImpl::delegate_recover(const  std::string &domain_name)  override;
-    virtual std::string WalletImpl::vote_status()  override;
-    virtual std::string WalletImpl::revote()  override;
+    virtual std::string delegate_recover(const  std::string &domain_name)  override;
+    virtual std::string vote_status()  override;
+    virtual std::string revote()  override;
 
 private:
     void clearStatus() const;

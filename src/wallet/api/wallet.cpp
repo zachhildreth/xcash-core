@@ -2843,6 +2843,7 @@ std::string WalletImpl::vote_status() {
   int random_network_data_node;
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
   std::string delegate_name = "";
+  std::string errorInfo= ":";
   double total;
 
   try
@@ -2936,6 +2937,7 @@ std::string WalletImpl::revote() {
   uint64_t current_block_height;
   struct network_data_nodes_list network_data_nodes_list; // The network data nodes
   int random_network_data_node;
+  std::string errorInfo= ":";
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
 
   try
@@ -3034,7 +3036,7 @@ std::string WalletImpl::revote() {
   // check if the reserve proof is not over the maximum length
   if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
   {
-    return "Failed to create the reserve proof\nReserve proof is over the maximum length");
+    return "Failed to create the reserve proof\nReserve proof is over the maximum length";
   }
 
   // get the current block height
@@ -3070,11 +3072,6 @@ std::string WalletImpl::revote() {
   {
         return "Success";  
   }
-  }catch (const std::exception &e) {
-    LOG_ERROR("Failed to send the vote: " << e.what());
-  }
-  return "Failed to revote"+ errorInfo; 
- }
 
   }catch (const std::exception &e) {
     LOG_ERROR("Failed to check the vote status: " << e.what());
