@@ -3890,7 +3890,7 @@ int sign_data(char *message)
 
 
 
-bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl)
+bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl,std::size_t current_block_height)
 {
   // Variables
   std::string network_block_string;
@@ -3925,11 +3925,11 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
   // fix live_sync issues commit possibly?
-  if (data_hash == "7c2748de805cefcf59d7f0fce292d67c5a824561625eec4d8ead0758ce207a1e5242a13c381b17142ffbb061a788c8944ac0b05e8db8a0062900fe87e6695314")
+  if (current_block_height == 808874 && data_hash == "7c2748de805cefcf59d7f0fce292d67c5a824561625eec4d8ead0758ce207a1e5242a13c381b17142ffbb061a788c8944ac0b05e8db8a0062900fe87e6695314")
   {
     data_hash = "82f14cfb3e87aedc0c5eff17e51ad65e29b28852372e593d6605b0c4db7487c530d23fe77f29b34f0929f9066b7bdc8689e263923c981c2fd471620a400b314a";
   }
-  if (data_hash == "046fa0e4a6b67aa5bf79dd051a34c7b4903c0343be6c6c48700445fc190fc375e71edc9d82c4d77726becd0d568d9e5c4b48158306e061848bfcb02a576e8971")
+  if (current_block_height == 809080 && data_hash == "046fa0e4a6b67aa5bf79dd051a34c7b4903c0343be6c6c48700445fc190fc375e71edc9d82c4d77726becd0d568d9e5c4b48158306e061848bfcb02a576e8971")
   {
     data_hash = "4a7aaa564815995b9316ab7fc6da3e6cbcd32bcdf4fd13ddac028632da1e4f24668c95b5a6a109821de117ac8092cc845381b5284bfd303f3427031be9a209cc";
   }
@@ -4117,7 +4117,7 @@ bool check_block_verifier_node_signed_block(const block bl, std::size_t current_
   }
 
   // verify the current block
-  if (!verify_network_block(block_verifiers_database_hashes,bl))
+  if (!verify_network_block(block_verifiers_database_hashes,bl,current_block_height))
   {
     CHECK_BLOCK_VERIFIER_NODE_SIGNED_BLOCK_ERROR("Invalid data hash for block " << current_block_height);
   }
