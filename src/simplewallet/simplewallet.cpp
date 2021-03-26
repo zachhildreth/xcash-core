@@ -2386,31 +2386,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
-
-  // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "")
-  {
-    fail_msg_writer() << tr("Failed to send the vote\n");
-    return true; 
-  }
-
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
-  {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
-  }
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-  // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
-  }
-
   // get the wallet transfers   
   m_wallet->get_transfers(transfers);
 
@@ -2448,6 +2423,31 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   {
     fail_msg_writer() << tr("Failed to send the vote\nReserve proof is over the maximum length");
     return true;  
+  }
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    fail_msg_writer() << tr("Failed to send the vote\n");
+    return true; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
   }
 
   // get the current block height
@@ -3169,6 +3169,24 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     return true; 
   }
 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to create the reserve proof");
+    return true;  
+  }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    fail_msg_writer() << tr("Failed to revote\nReserve proof is over the maximum length");
+    return true;  
+  }
+
   // wait until the next valid data time
   sync_minutes_and_seconds(1);
 
@@ -3192,24 +3210,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
-  }
-
-  // create a reserve proof for the wallets balance  
-  try
-  {
-    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
-  }
-  catch (...)
-  {
-    fail_msg_writer() << tr("Failed to create the reserve proof");
-    return true;  
-  }
-
-  // check if the reserve proof is not over the maximum length
-  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
-  {
-    fail_msg_writer() << tr("Failed to revote\nReserve proof is over the maximum length");
-    return true;  
   }
 
   // get the current block height

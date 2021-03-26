@@ -2649,31 +2649,7 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   try
   {
 
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
-
-  // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "")
-  {
-    return "Failed to send the vote with timeout"; 
-  }
-
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
-  {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
-  }
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-  // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
-  }
-
-  // get the wallet transfers   
+   // get the wallet transfers   
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
@@ -2707,6 +2683,30 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
   {
     return "Failed to send the vote\nReserve proof is over the maximum length";  
+  }
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    return "Failed to send the vote with timeout"; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
   }
 
   // get the current block height

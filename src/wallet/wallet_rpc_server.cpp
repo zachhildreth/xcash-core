@@ -3499,32 +3499,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     return false;
   }
 
-  // wait until the next valid data time
-  sync_minutes_and_seconds(1);
-
-  // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "")
-  {
-    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-    er.message = "Invalid address";
-    return false;
-  }
-
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
-  {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
-  }
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-  // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
-  }
-
   // get the wallet transfers   
   m_wallet->get_transfers(transfers);
 
@@ -3565,6 +3539,32 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
     er.message = "Failed to send the vote\nReserve proof is over the maximum length";
     return false;  
+  }
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(1);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
   }
 
   // get the current block height
@@ -4239,6 +4239,26 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
 
   delegate_name = string.substr(15,string.find(",")-15);
 
+  // create a reserve proof for the wallets balance  
+  try
+  {
+    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
+  }
+  catch (...)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to revote";
+    return false; 
+  }
+
+  // check if the reserve proof is not over the maximum length
+  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to revote, Invalid reserve proof length";
+    return false; 
+  }
+
   // wait until the next valid data time
   sync_minutes_and_seconds(1);
 
@@ -4263,26 +4283,6 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     count3 = string.find("|",count2);
     block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
     count2 = count3 + 1;
-  }
-
-  // create a reserve proof for the wallets balance  
-  try
-  {
-    reserve_proof = m_wallet->get_reserve_proof(account_minreserve, "");
-  }
-  catch (...)
-  {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to revote";
-    return false; 
-  }
-
-  // check if the reserve proof is not over the maximum length
-  if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF)
-  {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Failed to revote, Invalid reserve proof length";
-    return false; 
   }
 
   // get the current block height
