@@ -3937,6 +3937,10 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   {
     data_hash = "5363a5b4a077e4707a8d01e4cee81a9c798728fa2baefd0f91ee3aed78f97acf7d28c6153827b6ba150c39fb96286a5c6609257ff4abd4a5b467e54a968b804b";
   }
+  if (current_block_height == 819279 && data_hash == "6fc3dd9d1d0ff0a423ae42e137d6a3568149bd34f7884bec18e7a07668b9f6548a64c365142dabf8a4451c71039afe8c0224cd08454fa74c520480c69148370f")
+  {
+    data_hash = "11cb9a737266c2f152e586dff0ea93609588a33215216a7a8dd51756372b6785b14cb50f66d51e33ecc719a3dd660ef2c9435f3a2f41ad81907b7cc84828a6b4";
+  }
 
   // check if the blocks reserve bytes hash matches any of the network data nodes
   VERIFY_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes,block_verifier_count);
