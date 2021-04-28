@@ -4178,7 +4178,7 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
   }
 
   // check if the block is valid in the X-CASH proof of stake
-  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (const std::size_t)m_db->height()))
+  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
   {
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
