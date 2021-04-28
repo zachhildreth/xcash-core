@@ -3888,9 +3888,31 @@ int sign_data(char *message)
   #undef SIGN_DATA_ERROR
 }
 
+void check_data_hash(const std::size_t current_block_height,std::string &data_hash)
+{
+  if (current_block_height == 808874 && data_hash == "7c2748de805cefcf59d7f0fce292d67c5a824561625eec4d8ead0758ce207a1e5242a13c381b17142ffbb061a788c8944ac0b05e8db8a0062900fe87e6695314")
+  {
+    data_hash = "82f14cfb3e87aedc0c5eff17e51ad65e29b28852372e593d6605b0c4db7487c530d23fe77f29b34f0929f9066b7bdc8689e263923c981c2fd471620a400b314a";
+  }
+  else if (current_block_height == 809080 && data_hash == "046fa0e4a6b67aa5bf79dd051a34c7b4903c0343be6c6c48700445fc190fc375e71edc9d82c4d77726becd0d568d9e5c4b48158306e061848bfcb02a576e8971")
+  {
+    data_hash = "4a7aaa564815995b9316ab7fc6da3e6cbcd32bcdf4fd13ddac028632da1e4f24668c95b5a6a109821de117ac8092cc845381b5284bfd303f3427031be9a209cc";
+  }
+  else if (current_block_height == 814024 && data_hash == "535eaccc8650ebd8f52b9f77aaedceaf166b4500d8532dfe6233a9a2c50f67ec50ff4b7083ba1ee7767b45801857cbce417f7ab695d73edd7de0808ffc4c75d3")
+  {
+    data_hash = "5363a5b4a077e4707a8d01e4cee81a9c798728fa2baefd0f91ee3aed78f97acf7d28c6153827b6ba150c39fb96286a5c6609257ff4abd4a5b467e54a968b804b";
+  }
+  else if (current_block_height == 819279 && data_hash == "6fc3dd9d1d0ff0a423ae42e137d6a3568149bd34f7884bec18e7a07668b9f6548a64c365142dabf8a4451c71039afe8c0224cd08454fa74c520480c69148370f")
+  {
+    data_hash = "11cb9a737266c2f152e586dff0ea93609588a33215216a7a8dd51756372b6785b14cb50f66d51e33ecc719a3dd660ef2c9435f3a2f41ad81907b7cc84828a6b4";
+  }
+  else if (current_block_height == 820980 && data_hash == "71cabbc78313369ce14398c7cf59ddaf048056b3f7f216beff8eea438d1ec075fe120b2b5097cfa38787a5948501b33ef2c1f7cd6fd9d13e720e754c1718a6a8")
+  {
+    data_hash = "dc63a8c27b8d57a037e27db7e68de3514fc4ceb3eb0d141d6ae0605e4bda267ff94213b7a337584d745b0c40080185dd717f47e99319d12f73bb95dfa13e4208";
+  }
+}
 
-
-bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl,std::size_t current_block_height)
+bool verify_network_block(std::vector<std::string> &block_verifiers_database_hashes, const block bl,const std::size_t current_block_height)
 {
   // Variables
   std::string network_block_string;
@@ -3924,23 +3946,8 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
   // get the data hash
   data_hash = network_block_string.substr(network_block_string.find(BLOCKCHAIN_RESERVED_BYTES_START)+sizeof(BLOCKCHAIN_RESERVED_BYTES_START)-1,DATA_HASH_LENGTH);
 
-  // fix live_sync issues commit possibly?
-  if (current_block_height == 808874 && data_hash == "7c2748de805cefcf59d7f0fce292d67c5a824561625eec4d8ead0758ce207a1e5242a13c381b17142ffbb061a788c8944ac0b05e8db8a0062900fe87e6695314")
-  {
-    data_hash = "82f14cfb3e87aedc0c5eff17e51ad65e29b28852372e593d6605b0c4db7487c530d23fe77f29b34f0929f9066b7bdc8689e263923c981c2fd471620a400b314a";
-  }
-  if (current_block_height == 809080 && data_hash == "046fa0e4a6b67aa5bf79dd051a34c7b4903c0343be6c6c48700445fc190fc375e71edc9d82c4d77726becd0d568d9e5c4b48158306e061848bfcb02a576e8971")
-  {
-    data_hash = "4a7aaa564815995b9316ab7fc6da3e6cbcd32bcdf4fd13ddac028632da1e4f24668c95b5a6a109821de117ac8092cc845381b5284bfd303f3427031be9a209cc";
-  }
-  if (current_block_height == 814024 && data_hash == "535eaccc8650ebd8f52b9f77aaedceaf166b4500d8532dfe6233a9a2c50f67ec50ff4b7083ba1ee7767b45801857cbce417f7ab695d73edd7de0808ffc4c75d3")
-  {
-    data_hash = "5363a5b4a077e4707a8d01e4cee81a9c798728fa2baefd0f91ee3aed78f97acf7d28c6153827b6ba150c39fb96286a5c6609257ff4abd4a5b467e54a968b804b";
-  }
-  if (current_block_height == 819279 && data_hash == "6fc3dd9d1d0ff0a423ae42e137d6a3568149bd34f7884bec18e7a07668b9f6548a64c365142dabf8a4451c71039afe8c0224cd08454fa74c520480c69148370f")
-  {
-    data_hash = "11cb9a737266c2f152e586dff0ea93609588a33215216a7a8dd51756372b6785b14cb50f66d51e33ecc719a3dd660ef2c9435f3a2f41ad81907b7cc84828a6b4";
-  }
+  // check data hash
+  check_data_hash(current_block_height,data_hash);
 
   // check if the blocks reserve bytes hash matches any of the network data nodes
   VERIFY_DATA_HASH(BLOCK_VERIFIERS_TOTAL_AMOUNT,block_verifiers_database_hashes,block_verifier_count);
@@ -3957,7 +3964,7 @@ bool verify_network_block(std::vector<std::string> &block_verifiers_database_has
 }
 
 
-bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,std::size_t current_block_height)
+bool get_network_block_database_hash(std::vector<std::string> &block_verifiers_database_hashes,const std::size_t current_block_height)
 {
   // structures
   struct network_data_nodes_list {
@@ -4101,7 +4108,7 @@ bool check_if_synced(const std::vector<std::string> block_verifiers_database_has
 
 
 
-bool check_block_verifier_node_signed_block(const block bl, std::size_t current_block_height)
+bool check_block_verifier_node_signed_block(const block bl, const std::size_t current_block_height)
 {
   // Variables
   std::size_t count = 0;
@@ -4171,7 +4178,7 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
   }
 
   // check if the block is valid in the X-CASH proof of stake
-  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (std::size_t)m_db->height()))
+  if (version >= HF_VERSION_PROOF_OF_STAKE && !check_block_verifier_node_signed_block(bl, (const std::size_t)m_db->height()))
   {
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
