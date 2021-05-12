@@ -942,6 +942,14 @@ struct Wallet
     virtual std::string vote_status()  = 0;
 
     virtual std::string revote()  = 0;
+
+    virtual std::string public_transactions_get_fee() = 0;
+
+    virtual std::string public_transactions_update_fee(const std::string &item,const std::string &value) = 0;
+
+    virtual std::string on_public_transactions_check_address(const std::string &public_addresses) = 0;
+
+    virtual std::string on_public_transactions_register(const std::string &tx_hash, const std::string &tx_key) = 0;
 };
 
 /**
@@ -1210,4 +1218,5 @@ struct WalletManagerFactory
 }
 
 namespace Bitxcash = XCash;
+
 

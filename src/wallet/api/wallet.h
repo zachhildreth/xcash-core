@@ -201,6 +201,10 @@ public:
     virtual std::string delegate_recover(const  std::string &domain_name)  override;
     virtual std::string vote_status()  override;
     virtual std::string revote()  override;
+    virtual std::string public_transactions_get_fee()  override;
+    virtual std::string public_transactions_update_fee(const std::string &item,const std::string &value)  override;
+    virtual std::string on_public_transactions_check_address(const std::string &public_addresses)  override;
+    virtual std::string on_public_transactions_register(const std::string &tx_hash, const std::string &tx_key)  override;    
 
 private:
     void clearStatus() const;
@@ -263,4 +267,5 @@ private:
 namespace Bitxcash = XCash;
 
 #endif
+
 

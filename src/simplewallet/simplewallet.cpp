@@ -3258,6 +3258,427 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   return true; 
 }
 
+bool simple_wallet::public_transactions_get_fee(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_WIDTH 30
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "----------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_FEE\",\r\n}"
+  #define GET_PUBLIC_TRANSACTIONS_FEE_ERROR \
+  tools::color_print(epee::console_color_red) << "Could not get the spublic transactions fees"; \
+  return true;
+
+  try
+  {
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      GET_PUBLIC_TRANSACTIONS_FEE_ERROR;
+    }
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nPUBLIC TRANSACTIONS FEES\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("PUBLIC_TRANSACTIONS_FEE")-1)+TABLE_INDENTATION) << "PUBLIC_TRANSACTIONS_FEE" << std::setw(TABLE_WIDTH-((sizeof("PUBLIC_TRANSACTIONS_FEE")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("FEE")-1)+TABLE_INDENTATION) << "FEE" << std::setw(TABLE_WIDTH-((sizeof("FEE")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING;
+
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 != 0)
+      {
+        std::cout << std::setw(data.length()+TABLE_INDENTATION) << data << std::setw(TABLE_WIDTH-(data.length()+2)) << TABLE_COLUMN_STRING;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+    std::cout << std::endl << TABLE_DATA << std::endl;
+  }
+  catch (...)
+  {
+    GET_PUBLIC_TRANSACTIONS_FEE_ERROR;
+  }
+  return true;
+
+  #undef TABLE_WIDTH
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+  #undef GET_PUBLIC_TRANSACTIONS_FEE_ERROR
+  #undef MESSAGE
+}
+
+bool simple_wallet::public_transactions_update_fee(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    // error check
+    if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Could not update the public transactions fee\nInvalid parameters");
+      return true;
+    } 
+
+    // check if the fee to update is a valid fee item
+    if (args[0] != "smart_contract_fee" && args[0] != "fee")
+    { 
+      fail_msg_writer() << tr("Could not update the public transactions fee");
+      return true;  
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Could not update the public transactions fee\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Could not update the public transactions fee\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_FEE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the smart contract fee")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      message_writer(console_color_green, false) << "The public transactions fee has been updated successfully";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Could not update the public transactions fee");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Could not update the public transactions fee");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
+bool simple_wallet::public_transactions_check_address(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  try
+  {    
+    if (args.empty())
+    {
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        fail_msg_writer() << tr("Could not check the public address");
+        return true;
+      }
+    }
+    else
+    {
+      // error check
+      if (args.front().length() != XCASH_WALLET_LENGTH)
+      {
+        fail_msg_writer() << tr("Invalid public address");
+        return true;
+      }
+      public_address = args.front();
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_PUBLIC_ADDRESS\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Could not check the public address");
+      return true;
+    }
+
+    string == "The public address is in the public address database" ? message_writer(console_color_green, false) << public_address << " is a public transaction only address" : message_writer(console_color_red, false) << public_address << " is not a public transaction only address";
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Could not check the public address");
+    return true;
+  }
+  return true;
+}
+
+std::string get_view_key(const crypto::secret_key &k)
+{
+  // Variables
+  std::string result = "";
+
+  static constexpr const char hex[] = u8"0123456789abcdef";
+  const uint8_t *ptr = (const uint8_t*)k.data;
+  for (size_t i = 0, sz = sizeof(k); i < sz; ++i)
+  {
+    result += hex[*ptr >> 4];
+    result += hex[*ptr & 15];
+    ++ptr;
+  }
+  return result;
+}
+
+bool simple_wallet::public_transactions_register(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string view_key = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    // error check
+    if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Could not register the public address\nInvalid parameters");
+      return true;
+    } 
+
+    // check if the fee to update is a valid fee item
+    if (args[0] != "smart_contract_fee" && args[0] != "fee")
+    { 
+      fail_msg_writer() << tr("Could not register the public address");
+      return true;  
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Could not register the public address");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Could not register the public address\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+
+    // get the view key
+    view_key = get_view_key(m_wallet->get_account().get_keys().m_view_secret_key);
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_PUBLIC_ADDRESS|" + view_key + args[0] + "|" + args[1] + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Registered the public address")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      message_writer(console_color_green, false) << "The public address has been registered";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Could not register the public address");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Could not register the public address");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -3645,6 +4066,22 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::revote, this, _1),
                            tr("revote"),
                            tr("Revotes to the currently staked to delegate with the full wallet balance"));
+  m_cmd_binder.set_handler("public_transactions_get_fee",
+                           boost::bind(&simple_wallet::public_transactions_get_fee, this, _1),
+                           tr("public_transactions_get_fee"),
+                           tr("Gets the public transactions fees"));
+  m_cmd_binder.set_handler("public_transactions_update_fee",
+                           boost::bind(&simple_wallet::public_transactions_update_fee, this, _1),
+                           tr("public_transactions_update_fee <item> <value>"),
+                           tr("Updates the public transactions fee. Valid items are fee"));
+  m_cmd_binder.set_handler("public_transactions_check_address",
+                           boost::bind(&simple_wallet::public_transactions_check_address, this, _1),
+                           tr("public_transactions_check_address <public_addresses> (this can be left empty for the wallets public address)"),
+                           tr("Checks if a public address is registered as a public transactions only address"));
+  m_cmd_binder.set_handler("public_transactions_register",
+                           boost::bind(&simple_wallet::public_transactions_register, this, _1),
+                           tr("public_transactions_register <tx_hash> <tx_key>"),
+                           tr("Register your wallet as a public transactions only wallet. This will only allow your wallet to receive public transactions. Make sure you pay the delegates fee, then run the command with the tx_hash and tx_key of the fee transaction."));  
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),

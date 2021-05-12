@@ -4330,6 +4330,435 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
   }
   return true;
 }
+
+bool wallet_rpc_server::on_public_transactions_get_fee(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE::response& res, epee::json_rpc::error& er)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define PUBLIC_TRANSACTIONS_GET_FEE_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_FEE\",\r\n}"
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      PUBLIC_TRANSACTIONS_GET_FEE_ERROR("Failed to get the public transactions fee");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      PUBLIC_TRANSACTIONS_GET_FEE_ERROR("Failed to get the public transactions fee");
+    }
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      PUBLIC_TRANSACTIONS_GET_FEE_ERROR("Failed to get the public transactions fee");
+    }
+
+    res.status = string;
+    return true;   
+  }
+  catch (...)
+  {
+    PUBLIC_TRANSACTIONS_GET_FEE_ERROR("Failed to get the public transactions fee");
+  }
+  return true;
+
+  #undef PUBLIC_TRANSACTIONS_GET_FEE_ERROR
+  #undef MESSAGE
+}
+
+bool wallet_rpc_server::on_public_transactions_update_fee(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR("Could not update the public transactions fee");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR("Could not update the public transactions fee");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_FEE|" + req.item + "|" + req.value + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the public transactions 2 fee")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR("Could not update the public transactions fee");
+    } 
+  }
+  catch (...)
+  {
+    PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR("Could not update the public transactions fee");
+  }
+  return true; 
+
+  #undef PUBLIC_TRANSACTIONS_UPDATE_FEE_ERROR
+}
+
+bool wallet_rpc_server::on_public_transactions_check_address(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS::response& res, epee::json_rpc::error& er)
+{
+    // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {   
+
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR("Could not check the public address");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR("Could not check the public address");
+    }
+ 
+    if (req.public_address == "")
+    {
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+        er.message = "Invalid address";
+        return false;
+      }
+    }
+    else
+    {
+      // error check
+      if (req.public_address.length() != XCASH_WALLET_LENGTH)
+      {
+        PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR("Could not check the public address");
+      }
+      public_address = req.public_address;
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_PUBLIC_ADDRESS\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR("Could not check the public address");
+    }
+
+    res.status = string;
+    return true;
+  }
+  catch (...)
+  {
+    PUBLIC_TRANSACTIONS_CHECK_ADDRESS_ERROR("Could not check the public address");
+  }
+  return true;
+}
+
+std::string get_view_key(const crypto::secret_key &k)
+{
+  // Variables
+  std::string result = "";
+
+  static constexpr const char hex[] = u8"0123456789abcdef";
+  const uint8_t *ptr = (const uint8_t*)k.data;
+  for (size_t i = 0, sz = sizeof(k); i < sz; ++i)
+  {
+    result += hex[*ptr >> 4];
+    result += hex[*ptr & 15];
+    ++ptr;
+  }
+  return result;
+}
+
+bool wallet_rpc_server::on_public_transactions_register(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string view_key = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR("Could not register the public address");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR("Could not register the public address");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR("Could not register the public address");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // get the view key
+    view_key = get_view_key(m_wallet->get_account().get_keys().m_view_secret_key);
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_PUBLIC_ADDRESS|" + view_key + req.tx_hash + "|" + req.tx_key + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Registered the public address")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR("Could not register the public address");
+    } 
+  }
+  catch (...)
+  {
+    PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR("Could not register the public address");
+  }
+  return true; 
+
+  #undef PUBLIC_TRANSACTIONS_REGISTER_ADDRESS_ERROR
+}
 }
 
 
@@ -4550,5 +4979,6 @@ int main(int argc, char** argv) {
   return daemonizer::daemonize(argc, const_cast<const char**>(argv), t_executor{}, *vm) ? 0 : 1;
   CATCH_ENTRY_L0("main", 1);
 }
+
 
 

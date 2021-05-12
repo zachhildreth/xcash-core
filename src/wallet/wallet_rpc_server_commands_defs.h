@@ -2081,7 +2081,74 @@ namespace wallet_rpc
     };
   };
 
-  
+  struct COMMAND_RPC_VOTE
+  {
+    struct request
+    {
+      std::string delegate_data;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(delegate_data)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string vote_status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(vote_status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_DELEGATE_REGISTER
+  {
+    struct request
+    {
+      std::string delegate_name;
+      std::string delegate_IP_address;
+      std::string delegates_public_key;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(delegate_name)
+        KV_SERIALIZE(delegate_IP_address)
+        KV_SERIALIZE(delegates_public_key)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string delegate_register_status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(delegate_register_status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_DELEGATE_UPDATE
+  {
+    struct request
+    {
+      std::string item;
+      std::string value;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(item)
+        KV_SERIALIZE(value)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string delegate_update_status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(delegate_update_status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
 
   struct COMMAND_RPC_DELEGATE_RECOVER
   {
@@ -2140,5 +2207,91 @@ namespace wallet_rpc
     };
   };
 
+struct COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE
+  {
+    struct request
+    { 
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE
+  {
+    struct request
+    {
+      std::string item;
+      std::string value;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(item)
+        KV_SERIALIZE(value)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS
+  {
+    struct request
+    {
+      std::string public_address;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(public_address)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER
+  {
+    struct request
+    {
+      std::string tx_hash;
+      std::string tx_key;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash)
+        KV_SERIALIZE(tx_key)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }
+

@@ -151,6 +151,10 @@ namespace tools
         MAP_JON_RPC_WE("delegate_recover",               on_delegate_recover,               wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER)
         MAP_JON_RPC_WE("vote_status",               on_vote_status,               wallet_rpc::COMMAND_RPC_VOTE_STATUS)
         MAP_JON_RPC_WE("revote",               on_revote,               wallet_rpc::COMMAND_RPC_REVOTE)
+        MAP_JON_RPC_WE("public_transactions_get_fee",               on_public_transactions_get_fee,               wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE)
+        MAP_JON_RPC_WE("public_transactions_update_fee",               on_public_transactions_update_fee,               wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE)
+        MAP_JON_RPC_WE("public_transactions_check_address",               on_public_transactions_check_address,               wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS)
+        MAP_JON_RPC_WE("public_transactions_register",               on_public_transactions_register,               wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -235,6 +239,11 @@ namespace tools
       bool on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er);
       bool on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS::request& req, wallet_rpc::COMMAND_RPC_VOTE_STATUS::response& res, epee::json_rpc::error& er);
       bool on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request& req, wallet_rpc::COMMAND_RPC_REVOTE::response& res, epee::json_rpc::error& er);
+      bool on_public_transactions_get_fee(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_GET_FEE::response& res, epee::json_rpc::error& er);
+      bool on_public_transactions_update_fee(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_UPDATE_FEE::response& res, epee::json_rpc::error& er);
+      bool on_public_transactions_check_address(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_CHECK_ADDRESS::response& res, epee::json_rpc::error& er);
+      bool on_public_transactions_register(const wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER::request& req, wallet_rpc::COMMAND_RPC_PUBLIC_TRANSACTIONS_REGISTER::response& res, epee::json_rpc::error& er);
+      END_JSON_RPC_MAP()
 
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
@@ -260,3 +269,4 @@ namespace tools
       const boost::program_options::variables_map *m_vm;
   };
 }
+
