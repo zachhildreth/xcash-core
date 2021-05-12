@@ -4330,6 +4330,288 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
   }
   return true;
 }
+
+bool wallet_rpc_server::on_delegate_consensus_vote(const wallet_rpc::COMMAND_RPC_DELEGATE_CONSENSUS_VOTE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_CONSENSUS_VOTE::response& res, epee::json_rpc::error& er)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  try
+  {
+  // check if the wallet is open
+  if (!m_wallet) return not_open(er);
+
+  // error check
+  if (m_wallet->key_on_device())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the consensus vote";
+    return false;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the consensus vote";
+    return false;
+  }
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Could not get the block verifiers list";
+    return false; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
+  }
+ 
+  // get the random data for the vote count
+  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_VOTE_RANDOM_DATA\",\r\n \"vote_count\": \"" + req.vote_count + "\",\r\n}";
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data2);
+    sleep(1);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS || string == "Could not get the random vote data")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the consensus vote";
+    return false; 
+  }
+
+  // sign the random data and the vote data
+  data2 = string + "|" + req.vote + "|";
+  string = m_wallet->sign(data2);
+ 
+  // create the data  
+  data2 = "NODES_TO_BLOCK_VERIFIERS_VOTE|" + req.vote_count + "|" + req.vote + "|" + string + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The vote has been added to the database successfully")
+    {
+      count2++;
+    }
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    res.status = "success";
+    return true;            
+  } 
+  else
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the consensus vote";
+    return false; 
+  } 
+  }
+  catch (...)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to send the consensus vote";
+    return false; 
+  }
+  return true; 
+}
+
+bool wallet_rpc_server::on_delegate_create_consensus_vote(const wallet_rpc::COMMAND_RPC_DELEGATE_CREATE_CONSENSUS_VOTE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_CREATE_CONSENSUS_VOTE::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  try
+  {
+  // check if the wallet is open
+  if (!m_wallet) return not_open(er);
+
+  // error check
+  if (m_wallet->key_on_device())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to create the consensus vote";
+    return false;
+  }
+  if (m_wallet->watch_only() || m_wallet->multisig())
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to create the consensus vote";
+    return false;
+  }
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Could not get the block verifiers list";
+    return false; 
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Invalid address";
+    return false;
+  }
+
+  if (public_address != NETWORK_DATA_NODE_PUBLIC_ADDRESS_1)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+    er.message = "Only the main network data node can create a consensus vote";
+    return false; 
+  }
+ 
+  // create the data  
+  data2 = "MAIN_NETWORK_DATA_NODE_TO_BLOCK_VERIFIERS_CREATE_VOTE|" + req.question + "|" + req.valid_vote_data + "|" + req.start_time + "|" + req.end_time + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Created the vote successfully")
+    {
+      count2++;
+    }
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    res.status = "success";
+    return true;            
+  } 
+  else
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to create the consensus vote";
+    return false; 
+  } 
+  }
+  catch (...)
+  {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to create the consensus vote";
+    return false; 
+  }
+  return true;
+}
 }
 
 

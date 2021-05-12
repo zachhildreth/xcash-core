@@ -942,6 +942,9 @@ struct Wallet
     virtual std::string vote_status()  = 0;
 
     virtual std::string revote()  = 0;
+  
+    virtual std::string delegate_consensus_vote(const std::string &vote_count,const std::string &vote) = 0;
+    virtual std::string delegate_create_consensus_vote(const  std::string &item,const  std::string &value) = 0;
 };
 
 /**

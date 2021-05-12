@@ -230,6 +230,9 @@ namespace cryptonote
     bool delegate_recover(const std::vector<std::string>& args);
     bool vote_status(const std::vector<std::string>& args);
     bool revote(const std::vector<std::string>& args);
+    bool revotes(const std::vector<std::string>& args);
+    bool delegate_consensus_vote(const std::vector<std::string>& args);
+    bool delegate_create_consensus_vote(const std::vector<std::string>& args);
 
     uint64_t get_daemon_blockchain_height(std::string& err);
     bool try_connect_to_daemon(bool silent = false, uint32_t* version = nullptr);

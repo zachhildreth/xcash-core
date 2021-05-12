@@ -2207,5 +2207,55 @@ namespace wallet_rpc
     };
   };
 
+struct COMMAND_RPC_DELEGATE_CONSENSUS_VOTE
+  {
+    struct request
+    {
+      std::string vote_count;
+      std::string vote;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(vote_count)
+        KV_SERIALIZE(vote)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_DELEGATE_CREATE_CONSENSUS_VOTE
+  {
+    struct request
+    {
+      std::string question;
+      std::string valid_vote_data;
+      std::string start_time;
+      std::string end_time;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(question)
+        KV_SERIALIZE(valid_vote_data)
+        KV_SERIALIZE(start_time)
+        KV_SERIALIZE(end_time)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }

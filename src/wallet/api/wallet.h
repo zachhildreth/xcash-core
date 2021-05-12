@@ -201,6 +201,8 @@ public:
     virtual std::string delegate_recover(const  std::string &domain_name)  override;
     virtual std::string vote_status()  override;
     virtual std::string revote()  override;
+    virtual std::string delegate_consensus_vote(const std::string &vote_count,const std::string &vote) override;
+    virtual std::string delegate_create_consensus_vote(const  std::string &item,const  std::string &value)  override;
 
 private:
     void clearStatus() const;

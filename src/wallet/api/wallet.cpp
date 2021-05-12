@@ -3079,6 +3079,232 @@ std::string WalletImpl::revote() {
   return "Failed to recover the delegate"+ errorInfo; 
 }
 
+std::string WalletImpl::delegate_consensus_vote(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key) {
+
+// structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};  
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  std::string errorInfo= ":";
+
+  // initialize the network_data_nodes_list struct
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+  try
+  {
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    return "Could not get the block verifiers list";
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+  auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    return "Failed to send the consensus vote\nInvalid public address. Only XCA addresses are allowed";  
+  }
+ 
+  // get the random data for the vote count
+  data2 = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_VOTE_RANDOM_DATA\",\r\n \"vote_count\": \"" + args[0] + "\",\r\n}";
+  for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+  {
+    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data2);
+    sleep(1);
+  }
+
+  if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS || string == "Could not get the random vote data")
+  {
+    return "Failed to send the consensus vote");
+  }
+
+  // sign the random data and the vote data
+  data2 = string + "|" + args[1] + "|";
+  string = m_wallet->sign(data2);
+ 
+  // create the data  
+  data2 = "NODES_TO_BLOCK_VERIFIERS_VOTE|" + args[0] + "|" + args[1] + "|" + string + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
+    if (result=="The vote has been added to the database successfully")
+    {
+      count2++;
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+    }else{
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
+    }     
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+    return "Success";        
+  } 
+
+  }catch (const std::exception &e) {
+    LOG_ERROR("Failed to send the consensus vote: " << e.what());
+  }
+
+  return "Failed to send the consensus vote "+ errorInfo;
+}
+
+ 
+
+ std::string WalletImpl::delegate_create_consensus_vote(const  std::string &value) {
+  // Variables
+  std::string public_address = "";
+  std::string reserve_proof = "";
+  tools::wallet2::transfer_container transfers;
+  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+  std::string errorInfo= ":";
+
+  try
+  {
+
+  // wait until the next valid data time
+  sync_minutes_and_seconds(0);
+
+  // get the current block verifiers list
+  if ((string = get_current_block_verifiers_list()) == "")
+  {
+    return "Could not get the block verifiers list";  
+  }
+
+  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  {
+    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+  }
+  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+  // initialize the current_block_verifiers_list struct
+  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  {
+    count3 = string.find("|",count2);
+    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+    count2 = count3 + 1;
+  }
+
+  // get the wallet transfers   
+  m_wallet->get_transfers(transfers);
+
+  // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+    {
+      bool used = std::find_if(
+        transfers.begin(), transfers.end(),
+        [this](const tools::wallet2::transfer_details& td) {
+          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+        }) != transfers.end();
+        public_address = m_wallet->get_subaddress_as_str({0, 0});
+    };
+    print_address_sub();
+  
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+  {
+    return "Failed to create the consensus vote\nInvalid public address. Only XCA addresses are allowed";  
+  }
+
+  if (public_address != NETWORK_DATA_NODE_PUBLIC_ADDRESS_1)
+  {
+    return "Failed to create the consensus vote\nOnly the main network data node can create a consensus vote";
+  }
+ 
+  // create the data  
+  data2 = "MAIN_NETWORK_DATA_NODE_TO_BLOCK_VERIFIERS_CREATE_VOTE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + args[3] + "|" + public_address + "|";
+
+  // sign the data    
+  data3 = m_wallet->sign(data2);
+
+  data2 += data3 + "|";
+
+  // send the data to all block verifiers
+  for (count = 0, count2 = 0; count < total_delegates; count++)
+  {
+    std::string result=  send_and_receive_data(block_verifiers_IP_address[count],data2);
+    if (result=="Created the vote successfully")
+    {
+      count2++;
+      errorInfo+= block_verifiers_IP_address[count]+"__Success"+"|";
+    }else{
+      errorInfo+= block_verifiers_IP_address[count]+"__"+result + "|";
+    }         
+  }
+
+  // check the result of the data
+  if (count2 >= total_delegates_valid_amount)
+  {
+        return "Success";  
+  }
+  }catch (const std::exception &e) {
+    LOG_ERROR("Failed to create the consensus vote: " << e.what());
+  }
+  return "Failed to create the consensus vote"+ errorInfo;
+ }
+
 } // namespace
 
 namespace Bitxcash = XCash;
