@@ -3258,6 +3258,683 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   return true; 
 }
 
+bool simple_wallet::xcash_sidechain_get_tx_list(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  try
+  {    
+    if (args.empty())
+    {
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        fail_msg_writer() << tr("Failed to get the xcash sidechain tx list");
+        return true;
+      }
+    }
+    else
+    {
+      // error check
+      if (args.front().length() != XCASH_WALLET_LENGTH)
+      {
+        fail_msg_writer() << tr("Invalid public address");
+        return true;
+      }
+      public_address = args.front();
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_TX_LIST\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the xcash sidechain tx list");
+      return true;
+    }
+
+    //string = "BLOCK_VERIFIERS_TO_NODES_SEND_TX_LIST|0000000000000000000000000000000000000000000000000000000000000001*100|0000000000000000000000000000000000000000000000000000000000000002*100|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nSidechain Transaction List\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("TX_HASH")-1)+TABLE_INDENTATION) << "TX_HASH" << std::setw(135-((sizeof("TX_HASH")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("AMOUNT")-1)+TABLE_INDENTATION) << "AMOUNT" << std::setw(40-((sizeof("AMOUNT")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+
+    count2 = 0;
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 != 0)
+      {
+        std::cout << TABLE_COLUMN_STRING << std::setw(std::to_string(count2).length()+TABLE_INDENTATION) << std::to_string(count2) << std::setw(10-(std::to_string(count2).length()+2)) << TABLE_COLUMN_STRING << std::setw(TRANSACTION_AND_TRANSACTION_KEY_LENGTH+TABLE_INDENTATION) << data.substr(0,TRANSACTION_AND_TRANSACTION_KEY_LENGTH) << std::setw(135-(TRANSACTION_AND_TRANSACTION_KEY_LENGTH+2)) << TABLE_COLUMN_STRING << std::setw((data.length()-(TRANSACTION_AND_TRANSACTION_KEY_LENGTH+1))+TABLE_INDENTATION) << data.substr(TRANSACTION_AND_TRANSACTION_KEY_LENGTH+1) << std::setw(40-((data.length()-(TRANSACTION_AND_TRANSACTION_KEY_LENGTH+1))+2)) << TABLE_COLUMN_STRING << std::endl; 
+        std::cout << TABLE_DATA << std::endl;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the xcash sidechain tx list");
+    return true;
+  }
+  return true;
+
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+bool simple_wallet::xcash_sidechain_get_tx_data(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string string = "";
+  std::string data;
+  std::string data2;
+  size_t count = 0;
+  int count2 = 0;
+
+  try
+  {
+    // error check
+    if (args.front().length() != TRANSACTION_AND_TRANSACTION_KEY_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to get the xcash sidechain tx data");
+      return true;
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_TX_DATA\",\r\n \"tx_hash\": \"" + args.front() + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the xcash sidechain tx data");
+      return true;
+    }
+
+    //string = "BLOCK_VERIFIERS_TO_NODES_SEND_TX_DATA|action|timestamp|public_address|receiver|amount|tx_hash|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nTX details for " << args.front() << "\n\n";  
+
+    count2 = 0;
+    while ((count = string.find("|")) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      data2 = count2 == 1 ? "Action" : count2 == 2 ? "Timestamp" : count2 == 3 ? "Public Address" : count2 == 4 ? "Receiver" : count2 == 5 ? "Amount" : "TX Hash";
+      if (count2 != 0)
+      {
+        tools::color_print(epee::console_color_yellow) << data2 << "\n";
+        std::cout << data << std::endl << std::endl;
+      }
+      string.erase(0, count + sizeof("|")-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the xcash sidechain tx data");
+    return true;
+  }
+  return true;
+}
+
+bool simple_wallet::xcash_sidechain_get_balance(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+  try
+  {    
+    if (args.empty())
+    {
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        fail_msg_writer() << tr("Failed to get the xcash sidechain balance");
+        return true;
+      }
+    }
+    else
+    {
+      // error check
+      if (args.front().length() != XCASH_WALLET_LENGTH)
+      {
+        fail_msg_writer() << tr("Invalid public address");
+        return true;
+      }
+      public_address = args.front();
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_BALANCE\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the xcash sidechain balance");
+      return true;
+    }
+
+    //string = "BLOCK_VERIFIERS_TO_NODES_SEND_BALANCE|100";
+
+    string = string.substr(38);
+
+    tools::color_print(epee::console_color_yellow) << "\nXCASH Sidechain Balance: " << string;
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the xcash sidechain balance");
+    return true;
+  }
+  return true;
+}
+
+bool simple_wallet::xcash_sidechain_convert_xcash(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    if (args.size() != PARAMETER_AMOUNT || args[0].length() != TRANSACTION_AND_TRANSACTION_KEY_LENGTH || args[1].length() != TRANSACTION_AND_TRANSACTION_KEY_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nInvalid parameters");
+      return true;
+    } 
+    if (m_wallet->key_on_device())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nThe reserve proof can be generated only by a full wallet");
+      return true;
+    }
+    if (!try_connect_to_daemon())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nFailed to connect to the daemon");
+      return true;
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Could not get the block verifiers list\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+ 
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_CONVERT_XCASH_TO_XCASH_SIDECHAIN|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the xcash sidechain balance successfully")
+      {
+        count2++;
+        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+        {
+          count3++;
+        }
+      } 
+      else
+      {
+        error_message = data3;
+      }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+    {
+      message_writer(console_color_green, false) << "Updated the xcash sidechain balance successfully";             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
+bool simple_wallet::xcash_sidechain_convert_xcash_sidechain(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 1
+
+  try
+  {
+    if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Failed to convert xcash sidechain to xcash\nInvalid parameters");
+      return true;
+    } 
+    if (m_wallet->key_on_device())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash sidechain to xcashn\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash sidechain to xcash\nThe reserve proof can be generated only by a full wallet");
+      return true;
+    }
+    if (!try_connect_to_daemon())
+    {
+      fail_msg_writer() << tr("Failed to convert xcash sidechain to xcash\nFailed to connect to the daemon");
+      return true;
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Could not get the block verifiers list\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to convert xcash to xcash sidechain\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+ 
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_CONVERT_XCASH_SIDECHAIN_TO_XCASH|" + args[0] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) != "Could not convert xcash sidechain to xcash")
+      {
+        count2++;
+        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+        {
+          count3++;
+        }
+      } 
+      else
+      {
+        error_message = data3;
+      }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+    {
+      message_writer(console_color_green, false) << data3;             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to convert xcash sidechain to xcash");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to convert xcash sidechain to xcash");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
+bool simple_wallet::xcash_sidechain_send(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    if (args.size() != PARAMETER_AMOUNT || args[1].length() != XCASH_WALLET_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to send xcash sidechain\nInvalid parameters");
+      return true;
+    } 
+    if (m_wallet->key_on_device())
+    {
+      fail_msg_writer() << tr("Failed to send xcash sidechain\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      fail_msg_writer() << tr("FFailed to send xcash sidechain\nThe reserve proof can be generated only by a full wallet");
+      return true;
+    }
+    if (!try_connect_to_daemon())
+    {
+      fail_msg_writer() << tr("Failed to send xcash sidechain\nFailed to connect to the daemon");
+      return true;
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Could not get the block verifiers list\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+ 
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to send xcash sidechain\nInvalid public address. Only XCA addresses are allowed.");
+      return true;  
+    }
+ 
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_SEND_XCASH_SIDECHAIN|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) != "Could not send xcash sidechain")
+      {
+        count2++;
+        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+        {
+          count3++;
+        }
+      } 
+      else
+      {
+        error_message = data3;
+      }     
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount || count3 == NETWORK_DATA_NODES_AMOUNT)
+    {
+      message_writer(console_color_green, false) << data3;             
+    } 
+    else
+    {
+      fail_msg_writer() << tr("Failed to send xcash sidechain");
+      fail_msg_writer() << error_message;  
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to send xcash sidechain");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -3645,6 +4322,30 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::revote, this, _1),
                            tr("revote"),
                            tr("Revotes to the currently staked to delegate with the full wallet balance"));
+  m_cmd_binder.set_handler("xcash_sidechain_get_tx_list",
+                           boost::bind(&simple_wallet::xcash_sidechain_get_tx_list, this, _1),
+                           tr("xcash_sidechain_get_tx_list <public_address>"),
+                           tr("Gets a list of xcash sidechain tx. The wallets current public address is used if no public address is specified"));
+  m_cmd_binder.set_handler("xcash_sidechain_get_tx_data",
+                           boost::bind(&simple_wallet::xcash_sidechain_get_tx_data, this, _1),
+                           tr("xcash_sidechain_get_tx_data <tx_hash>"),
+                           tr("Gets the xcash sidechain tx details for the specified xcash sidechain tx hash"));
+  m_cmd_binder.set_handler("xcash_sidechain_get_balance",
+                           boost::bind(&simple_wallet::xcash_sidechain_get_balance, this, _1),
+                           tr("xcash_sidechain_get_balance <public_address>"),
+                           tr("Gets the xcash sidechain balance. The wallets current public address is used if no public address is specified"));
+  m_cmd_binder.set_handler("xcash_sidechain_convert_xcash",
+                           boost::bind(&simple_wallet::xcash_sidechain_convert_xcash, this, _1),
+                           tr("xcash_sidechain_convert_xcash <tx_hash> <tx_key>"),
+                           tr("Converts xcash to xcash sidechain. Send xcash to the xcash sidechain wallet, then run the command with the tx_hash and tx_key to credit your account with xcash sidechain"));
+  m_cmd_binder.set_handler("xcash_sidechain_convert_xcash_sidechain",
+                           boost::bind(&simple_wallet::xcash_sidechain_convert_xcash_sidechain, this, _1),
+                           tr("xcash_sidechain_convert_xcash_sidechain <amount>"),
+                           tr("Converts xcash sidechain to xcash. Type the amount and the xcash sidechain wallet will send you a xcash transaction for that amount"));
+  m_cmd_binder.set_handler("xcash_sidechain_send",
+                           boost::bind(&simple_wallet::xcash_sidechain_send, this, _1),
+                           tr("xcash_sidechain_send <receiver> <amount>"),
+                           tr("Send xcash sidechain amount to receiver"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
@@ -9227,6 +9928,7 @@ int main(int argc, char* argv[])
   return 0;
   CATCH_ENTRY_L0("main", 1);
 }
+
 
 
 

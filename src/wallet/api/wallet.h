@@ -201,6 +201,12 @@ public:
     virtual std::string delegate_recover(const  std::string &domain_name)  override;
     virtual std::string vote_status()  override;
     virtual std::string revote()  override;
+    virtual std::string xcash_sidechain_get_tx_list(const std::string &public_address)  override;
+    virtual std::string xcash_sidechain_get_tx_data(const std::string &tx_hash)  override;
+    virtual std::string xcash_sidechain_get_balance(const std::string &public_address)  override;
+    virtual std::string xcash_sidechain_convert_xcash(const std::string &tx_hash,const std::string &tx_key)  override;
+    virtual std::string xcash_sidechain_convert_xcash_sidechain(const std::string &amount)  override;
+    virtual std::string xcash_sidechain_send(const std::string &receiver, const std::string &amount)  override;
 
 private:
     void clearStatus() const;
@@ -263,4 +269,5 @@ private:
 namespace Bitxcash = XCash;
 
 #endif
+
 

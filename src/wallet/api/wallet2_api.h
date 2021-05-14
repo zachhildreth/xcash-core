@@ -942,6 +942,18 @@ struct Wallet
     virtual std::string vote_status()  = 0;
 
     virtual std::string revote()  = 0;
+
+    virtual std::string xcash_sidechain_get_tx_list(const std::string &public_address) = 0;
+
+    virtual std::string xcash_sidechain_get_tx_data(const std::string &tx_hash) = 0;
+
+    virtual std::string xcash_sidechain_get_balance(const std::string &public_address) = 0;
+
+    virtual std::string xcash_sidechain_convert_xcash(const std::string &tx_hash,const std::string &tx_key) = 0;
+
+    virtual std::string xcash_sidechain_convert_xcash_sidechain(const std::string &amount) = 0;
+
+    virtual std::string xcash_sidechain_send(const std::string &receiver, const std::string &amount) = 0;
 };
 
 /**
@@ -1210,4 +1222,5 @@ struct WalletManagerFactory
 }
 
 namespace Bitxcash = XCash;
+
 

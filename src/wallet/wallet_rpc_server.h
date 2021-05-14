@@ -151,6 +151,12 @@ namespace tools
         MAP_JON_RPC_WE("delegate_recover",               on_delegate_recover,               wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER)
         MAP_JON_RPC_WE("vote_status",               on_vote_status,               wallet_rpc::COMMAND_RPC_VOTE_STATUS)
         MAP_JON_RPC_WE("revote",               on_revote,               wallet_rpc::COMMAND_RPC_REVOTE)
+        MAP_JON_RPC_WE("xcash_sidechain_get_tx_list",               on_xcash_sidechain_get_tx_list,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_LIST)
+        MAP_JON_RPC_WE("xcash_sidechain_get_tx_data",               on_xcash_sidechain_get_tx_data,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_DATA)
+        MAP_JON_RPC_WE("xcash_sidechain_get_balance",               on_xcash_sidechain_get_balance,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_BALANCE)
+        MAP_JON_RPC_WE("xcash_sidechain_convert_xcash",               on_xcash_sidechain_convert_xcash,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH)
+        MAP_JON_RPC_WE("xcash_sidechain_convert_xcash_sidechain",               on_xcash_sidechain_convert_xcash_sidechain,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH_SIDECHAIN)
+        MAP_JON_RPC_WE("xcash_sidechain_send",               on_xcash_sidechain_send,               wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_SEND)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -235,6 +241,12 @@ namespace tools
       bool on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er);
       bool on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS::request& req, wallet_rpc::COMMAND_RPC_VOTE_STATUS::response& res, epee::json_rpc::error& er);
       bool on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request& req, wallet_rpc::COMMAND_RPC_REVOTE::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_get_tx_list(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_LIST::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_LIST::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_get_tx_data(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_DATA::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_DATA::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_get_balance(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_GET_BALANCE::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_convert_xcash(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_convert_xcash_sidechain(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH_SIDECHAIN::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH_SIDECHAIN::response& res, epee::json_rpc::error& er);
+      bool on_xcash_sidechain_send(const wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_SEND::request& req, wallet_rpc::COMMAND_RPC_XCASH_SIDECHAIN_SEND::response& res, epee::json_rpc::error& er);
 
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
@@ -260,3 +272,4 @@ namespace tools
       const boost::program_options::variables_map *m_vm;
   };
 }
+

@@ -2207,5 +2207,136 @@ namespace wallet_rpc
     };
   };
 
+struct COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_LIST
+  {
+    struct request
+    {
+      std::string public_address;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(public_address)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+   struct COMMAND_RPC_XCASH_SIDECHAIN_GET_TX_DATA
+  {
+    struct request
+    {
+      std::string tx_hash;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+    struct COMMAND_RPC_XCASH_SIDECHAIN_GET_BALANCE
+  {
+    struct request
+    {
+      std::string public_address;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(public_address)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+    struct COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH
+  {
+    struct request
+    {
+      std::string tx_hash;
+      std::string tx_key;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash)
+        KV_SERIALIZE(tx_key)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+    struct COMMAND_RPC_XCASH_SIDECHAIN_CONVERT_XCASH_SIDECHAIN
+  {
+    struct request
+    {
+      std::string amount;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(amount)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+    struct COMMAND_RPC_XCASH_SIDECHAIN_SEND
+  {
+    struct request
+    {
+      std::string receiver;
+      std::string amount;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(receiver)
+        KV_SERIALIZE(amount)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }
+
