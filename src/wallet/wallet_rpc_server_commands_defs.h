@@ -2207,5 +2207,156 @@ namespace wallet_rpc
     };
   };
 
+struct COMMAND_RPC_SMART_CONTRACTS_GET_FEE
+  {
+    struct request
+    { 
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE
+  {
+    struct request
+    {
+      std::string item;
+      std::string value;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(item)
+        KV_SERIALIZE(value)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACT_CREATE
+  {
+    struct request
+    {
+      std::string authorized_public_addresses;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(authorized_public_addresses)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACT_UPDATE
+  {
+    struct request
+    {
+      std::string smart_contract_id;
+      std::string item;
+      std::string value;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(smart_contract_id)
+        KV_SERIALIZE(item)
+        KV_SERIALIZE(value)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT
+  {
+    struct request
+    {
+      std::string smart_contract_id;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(smart_contract_id)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACT_START
+  {
+    struct request
+    {
+      std::string smart_contract_id;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(smart_contract_id)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SMART_CONTRACT_CANCEL
+  {
+    struct request
+    {
+      std::string smart_contract_id;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(smart_contract_id)
+      END_KV_SERIALIZE_MAP()
+    };
+ 
+    struct response
+    {
+      std::string status;
+ 
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }
+

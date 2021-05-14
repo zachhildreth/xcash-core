@@ -201,6 +201,13 @@ public:
     virtual std::string delegate_recover(const  std::string &domain_name)  override;
     virtual std::string vote_status()  override;
     virtual std::string revote()  override;
+    virtual std::string smart_contract_cancel(const std::string &smart_contract_id)  override;
+    virtual std::string smart_contract_start(const std::string &smart_contract_id)  override;
+    virtual std::string smart_contract_update_amount(const std::string &smart_contract_id)  override;
+    virtual std::string smart_contract_update(const std::string &smart_contract_id,const std::string &item,const std::string &value)  override;
+    virtual std::string smart_contract_create(const std::string &authorized_public_addresses)  override;
+    virtual std::string smart_contracts_update_fee(const std::string &item,const std::string &value)  override;
+    virtual std::string smart_contracts_get_fee()  override;
 
 private:
     void clearStatus() const;
@@ -263,4 +270,5 @@ private:
 namespace Bitxcash = XCash;
 
 #endif
+
 

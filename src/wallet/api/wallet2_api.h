@@ -942,6 +942,20 @@ struct Wallet
     virtual std::string vote_status()  = 0;
 
     virtual std::string revote()  = 0;
+
+    virtual std::string smart_contracts_get_fee() = 0;
+
+    virtual std::string smart_contracts_update_fee(const std::string &item,const std::string &value) = 0;
+
+    virtual std::string smart_contract_create(const std::string &authorized_public_addresses) = 0;
+
+    virtual std::string smart_contract_update(const std::string &smart_contract_id,const std::string &item,const std::string &value) = 0;
+
+    virtual std::string smart_contract_update_amount(const std::string &smart_contract_id) = 0;
+
+    virtual std::string smart_contract_start(const std::string &smart_contract_id) = 0;
+
+    virtual std::string smart_contract_cancel(const std::string &smart_contract_id) = 0;
 };
 
 /**
@@ -1210,4 +1224,5 @@ struct WalletManagerFactory
 }
 
 namespace Bitxcash = XCash;
+
 

@@ -4330,6 +4330,828 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
   }
   return true;
 }
+
+bool wallet_rpc_server::on_smart_contracts_get_fee(const wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_GET_FEE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_GET_FEE::response& res, epee::json_rpc::error& er)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  std::string string = "";
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define GET_SMART_CONTRACTS_FEE_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+  #define MESSAGE "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_FEE\",\r\n}"
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      GET_SMART_CONTRACTS_FEE_ERROR("Failed to get the smart contract fee");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      GET_SMART_CONTRACTS_FEE_ERROR("Failed to get the smart contract fee");
+    }
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],MESSAGE);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      GET_SMART_CONTRACTS_FEE_ERROR("Failed to get the smart contract fee");
+    }
+
+    res.status = string;
+    return true;   
+  }
+  catch (...)
+  {
+    GET_SMART_CONTRACTS_FEE_ERROR("Failed to get the smart contract fee");
+  }
+  return true;
+
+  #undef GET_SMART_CONTRACTS_FEE_ERROR
+  #undef MESSAGE
+}
+
+bool wallet_rpc_server::on_smart_contracts_update_fee(const wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define UPDATE_SMART_CONTRACTS_FEE_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      UPDATE_SMART_CONTRACTS_FEE_ERROR("Could not update the smart contracts fee");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      UPDATE_SMART_CONTRACTS_FEE_ERROR("Could not update the smart contracts fee");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      UPDATE_SMART_CONTRACTS_FEE_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_FEE|" + req.item + "|" + req.value + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the smart contract fee")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      UPDATE_SMART_CONTRACTS_FEE_ERROR("Failed to update the smart contract fee");
+    } 
+  }
+  catch (...)
+  {
+    UPDATE_SMART_CONTRACTS_FEE_ERROR("Failed to update the smart contract fee");
+  }
+  return true; 
+
+  #undef UPDATE_SMART_CONTRACTS_FEE_ERROR
+}
+
+std::string random_string(const size_t LENGTH)
+{  
+  // Constants
+  const std::string DATA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+  // define macros
+  #define MINIMUM 0
+  #define MAXIMUM 61
+  
+  // Variables
+  std::string result = "";
+  size_t count;
+
+  for (count = 0; count < LENGTH; count++)
+  {
+    result += DATA.substr(((rand() % (MAXIMUM - MINIMUM + 1)) + MINIMUM),1);
+  }
+  return result;
+
+  #undef MINIMUM
+  #undef MAXIMUM  
+}
+
+bool wallet_rpc_server::on_smart_contract_create(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CREATE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CREATE::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define CREATE_SMART_CONTRACT_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      CREATE_SMART_CONTRACT_ERROR("Could not create the smart contract");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      CREATE_SMART_CONTRACT_ERROR("Could not create the smart contract");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      CREATE_SMART_CONTRACT_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the smart contract ID
+    smart_contract_id = random_string(SMART_CONTRACT_ID_LENGTH);    
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_CREATE_SMART_CONTRACT|" + smart_contract_id + "|" + req.authorized_public_addresses + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) != "Could not create the smart contract")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      CREATE_SMART_CONTRACT_ERROR("Could not create the smart contract");
+    } 
+  }
+  catch (...)
+  {
+    CREATE_SMART_CONTRACT_ERROR("Could not create the smart contract");
+  }
+  return true; 
+
+  #undef CREATE_SMART_CONTRACT_ERROR
+}
+
+bool wallet_rpc_server::on_smart_contract_update(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define UPDATE_SMART_CONTRACT_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      UPDATE_SMART_CONTRACT_ERROR("Could not update the  contract");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      UPDATE_SMART_CONTRACT_ERROR("Could not update the smart contract");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      UPDATE_SMART_CONTRACT_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_SMART_CONTRACT|" + req.smart_contract_id + "|" + req.item + "|" + req.value + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the smart contract information")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      UPDATE_SMART_CONTRACT_ERROR("Could not update the smart contract");
+    } 
+  }
+  catch (...)
+  {
+    UPDATE_SMART_CONTRACT_ERROR("Could not update the smart contract");
+  }
+  return true; 
+
+  #undef UPDATE_SMART_CONTRACT_ERROR
+}
+
+bool wallet_rpc_server::on_smart_contract_update_amount(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define UPDATE_AMOUNT_SMART_CONTRACT_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      UPDATE_AMOUNT_SMART_CONTRACT_ERROR("Could not update the smart contract amount");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      UPDATE_AMOUNT_SMART_CONTRACT_ERROR("Could not update the smart contract amount");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      UPDATE_AMOUNT_SMART_CONTRACT_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_AMOUNT_SMART_CONTRACT|" + req.smart_contract_id + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The smart contract amount has been update_amounted successfully")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      UPDATE_AMOUNT_SMART_CONTRACT_ERROR("Could not update the smart contract amount");
+    } 
+  }
+  catch (...)
+  {
+    UPDATE_AMOUNT_SMART_CONTRACT_ERROR("Could not update the smart contract amount");
+  }
+  return true; 
+
+  #undef UPDATE_AMOUNT_SMART_CONTRACT_ERROR
+}
+
+bool wallet_rpc_server::on_smart_contract_start(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_START::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_START::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define START_SMART_CONTRACT_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      START_SMART_CONTRACT_ERROR("Could not start the smart contract");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      START_SMART_CONTRACT_ERROR("Could not start the smart contract");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      START_SMART_CONTRACT_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_START_SMART_CONTRACT|" + req.smart_contract_id + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The smart contract has been started successfully")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      START_SMART_CONTRACT_ERROR("Could not start the smart contract");
+    } 
+  }
+  catch (...)
+  {
+    START_SMART_CONTRACT_ERROR("Could not start the smart contract");
+  }
+  return true; 
+
+  #undef START_SMART_CONTRACT_ERROR
+}
+
+bool wallet_rpc_server::on_smart_contract_cancel(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CANCEL::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CANCEL::response& res, epee::json_rpc::error& er)
+{
+  // Variables
+  std::string parameters = "";
+  std::string public_address = "";
+  std::string smart_contract_id;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string string = "";
+  std::string data2 = "";
+  std::string data3 = ""; 
+  std::string error_message;
+  std::size_t count; 
+  std::size_t count2;
+  std::size_t count3;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define CANCEL_SMART_CONTRACT_ERROR(MESSAGE) \
+  er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR; \
+  er.message = MESSAGE; \
+  return false;
+
+  try
+  {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
+
+    // error check
+    if (m_wallet->key_on_device())
+    {
+      CANCEL_SMART_CONTRACT_ERROR("Could not cancel the smart contract");
+    }
+    if (m_wallet->watch_only() || m_wallet->multisig())
+    {
+      CANCEL_SMART_CONTRACT_ERROR("Could not cancel the smart contract");
+    }
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      CANCEL_SMART_CONTRACT_ERROR("Could not get the current block verifiers list");
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_CANCEL_SMART_CONTRACT|" + req.smart_contract_id + "|" + public_address + "|";
+
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The smart contract has been canceled successfully")
+      {
+        count2++;
+      }  
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      res.status = "success";
+      return true;            
+    } 
+    else
+    {
+      CANCEL_SMART_CONTRACT_ERROR("Could not cancel the smart contract");
+    } 
+  }
+  catch (...)
+  {
+    CANCEL_SMART_CONTRACT_ERROR("Could not cancel the smart contract");
+  }
+  return true; 
+
+  #undef CANCEL_SMART_CONTRACT_ERROR
+}
 }
 
 
@@ -4550,5 +5372,6 @@ int main(int argc, char** argv) {
   return daemonizer::daemonize(argc, const_cast<const char**>(argv), t_executor{}, *vm) ? 0 : 1;
   CATCH_ENTRY_L0("main", 1);
 }
+
 
 

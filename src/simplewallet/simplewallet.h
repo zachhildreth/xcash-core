@@ -230,6 +230,13 @@ namespace cryptonote
     bool delegate_recover(const std::vector<std::string>& args);
     bool vote_status(const std::vector<std::string>& args);
     bool revote(const std::vector<std::string>& args);
+    bool smart_contracts_get_fee(const std::vector<std::string>& args);
+    bool smart_contracts_update_fee(const std::vector<std::string>& args);
+    bool smart_contract_create(const std::vector<std::string>& args);
+    bool smart_contract_update(const std::vector<std::string>& args);
+    bool smart_contract_update_amount(const std::vector<std::string>& args);
+    bool smart_contract_start(const std::vector<std::string>& args);
+    bool smart_contract_cancel(const std::vector<std::string>& args);
 
     uint64_t get_daemon_blockchain_height(std::string& err);
     bool try_connect_to_daemon(bool silent = false, uint32_t* version = nullptr);
@@ -365,3 +372,4 @@ namespace cryptonote
     uint32_t m_current_subaddress_account;
   };
 }
+

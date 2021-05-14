@@ -151,6 +151,13 @@ namespace tools
         MAP_JON_RPC_WE("delegate_recover",               on_delegate_recover,               wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER)
         MAP_JON_RPC_WE("vote_status",               on_vote_status,               wallet_rpc::COMMAND_RPC_VOTE_STATUS)
         MAP_JON_RPC_WE("revote",               on_revote,               wallet_rpc::COMMAND_RPC_REVOTE)
+        MAP_JON_RPC_WE("smart_contracts_get_fee",               on_smart_contracts_get_fee,               wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_GET_FEE)
+        MAP_JON_RPC_WE("smart_contracts_update_fee",               on_smart_contracts_update_fee,               wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE)
+        MAP_JON_RPC_WE("smart_contract_create",               on_smart_contract_create,               wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CREATE)
+        MAP_JON_RPC_WE("smart_contract_update",               on_smart_contract_update,               wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE)
+        MAP_JON_RPC_WE("smart_contract_update_amount",               on_smart_contract_update_amount,               wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT)
+        MAP_JON_RPC_WE("smart_contract_start",               on_smart_contract_start,               wallet_rpc::COMMAND_RPC_SMART_CONTRACT_START)
+        MAP_JON_RPC_WE("smart_contract_cancel",               on_smart_contract_cancel,               wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CANCEL)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -235,6 +242,13 @@ namespace tools
       bool on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er);
       bool on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS::request& req, wallet_rpc::COMMAND_RPC_VOTE_STATUS::response& res, epee::json_rpc::error& er);
       bool on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request& req, wallet_rpc::COMMAND_RPC_REVOTE::response& res, epee::json_rpc::error& er);
+      bool on_smart_contracts_get_fee(const wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_GET_FEE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_GET_FEE::response& res, epee::json_rpc::error& er);
+      bool on_smart_contracts_update_fee(const wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACTS_UPDATE_FEE::response& res, epee::json_rpc::error& er);
+      bool on_smart_contract_create(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CREATE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CREATE::response& res, epee::json_rpc::error& er);
+      bool on_smart_contract_update(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE::response& res, epee::json_rpc::error& er);
+      bool on_smart_contract_update_amount(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_UPDATE_AMOUNT::response& res, epee::json_rpc::error& er);
+      bool on_smart_contract_start(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_START::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_START::response& res, epee::json_rpc::error& er);
+      bool on_smart_contract_cancel(const wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CANCEL::request& req, wallet_rpc::COMMAND_RPC_SMART_CONTRACT_CANCEL::response& res, epee::json_rpc::error& er);
 
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
@@ -260,3 +274,4 @@ namespace tools
       const boost::program_options::variables_map *m_vm;
   };
 }
+

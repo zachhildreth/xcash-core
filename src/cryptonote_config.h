@@ -238,6 +238,7 @@ full_addrs.insert(SEED_NODE_5);
 
 // Network
 #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
+#define MAXIMUM_CONNECTION_TIMEOUT_SETTINGS 5 // The maximum amount of socket_connection_timeouts
 #define CONNECTION_TIMEOUT_SETTINGS 1000 // the time in milliseconds for a connection to be created
 #define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 3000 // The time in milliseconds to wait for sending or receving socket data
 #define SEND_OR_RECEIVE_SOCKET_DATA_DOWNLOAD_DATABASE_HASH_TIMEOUT_SETTINGS 60000 // The time in milliseconds to wait for downloading multiple data hashes
@@ -289,6 +290,9 @@ network_data_nodes_list.network_data_nodes_public_address[3] = NETWORK_DATA_NODE
 network_data_nodes_list.network_data_nodes_IP_address[3] = NETWORK_DATA_NODE_IP_ADDRESS_4; \
 network_data_nodes_list.network_data_nodes_public_address[4] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_5; \
 network_data_nodes_list.network_data_nodes_IP_address[4] = NETWORK_DATA_NODE_IP_ADDRESS_5;
+
+// Smart Contracts
+#define SMART_CONTRACT_ID_LENGTH 16
 
 
 
@@ -419,5 +423,6 @@ namespace cryptonote
     }
   };
 }
+
 
 
