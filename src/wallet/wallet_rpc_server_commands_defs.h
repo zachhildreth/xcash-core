@@ -2207,5 +2207,71 @@ namespace wallet_rpc
     };
   };
 
+ struct COMMAND_RPC_NFT_GET_LIST
+  {
+    struct request
+    {
+      std::string public_address;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(public_address)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_NFT_GET_DATA
+  {
+    struct request
+    {
+      std::string nft_data_hash;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(nft_data_hash)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_NFT_UPDATE_ATTRIBUTES_URL
+  {
+    struct request
+    {
+      std::string nft_data_hash;
+      std::string data;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(nft_data_hash)
+        KV_SERIALIZE(data)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 }
 }
+

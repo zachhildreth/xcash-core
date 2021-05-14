@@ -3258,6 +3258,305 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   return true; 
 }
 
+bool simple_wallet::nft_get_list(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  tools::wallet2::transfer_container transfers;
+  std::string public_address;
+  std::string string = "";
+  std::string data;
+  size_t count = 0;
+  int count2 = 0;
+
+  // define macros
+  #define TABLE_INDENTATION 1
+  #define TABLE_COLUMN_STRING "|"
+  #define TABLE_DATA "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" // (TABLE_WIDTH * amount of colums)-2
+
+  try
+  {    
+    if (args.empty())
+    {
+      // get the wallet transfers   
+      m_wallet->get_transfers(transfers);
+
+      // get the wallets public address
+      auto print_address_sub = [this, &transfers, &public_address]()
+        {
+          bool used = std::find_if(
+            transfers.begin(), transfers.end(),
+            [this](const tools::wallet2::transfer_details& td) {
+              return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+            }) != transfers.end();
+            public_address = m_wallet->get_subaddress_as_str({0, 0});
+        };
+        print_address_sub();
+  
+      if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+      {
+        fail_msg_writer() << tr("Failed to get the nft list");
+        return true;
+      }
+    }
+    else
+    {
+      // error check
+      if (args.front().length() != XCASH_WALLET_LENGTH)
+      {
+        fail_msg_writer() << tr("Failed to check if the public address is registered in the NFT database");
+        return true;
+      }
+      public_address = args.front();
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_NON_FUNBILE_TOKEN_LIST_FOR_SPECIFIC_PUBLIC_ADDRESS\",\r\n \"public_address\": \"" + public_address + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the nft list");
+      return true;
+    }
+
+    //string = "BLOCK_VERIFIERS_TO_NODES_SEND_NON_FUNBILE_TOKEN_LIST_FOR_SPECIFIC_PUBLIC_ADDRESS|00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000*non_fungible_token_name_1|00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000*non_fungible_token_name_2|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT\n";  
+    std::cout << TABLE_DATA << std::endl;
+    std::cout << TABLE_COLUMN_STRING << std::setw((sizeof("INDEX")-1)+TABLE_INDENTATION) << "INDEX" << std::setw(10-((sizeof("INDEX")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NFT_DATA_HASH")-1)+TABLE_INDENTATION) << "NFT_DATA_HASH" << std::setw(135-((sizeof("NFT_DATA_HASH")-1)+2)) << TABLE_COLUMN_STRING << std::setw((sizeof("NFT_NAME")-1)+TABLE_INDENTATION) << "NFT_NAME" << std::setw(40-((sizeof("NFT_NAME")-1)+2)) << TABLE_COLUMN_STRING << std::endl; 
+    std::cout << TABLE_DATA << std::endl;
+
+    count2 = 0;
+    while ((count = string.find(TABLE_COLUMN_STRING)) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      if (count2 != 0)
+      {
+        std::cout << TABLE_COLUMN_STRING << std::setw(std::to_string(count2).length()+TABLE_INDENTATION) << std::to_string(count2) << std::setw(10-(std::to_string(count2).length()+2)) << TABLE_COLUMN_STRING << std::setw(NFT_DATA_HASH_LENGTH+TABLE_INDENTATION) << data.substr(0,NFT_DATA_HASH_LENGTH) << std::setw(135-(NFT_DATA_HASH_LENGTH+2)) << TABLE_COLUMN_STRING << std::setw((data.length()-(NFT_DATA_HASH_LENGTH+1))+TABLE_INDENTATION) << data.substr(NFT_DATA_HASH_LENGTH+1) << std::setw(40-((data.length()-(NFT_DATA_HASH_LENGTH+1))+2)) << TABLE_COLUMN_STRING << std::endl; 
+        std::cout << TABLE_DATA << std::endl;
+      }
+      string.erase(0, count + sizeof(TABLE_COLUMN_STRING)-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the nft list");
+    return true;
+  }
+  return true;
+
+  #undef TABLE_INDENTATION
+  #undef TABLE_COLUMN_STRING
+  #undef TABLE_DATA
+}
+
+bool simple_wallet::nft_get_data(const std::vector<std::string>& args)
+{
+  // structures
+  struct network_data_nodes_list {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+};
+
+  // Variables
+  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
+  std::string string = "";
+  std::string data;
+  std::string data2;
+  size_t count = 0;
+  int count2 = 0;
+
+  try
+  {
+    // error check
+    if (args.front().length() != NFT_DATA_HASH_LENGTH)
+    {
+      fail_msg_writer() << tr("Failed to get the nft data");
+      return true;
+    }
+
+    // create the message
+    data = "{\r\n \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_GET_NON_FUNBILE_TOKEN_DATA\",\r\n \"non_fungible_token_data_hash\": \"" + args.front() + "\",\r\n}";
+
+    // initialize the network_data_nodes_list struct
+    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+
+    // send the message to a random network data node
+    for (count = 0; string.find("|") == std::string::npos && count < MAXIMUM_CONNECTION_TIMEOUT_SETTINGS; count++)
+    {
+      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[(int)(rand() % NETWORK_DATA_NODES_AMOUNT)],data);
+      sleep(1);
+    }
+
+    if (count == MAXIMUM_CONNECTION_TIMEOUT_SETTINGS)
+    {
+      fail_msg_writer() << tr("Failed to get the nft data");
+      return true;
+    }
+
+    //string = "BLOCK_VERIFIERS_TO_NODES_SEND_NON_FUNBILE_TOKEN_DATA|name|description|tags|terms|website|image_url|animation_url|video_url|atrributes_url|unique_id|non_fungible_token_data_hash|";
+
+    // print the title and the table header
+    tools::color_print(epee::console_color_yellow) << "\nNFT details for " << args.front() << "\n\n";  
+
+    count2 = 0;
+    while ((count = string.find("|")) != std::string::npos)
+    {
+      data = string.substr(0, count);
+      data2 = count2 == 1 ? "Name" : count2 == 2 ? "Description" : count2 == 3 ? "Tags" : count2 == 4 ? "Terms" : count2 == 5 ? "Website" : count2 == 6 ? "Image URL" : count2 == 7 ? "Animation URL" : count2 == 8 ? "Video URL" : count2 == 9 ? "Attributes URL" : "Unique ID";
+      if (count2 != 0 && count2 != 11)
+      {
+        tools::color_print(epee::console_color_yellow) << data2 << "\n";
+        std::cout << data << std::endl << std::endl;
+      }
+      string.erase(0, count + sizeof("|")-1);
+      count2++;
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to get the nft data");
+    return true;
+  }
+  return true;
+}
+
+bool simple_wallet::nft_update_attributes_url(const std::vector<std::string>& args)
+{
+  // Variables
+  std::string string = "";
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
+  std::string public_address;
+  std::string data2;
+  std::string data3;
+  std::string error_message;
+  size_t count = 0;
+  size_t count2 = 0;
+  size_t count3 = 0;
+  std::size_t total_delegates;
+  std::size_t total_delegates_valid_amount;
+
+  // define macros
+  #define PARAMETER_AMOUNT 2
+
+  try
+  {
+    // error check
+    if (args.size() != PARAMETER_AMOUNT)
+    {
+      fail_msg_writer() << tr("Failed to update the NFT attributes URL");
+      return true;
+    }
+
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
+
+    // wait until the next valid data time
+    sync_minutes_and_seconds(0);
+
+    // get the current block verifiers list
+    if ((string = get_current_block_verifiers_list()) == "")
+    {
+      fail_msg_writer() << tr("Failed to register the delegate\n");
+      return true; 
+    }
+
+    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+    if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+    {
+      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    }
+    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
+    // initialize the current_block_verifiers_list struct
+    for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+    {
+      count3 = string.find("|",count2);
+      block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+      count2 = count3 + 1;
+    }
+
+    // get the wallet transfers   
+    m_wallet->get_transfers(transfers);
+
+    // get the wallets public address
+    auto print_address_sub = [this, &transfers, &public_address]()
+      {
+        bool used = std::find_if(
+          transfers.begin(), transfers.end(),
+          [this](const tools::wallet2::transfer_details& td) {
+            return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
+          }) != transfers.end();
+          public_address = m_wallet->get_subaddress_as_str({0, 0});
+      };
+      print_address_sub();
+  
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
+    {
+      fail_msg_writer() << tr("Failed to update the NFT attributes URL");
+      return true;  
+    }
+
+    // create the data
+    data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_ATTRIBUTES_URL|" + args[0] + "|" + args[1] + "|" + public_address + "|";
+ 
+    // sign the data    
+    data3 = m_wallet->sign(data2);
+
+    data2 += data3 + "|";
+
+    // send the data to all block verifiers
+    for (count = 0, count2 = 0; count < total_delegates; count++)
+    {
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "Updated the attributes url")
+      {
+        count2++;
+      }
+      else
+      {
+        error_message = data3;
+      }   
+    }
+
+    // check the result of the data
+    if (count2 >= total_delegates_valid_amount)
+    {
+      message_writer(console_color_green, false) << "The attributes url has been updated successfully";             
+    }
+    else
+    {
+      fail_msg_writer() << tr("Failed to update the NFT attributes URL");
+      fail_msg_writer() << error_message; 
+    }
+  }
+  catch (...)
+  {
+    fail_msg_writer() << tr("Failed to update the NFT attributes URL");
+  }
+  return true;  
+
+  #undef PARAMETER_AMOUNT
+}
+
 bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   if(args.empty())
@@ -3645,6 +3944,18 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::revote, this, _1),
                            tr("revote"),
                            tr("Revotes to the currently staked to delegate with the full wallet balance"));
+  m_cmd_binder.set_handler("nft_get_list",
+                           boost::bind(&simple_wallet::nft_get_list, this, _1),
+                           tr("nft_get_list <public_address>"),
+                           tr("Gets the non fungible token that the wallet currently owns. The wallets current public address is used if no public address is specified"));
+  m_cmd_binder.set_handler("nft_get_data",
+                           boost::bind(&simple_wallet::nft_get_data, this, _1),
+                           tr("nft_get_data <NFT data hash>"),
+                           tr("Gets the non fungible token details for the specified NFT data hash"));
+  m_cmd_binder.set_handler("nft_update_attributes_url",
+                           boost::bind(&simple_wallet::nft_update_attributes_url, this, _1),
+                           tr("nft_update_attributes_url <NFT_data_hash> <data>"),
+                           tr("Updates the attributes URL for the NFT"));
   m_cmd_binder.set_handler("help",
                            boost::bind(&simple_wallet::help, this, _1),
                            tr("help [<command>]"),
@@ -9227,6 +9538,7 @@ int main(int argc, char* argv[])
   return 0;
   CATCH_ENTRY_L0("main", 1);
 }
+
 
 
 

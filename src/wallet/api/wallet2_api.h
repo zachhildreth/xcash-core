@@ -942,6 +942,12 @@ struct Wallet
     virtual std::string vote_status()  = 0;
 
     virtual std::string revote()  = 0;
+
+    virtual std::string nft_get_list(const std::string &public_address) = 0;
+
+    virtual std::string nft_get_data(const std::string &nft_data_hash) = 0;
+
+    virtual std::string nft_update_attributes_url(const std::string &nft_data_hash,const std::string &data) = 0;
 };
 
 /**
@@ -1210,4 +1216,5 @@ struct WalletManagerFactory
 }
 
 namespace Bitxcash = XCash;
+
 

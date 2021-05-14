@@ -122,6 +122,11 @@ inline scoped_message_writer success_msg_writer(bool color = true)
   return scoped_message_writer(color ? epee::console_color_green : epee::console_color_default, false, std::string(), el::Level::Info);
 }
 
+inline scoped_message_writer color_print(epee::console_colors color = epee::console_color_default)
+{
+  return scoped_message_writer(color, true, std::string(), el::Level::Info);
+}
+
 inline scoped_message_writer msg_writer(epee::console_colors color = epee::console_color_default)
 {
   return scoped_message_writer(color, false, std::string(), el::Level::Info);
